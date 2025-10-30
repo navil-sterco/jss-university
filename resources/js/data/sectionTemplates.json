@@ -1,0 +1,45 @@
+{
+  "hero": {
+    "label": "Hero",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Enter title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Enter subtitle" },
+      { "name": "file", "label": "Background Image", "type": "file" },
+      { "name": "cta_text", "label": "CTA Text", "type": "text", "placeholder": "Get Started" },
+      { "name": "no btn", "label": "btn Text", "type": "text", "placeholder": "btn Started" }
+    ]
+  },
+  "features": {
+    "label": "Features",
+    "fields": [
+      { "name": "title", "label": "Feature Title", "type": "text", "placeholder": "Feature name" },
+      { "name": "description", "label": "Description", "type": "text", "placeholder": "Describe the feature" },
+      { "name": "icon", "label": "Icon", "type": "file" }
+    ]
+  },
+  "testimonials": {
+    "label": "Testimonials",
+    "fields": [
+      { "name": "author", "label": "Author", "type": "text", "placeholder": "Author name" },
+      { "name": "role", "label": "Role", "type": "text", "placeholder": "Job title" },
+      { "name": "content", "label": "Testimonial", "type": "text", "placeholder": "What they said" },
+      { "name": "photo", "label": "Avatar", "type": "file" }
+    ]
+  },
+  "pricing": {
+    "label": "Pricing",
+    "fields": [
+      { "name": "plan_name", "label": "Plan Name", "type": "text", "placeholder": "Basic" },
+      { "name": "price", "label": "Price", "type": "text", "placeholder": "$99" },
+      { "name": "features", "label": "Features", "type": "text", "placeholder": "Feature list" }
+    ]
+  },
+  "cta": {
+    "label": "Call to Action",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Ready to get started?" },
+      { "name": "button_text", "label": "Button Text", "type": "text", "placeholder": "Sign Up Now" },
+      { "name": "button_url", "label": "Button URL", "type": "text", "placeholder": "/signup" }
+    ]
+  }
+}

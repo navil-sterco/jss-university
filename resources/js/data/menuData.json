@@ -1,0 +1,155 @@
+[
+    {
+        "header": "",
+        "items": [
+            {
+                "text": "Dashboard",
+                "icon": "bx bx-qr",
+                "available": true,
+                "link": "dashboard"
+            }
+        ]
+    },
+    {
+        "header": "",
+        "items": [
+            {
+                "text": "Homepage",
+                "icon": "bx bx-home",
+                "available": true,
+                "link": "home"
+            }
+        ]
+    },
+    {
+        "header": "",
+        "items": [
+            {
+                "text": "Manage Content",
+                "icon": "bx bx-notepad",
+                "available": true,
+                "link": "",
+                "submenu": [
+                    {
+                        "text": "Pages",
+                        "available": true,
+                        "link": "pages.index"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "header": "",
+        "items": [
+            {
+                "text": "Manage Elements",
+                "icon": "bx bx-intersect",
+                "available": true,
+                "link": "",
+                "submenu": [
+                    {
+                        "text": "Banners",
+                        "available": true,
+                        "link": "banners.index"
+                    },
+                    {
+                        "text": "Testimonials",
+                        "available": true,
+                        "link": "testimonial.index"
+                    },
+                    {
+                        "text": "Happenings",
+                        "available": true,
+                        "link": "happening.index"
+                    },
+                    {
+                        "text": "Facts And Figures",
+                        "available": true,
+                        "link": "facts-and-figures.index"
+                    },
+                    {
+                        "text": "Recruiters",
+                        "available": true,
+                        "link": "recruiters.index"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "header": "",
+        "items": [
+            {
+                "text": "Galleries",
+                "icon": "bx bx-image",
+                "available": true,
+                "link": "galleries.index"
+            }
+        ]
+    },
+    {
+        "header": "University",
+        "items": [
+            {
+                "text": "School",
+                "icon": "bx bx-buildings",
+                "available": true,
+                "link": "schools.index"
+            },
+            {
+                "text": "Departments",
+                "icon": "bx bx-book",
+                "available": true,
+                "link": "department.index"
+            },
+            {
+                "text": "Programs",
+                "icon": "bx bx-book-content",
+                "available": true,
+                "link": "program.index"
+            },
+            {
+                "text": "Courses",
+                "icon": "bx bx-receipt",
+                "available": true,
+                "link": "course.index"
+            }
+        ]
+    },
+    {
+        "header": "Layout",
+        "items": [
+            {
+                "text": "Header",
+                "icon": "bx bx-layout",
+                "available": true,
+                "link": "headers.index"
+            },
+            {
+                "text": "Footer",
+                "icon": "bx bx-layout",
+                "available": true,
+                "link": ""
+            }
+        ]
+    },
+    {
+        "header": "Settings",
+        "items": [
+            {
+                "text": "Profile Settings",
+                "icon": "bx bx-cog",
+                "available": true,
+                "link": "",
+                "submenu": [
+                    {
+                        "text": "Update Profile",
+                        "available": true,
+                        "link": "profile.edit"
+                    }
+                ]
+            }
+        ]
+    }
+]
