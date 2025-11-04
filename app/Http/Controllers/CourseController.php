@@ -89,12 +89,13 @@ class CourseController extends Controller
 
         $data = $request->all();
 
-        // Generate slug if empty
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
-            $count = Course::where('slug', 'LIKE', "{$data['slug']}%")->count();
-            if ($count > 0) {
-                $data['slug'] .= '-' . ($count + 1);
+              
+            if (Course::where('slug', $data['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
             }
         }
 
@@ -157,11 +158,10 @@ class CourseController extends Controller
 
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
-            $count = Course::where('slug', 'LIKE', "{$data['slug']}%")
-                        ->where('id', '!=', $course->id)
-                        ->count();
-            if ($count > 0) {
-                $data['slug'] .= '-' . ($count + 1);
+            $exists = Course::where('slug', $data['slug'])->where('id', '!=', $course->id)->exists();
+
+            if ($exists) {
+                return back()->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])->withInput();
             }
         }
 

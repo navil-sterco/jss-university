@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\School;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -56,6 +57,11 @@ class Department extends Model
         'mission_points' => 'array',
         'hod_messages' => 'array',
     ];
+
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
 
     public function scopeFilter(Builder $query, $filters)
     {

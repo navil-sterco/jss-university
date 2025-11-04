@@ -13,6 +13,7 @@ const Edit = ({ banner }) => {
         linked_text: banner.linked_text || "",
         link: banner.link || "",
         image: null,
+        mobile_image: null,
         display_order: banner.display_order || "",
         show_on_home: banner.show_on_home || 0,
     });
@@ -43,7 +44,7 @@ const Edit = ({ banner }) => {
 
                             {/* Heading */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="heading" className="form-label">Heading</label>
+                                <label htmlFor="heading" className="form-label">Heading <span className="text-danger">*</span></label>
                                 <input
                                     className="form-control"
                                     type="text"
@@ -105,22 +106,35 @@ const Edit = ({ banner }) => {
                                 />
                                 {errors.display_order && <div className="form-text text-danger">{errors.display_order}</div>}
                             </div>
-
                             
                             {/* Image upload */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label" htmlFor="image">Banner Image</label>
-                                
+                                <label className="form-label" htmlFor="image">Desktop Banner <span className="text-danger">*</span></label>
                                 <input
                                     type="file"
                                     id="image"
                                     className="form-control"
                                     ref={fileInputRef}
                                     onChange={(e) => setData("image", e.target.files[0])}
-                                    accept="image/png, image/jpeg"
+                                    accept="image/png, image/jpg, image/jpeg, image/webp"
                                 />
                                 {errors.image && <div className="form-text text-danger">{errors.image}</div>}
                             </div>
+
+                            {/*Mobile Image upload */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label" htmlFor="mobile_image">Mobile Banner <span className="text-danger">*</span></label>
+                                <input
+                                    type="file"
+                                    id="mobile_image"
+                                    className="form-control"
+                                    ref={fileInputRef}
+                                    onChange={(e) => setData("mobile_image", e.target.files[0])}
+                                    accept="image/png, image/jpg, image/jpeg, image/webp"
+                                />
+                                {errors.mobile_image && <div className="form-text text-danger">{errors.mobile_image}</div>}
+                            </div>
+                            
                             {/* Show on Home */}
                             <div className="mb-3 col-md-6">
                                 <label htmlFor="show_on_home" className="form-label">Show on Home</label>
@@ -134,13 +148,30 @@ const Edit = ({ banner }) => {
                                     <option value="0">No</option>
                                 </select>
                             </div>
-                            <div className="mb-3 col-md-6">
-                                <label className="form-label" htmlFor="image">Current Image</label>
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label" htmlFor="image">Current Desktop Banner</label>
                                 {banner.image && (
                                     <div className="mb-2">
                                         <img
                                             src={`${appUrl}/${banner.image}`}
                                             alt="Current Banner"
+                                            style={{
+                                                width: "100px",
+                                                height: "60px",
+                                                objectFit: "cover",
+                                                borderRadius: "4px"
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label" htmlFor="image">Current Mobile Banner</label>
+                                {banner.mobile_image && (
+                                    <div className="mb-2">
+                                        <img
+                                            src={`${appUrl}/${banner.mobile_image}`}
+                                            alt="Current Mobile Banner"
                                             style={{
                                                 width: "100px",
                                                 height: "60px",

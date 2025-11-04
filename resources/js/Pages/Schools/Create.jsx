@@ -20,7 +20,7 @@ const Create = () => {
     const imageRefs = {
         image: useRef(null),
         prospectus: useRef(null),
-    };
+    };    
 
     const submit = (e) => {
         e.preventDefault();
@@ -36,7 +36,7 @@ const Create = () => {
                         <div className="row">
                             {/* ================== BASIC INFO ================== */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">School Name</label>
+                                <label className="form-label">School Name <span className="text-danger">*</span></label>
                                 <input
                                     className="form-control"
                                     type="text"

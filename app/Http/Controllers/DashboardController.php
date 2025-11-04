@@ -10,6 +10,7 @@ use App\Models\Program;
 use App\Models\Happening;
 use App\Models\Recruiter;
 use App\Models\Department;
+use App\Models\ContactInfo;
 use App\Models\Testimonial;
 use App\Models\FactsAndFigures;
 
@@ -46,6 +47,8 @@ class DashboardController extends Controller
 
         $schools = School::select('name', 'slug')->take(5)->get();
 
+        $contactInfo = ContactInfo::first();
+
         return Inertia::render('Dashboard/Dashboard',[
             'schoolcount' => $schoolCount,
             'schoolactivecount' => $schoolActiveCount,
@@ -70,6 +73,7 @@ class DashboardController extends Controller
             'recruitercount' => $recruiterCount,
             'upcomingevent' => $upcomingEvent,
             'schools' => $schools,
+            'contactinfo' => $contactInfo,
         ]);
     }
 }

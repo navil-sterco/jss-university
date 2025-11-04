@@ -1,8 +1,9 @@
 import { useForm } from '@inertiajs/react';
-import React from 'react'
+import React, { useRef } from 'react'
 
-const Create = (props) => {
-    
+const Create = () => {
+
+    const fileInputRef = useRef(null);
     const now = new Date();
 
     function formatDateForInput(date) {
@@ -20,6 +21,8 @@ const Create = (props) => {
     const { data, setData, post, progress, errors, processing } = useForm({
         title: "",
         slug: "",
+        type: "",
+        image: "",
         sub_title: "",
         target_blank: 0,
         publish_date: publishDate,
@@ -38,7 +41,21 @@ return (
                 <div className="card-body">
                     <div className="row">
                         <div className="mb-3 col-md-6">
-                            <label htmlFor="title" className="form-label">Title</label>
+                            <label htmlFor="type" className="form-label">Page Type <span className="text-danger">*</span></label>
+                            <select
+                                id="type"
+                                className="form-select"
+                                value={data.type}
+                                onChange={(e) => setData("type", e.target.value)}
+                            >
+                                <option value="">Select Type</option>
+                                <option value="Content-Page">Content Page</option>
+                                <option value="Laboratory">Laboratory</option>
+                            </select>
+                            <div className="form-text text-danger">{errors.type}</div>
+                        </div>
+                        <div className="mb-3 col-md-6">
+                            <label htmlFor="title" className="form-label">Title <span className="text-danger">*</span></label>
                             <input
                                 className="form-control"
                                 type="text"
@@ -75,6 +92,18 @@ return (
                                 onChange={(e) => setData("sub_title",e.target.value)}
                             />
                             <div className="form-text text-danger">{errors.sub_title}</div>
+                        </div>
+                        <div className="mb-3 col-md-6">
+                            <label htmlFor="image" className="form-label">Image</label>
+                            <input
+                                type="file"
+                                id="image"
+                                ref={fileInputRef}
+                                className="form-control"
+                                onChange={(e) => setData("image", e.target.files[0])}
+                                accept="image/png, image/jpeg, image/webp"
+                            />
+                            <div className="form-text text-danger">{errors.image}</div>
                         </div>
                         <div className="mb-3 col-md-6">
                             <label htmlFor="template_path" className="form-label">Overwrite Url</label>

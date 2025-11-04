@@ -4,6 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 
 const Section = ({ department }) => {
     const [activeSections, setActiveSections] = useState([]);
+    const appUrl = usePage().props.appUrl;
 
     const { data, setData, post, progress, errors, processing } = useForm({
         // About Department
@@ -394,8 +395,20 @@ const Section = ({ department }) => {
                         
                         {/* Show current file if exists in department data */}
                         {department[field.name] && typeof department[field.name] === 'string' && (
-                            <div className="form-text text-success">
-                                Current file: {department[field.name]}
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label" htmlFor="image">Current Image</label>
+                                <div className="mb-2">
+                                    <img
+                                        src={`${appUrl}/${department[field.name]}`}
+                                        alt="Current Banner"
+                                        style={{
+                                            width: "100px",
+                                            height: "60px",
+                                            objectFit: "cover",
+                                            borderRadius: "4px"
+                                        }}
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>

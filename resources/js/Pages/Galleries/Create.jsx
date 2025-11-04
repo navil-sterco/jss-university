@@ -46,7 +46,7 @@ const Create = () => {
 
                             {/* Type */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="type" className="form-label">Type</label>
+                                <label htmlFor="type" className="form-label">Type <span className="text-danger">*</span></label>
                                 <select
                                     id="type"
                                     className="form-select"
@@ -63,7 +63,7 @@ const Create = () => {
 
                             {/* Title */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="title" className="form-label">Title</label>
+                                <label htmlFor="title" className="form-label">Title <span className="text-danger">*</span></label>
                                 <input
                                     type="text"
                                     id="title"

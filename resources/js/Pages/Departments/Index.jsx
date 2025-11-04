@@ -95,6 +95,7 @@ const DepartmentIndex = (props) => {
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>School</th>
                                 <th>Slug</th>
                                 <th>Menu Name</th>
                                 <th>Status</th>
@@ -106,6 +107,7 @@ const DepartmentIndex = (props) => {
                             {departments.data.map((department) => (
                                 <tr key={department.id}>
                                     <td className='description-cell'><i className="bx bx-heading bx-sm me-3"></i>{department.name}</td>
+                                    <td className='description-cell'><i className="bx bx-buildings bx-sm me-3"></i>{department.school}</td>
                                     <td className='description-cell'><i className="bx bx-link bx-sm me-3"></i>{department.slug}</td>
                                     <td><i className="bx bx-navigation bx-sm me-3"></i>{department.menu_name}</td>
                                     <td>

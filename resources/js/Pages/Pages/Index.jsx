@@ -13,6 +13,11 @@ const Index = (props) => {
     const modalInstance = useRef(null);
     const [pageIdDelete, setPageIdDelete] = useState(null);
 
+    // Image modal
+    const [selectedImage, setSelectedImage] = useState(null);
+    const imageModalRef = useRef(null);
+    const imageModalInstance = useRef(null);
+
     const { get, processing } = useForm();
     
     useEffect(() => {
@@ -20,6 +25,12 @@ const Index = (props) => {
             toast.success(flash.success);
         }
     }, [flash.success]);
+
+    useEffect(() => {
+        if (flash.error) {
+            toast.error(flash.error);
+        }
+    }, [flash.error]);
 
     useEffect(() => {
         const delaySearch = _.debounce(() => {
@@ -34,11 +45,20 @@ const Index = (props) => {
         if (modalRef.current) {
             modalInstance.current = new bootstrap.Modal(modalRef.current);
         }
+        if (imageModalRef.current) {
+            imageModalInstance.current = new bootstrap.Modal(imageModalRef.current);
+        }
     }, []);
 
     const showDeleteModal = (id) => {
         setPageIdDelete(id);
         modalInstance.current.show();
+    };
+
+    // Image preview modal
+    const showImageModal = (imageUrl) => {
+        setSelectedImage(imageUrl);
+        imageModalInstance.current.show();
     };
 
     const handleConfirmDelete = () => {
@@ -96,8 +116,10 @@ const Index = (props) => {
                         <thead>
                             <tr>
                                 <th>Title</th>
+                                <th>Type</th>
                                 <th>Slug</th>
                                 <th>Target Blank</th>
+                                <th>Image</th>
                                 <th>Display Order</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -110,6 +132,10 @@ const Index = (props) => {
                                         <i className="bx bx-news bx-sm me-3"></i>
                                         {page.title}
                                     </td>
+                                    <td>
+                                        <i className="bx bx-category bx-sm me-3"></i>
+                                        {page.type}
+                                    </td>
                                     <td className='description-cell'>
                                         <i className="bx bx-link bx-sm me-3"></i>
                                         {page.slug}
@@ -120,6 +146,24 @@ const Index = (props) => {
                                         >
                                             {page.target_blank ? "Yes" : "No"}
                                         </span>
+                                    </td>
+                                    <td>
+                                        {page.image ? (
+                                            <img
+                                                src={page.image}
+                                                alt="page"
+                                                className="img-thumbnail"
+                                                style={{
+                                                    width: "80px",
+                                                    height: "50px",
+                                                    objectFit: "cover",
+                                                    cursor: "pointer",
+                                                }}
+                                                onClick={() => showImageModal(page.image)}
+                                            />
+                                        ) : (
+                                            <span className="text-muted">No image</span>
+                                        )}
                                     </td>
                                     <td>
                                         <i className="bx bx-category bx-sm me-3"></i>
@@ -169,6 +213,35 @@ const Index = (props) => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Image Preview Modal */}
+            <div
+                className="modal fade"
+                id="imagePreviewModal"
+                tabIndex="-1"
+                aria-hidden="true"
+                ref={imageModalRef}
+            >
+                <div className="modal-dialog modal-dialog-centered modal-lg">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">Page Image</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div className="modal-body text-center">
+                            {selectedImage ? (
+                                <img
+                                    src={selectedImage}
+                                    alt="Happening Preview"
+                                    style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "8px" }}
+                                />
+                            ) : (
+                                <p>No image available</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
             

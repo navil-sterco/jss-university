@@ -31,7 +31,7 @@ const Create = ({ departments, programs }) => {
                         <div className="row">
                             {/* Department */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Department</label>
+                                <label className="form-label">Department <span className="text-danger">*</span></label>
                                 <select
                                     className="form-control"
                                     value={data.department_id}
@@ -49,7 +49,7 @@ const Create = ({ departments, programs }) => {
 
                             {/* Programs */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Programs</label>
+                                <label className="form-label">Programs <span className="text-danger">*</span></label>
                                 <select
                                     className="form-control"
                                     value={data.program_id}
@@ -67,7 +67,7 @@ const Create = ({ departments, programs }) => {
 
                             {/* Name */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Course Name</label>
+                                <label className="form-label">Course Name <span className="text-danger">*</span></label>
                                 <input
                                     type="text"
                                     className="form-control"

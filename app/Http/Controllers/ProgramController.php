@@ -21,13 +21,13 @@ class ProgramController extends Controller
                 'id' => $program->id,
                 'name' => $program->name,
                 'menu_name' => $program->menu_name,
+                'image' => $program->image ? asset($program->image) : asset('assets/img/placeholder.png'),
                 'name_short' => $program->name_short,
                 'slug' => $program->slug,
                 'display_order' => $program->display_order,
                 'status' => $program->status,
                 'title' => $program->title,
                 'description' => $program->description,
-                'image' => $program->image,
             ];
         });
 
@@ -68,9 +68,14 @@ class ProgramController extends Controller
             'display_order' => 'nullable|integer',
         ]);
 
-        // Auto-generate slug if not provided
-        if (empty($validated['slug']) && !empty($validated['name'])) {
+        if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
+
+            if (Program::where('slug', $validated['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
         }
 
         // Handle image upload
@@ -127,9 +132,20 @@ class ProgramController extends Controller
             'display_order' => 'nullable|integer',
         ]);
 
-        if (empty($validated['slug']) && !empty($validated['name'])) {
-            $validated['slug'] = \Str::slug($validated['name']);
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+
+            $exists = Program::where('slug', $validated['slug'])
+                ->where('id', '!=', $program->id)
+                ->exists();
+
+            if ($exists) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
         }
+
 
         if ($request->hasFile('image')) {
             $request->validate([

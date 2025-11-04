@@ -24,6 +24,7 @@ class BannerController extends Controller
                 'link' => asset($banner->link),
                 'linked_text' => $banner->linked_text,
                 'image' => $banner->image ? asset($banner->image) : asset('assets/img/placeholder.png'),
+                'mobile_image' => $banner->mobile_image ? asset($banner->mobile_image) : asset('assets/img/placeholder.png'),
                 'status' => $banner->status,
                 'show_on_home' => $banner->show_on_home,
                 'display_order' => $banner->display_order,
@@ -54,7 +55,8 @@ class BannerController extends Controller
             'subheading' => 'nullable|string|max:255',
             'linked_text' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
-            'image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'mobile_image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
             'display_order' => 'nullable|integer',
             'show_on_home' => 'nullable|integer|in:0,1',
         ]);
@@ -65,6 +67,14 @@ class BannerController extends Controller
             $image->move(public_path('assets/img/banners/'), $imageName);
 
             $validated['image'] = 'assets/img/banners/' . $imageName;
+        }
+        
+        if ($request->hasFile('mobile_image')) {
+            $imageMobile = $request->file('mobile_image');
+            $imageNameMobile = time() . '_' . uniqid() . '.' . $imageMobile->getClientOriginalExtension();
+            $imageMobile->move(public_path('assets/img/banners/'), $imageNameMobile);
+
+            $validated['mobile_image'] = 'assets/img/banners/' . $imageNameMobile;
         }
 
         Banner::create($validated);
@@ -106,7 +116,7 @@ class BannerController extends Controller
 
         if ($request->hasFile('image')) {
             $request->validate([
-                'image' => 'image|mimes:jpg,jpeg,png|max:2048',
+                'image' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
             if (!empty($banner->image) && file_exists(public_path($banner->image))) {
@@ -119,6 +129,23 @@ class BannerController extends Controller
             $image->move(public_path('assets/img/banners/'), $imageName);
 
             $validated['image'] = 'assets/img/banners/' . $imageName;
+        }
+
+        if ($request->hasFile('mobile_image')) {
+            $request->validate([
+                'mobile_image' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
+
+            if (!empty($banner->mobile_image) && file_exists(public_path($banner->mobile_image))) {
+                unlink(public_path($banner->mobile_image));
+            }
+
+            // Upload new image
+            $mobileImage = $request->file('mobile_image');
+            $imageNameMobile = time() . '_' . uniqid() . '.' . $mobileImage->getClientOriginalExtension();
+            $mobileImage->move(public_path('assets/img/banners/'), $imageNameMobile);
+
+            $validated['mobile_image'] = 'assets/img/banners/' . $imageNameMobile;
         }
 
         $banner->update($validated);

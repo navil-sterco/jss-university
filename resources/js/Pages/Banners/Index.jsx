@@ -121,7 +121,8 @@ const Index = (props) => {
                                 <th>Subheading</th>
                                 <th>Link</th>
                                 <th>Linked Text</th>
-                                <th>Image</th>
+                                <th>Desktop Banner</th>
+                                <th>Mobile Banner</th>
                                 <th>Display Order</th>
                                 <th>Show On Home</th>
                                 <th>Status</th>
@@ -139,7 +140,7 @@ const Index = (props) => {
                                         {banner.image ? (
                                             <img
                                                 src={banner.image}
-                                                alt="Banner"
+                                                alt="Desktop Banner"
                                                 className="img-thumbnail"
                                                 style={{
                                                     width: "80px",
@@ -148,6 +149,24 @@ const Index = (props) => {
                                                     cursor: "pointer"
                                                 }}
                                                 onClick={() => showImageModal(banner.image)}
+                                            />
+                                        ) : (
+                                            <span className="text-muted">No image</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {banner.mobile_image ? (
+                                            <img
+                                                src={banner.mobile_image}
+                                                alt="Mobile Banner"
+                                                className="img-thumbnail"
+                                                style={{
+                                                    width: "80px",
+                                                    height: "50px",
+                                                    objectFit: "cover",
+                                                    cursor: "pointer"
+                                                }}
+                                                onClick={() => showImageModal(banner.mobile_image)}
                                             />
                                         ) : (
                                             <span className="text-muted">No image</span>

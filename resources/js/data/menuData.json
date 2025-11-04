@@ -72,6 +72,21 @@
                         "text": "Recruiters",
                         "available": true,
                         "link": "recruiters.index"
+                    },
+                    {
+                        "text": "Faq's",
+                        "available": true,
+                        "link": "faq.index"
+                    },
+                    {
+                        "text": "Faculties",
+                        "available": true,
+                        "link": "faculty.index"
+                    },
+                    {
+                        "text": "Leadership",
+                        "available": true,
+                        "link": "leadership.index"
                     }
                 ]
             }
@@ -130,13 +145,19 @@
                 "text": "Footer",
                 "icon": "bx bx-layout",
                 "available": true,
-                "link": ""
+                "link": "footer.index"
             }
         ]
     },
     {
         "header": "Settings",
         "items": [
+            {
+                "text": "Contact info",
+                "icon": "bx bx-phone",
+                "available": true,
+                "link": "contact.edit"
+            },
             {
                 "text": "Profile Settings",
                 "icon": "bx bx-cog",

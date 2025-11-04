@@ -22,8 +22,6 @@ const Edit = ({ school }) => {
         remove_image: false,
         remove_prospectus: false,
     });
-
-    console.log(data);
     
     const submit = (e) => {
         e.preventDefault();
@@ -58,7 +56,7 @@ const Edit = ({ school }) => {
                         <div className="row">
                             {/* Name */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">School Name</label>
+                                <label className="form-label">School Name <span className="text-danger">*</span></label>
                                 <input
                                     className="form-control"
                                     type="text"

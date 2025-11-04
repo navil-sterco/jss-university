@@ -8,6 +8,7 @@ const Create = (props) => {
         linked_text: "",
         link: "",
         image: "",
+        mobile_image: "",
         display_order:100,
         show_on_home: 0,
     });
@@ -25,7 +26,7 @@ return (
                 <div className="card-body">
                     <div className="row">
                         <div className="mb-3 col-md-6">
-                            <label className="form-label" htmlFor="image">Banner Image</label>
+                            <label className="form-label" htmlFor="image">Desktop Banner <span className="text-danger">*</span></label>
                             <input
                                 type="file"
                                 id="image"
@@ -34,12 +35,27 @@ return (
                                 onChange={(e) =>
                                     setData("image", e.target.files[0])
                                 }
-                                accept="image/png, image/jpeg"
+                                accept="image/png, image/jpeg, image/webp"
                             />
                             <div className="form-text text-danger">{errors.image}</div>
                         </div>
+
+                        {/*Mobile Image upload */}
                         <div className="mb-3 col-md-6">
-                            <label htmlFor="heading" className="form-label">Heading</label>
+                            <label className="form-label" htmlFor="mobile_image">Mobile Banner <span className="text-danger">*</span></label>
+                            <input
+                                type="file"
+                                id="mobile_image"
+                                className="form-control"
+                                ref={fileInputRef}
+                                onChange={(e) => setData("mobile_image", e.target.files[0])}
+                                accept="image/png, image/jpg, image/jpeg, image/webp"
+                            />
+                            {errors.mobile_image && <div className="form-text text-danger">{errors.mobile_image}</div>}
+                        </div>
+
+                        <div className="mb-3 col-md-6">
+                            <label htmlFor="heading" className="form-label">Heading <span className="text-danger">*</span></label>
                             <input
                                 className="form-control"
                                 type="text"
@@ -51,6 +67,7 @@ return (
                             />
                             <div className="form-text text-danger">{errors.heading}</div> 
                         </div>
+
                         <div className="mb-3 col-md-6">
                             <label htmlFor="subheading" className="form-label">Subheading</label>
                             <input
@@ -64,6 +81,7 @@ return (
                             />
                             <div className="form-text text-danger">{errors.subheading}</div> 
                         </div>
+
                         <div className="mb-3 col-md-6">
                             <label htmlFor="linked_text" className="form-label">Linked Text</label>
                             <input
@@ -77,6 +95,7 @@ return (
                             />
                             <div className="form-text text-danger">{errors.linked_text}</div> 
                         </div>
+
                         <div className="mb-3 col-md-6">
                             <label htmlFor="link" className="form-label">Link</label>
                             <input
@@ -90,6 +109,7 @@ return (
                             />
                             <div className="form-text text-danger">{errors.link}</div> 
                         </div>
+
                         <div className="mb-3 col-md-6">
                             <label htmlFor="display_order" className="form-label">Display Order</label>
                             <input
@@ -103,6 +123,7 @@ return (
                             />
                             <div className="form-text text-danger">{errors.display_order}</div> 
                         </div>
+
                         <div className="mb-3 col-md-6">
                             <label htmlFor="show_on_home" className="form-label">Show on Home</label>
                             <select
@@ -115,6 +136,7 @@ return (
                                 <option value="0">No</option>
                             </select>
                         </div>
+
                     </div>
                     <div className="mt-2">
                         <button aria-label='Click me' type="submit" className="btn btn-primary me-2" disabled={processing}>Submit</button>

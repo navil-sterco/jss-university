@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('parent_id')->nullable()->constrained('pages')->onDelete('cascade');
             $table->string('title');
+            $table->string('type');
+            $table->string('image');
             $table->string('sub_title')->nullable();
             $table->string('publish_date')->nullable();
             $table->string('start_date')->nullable();

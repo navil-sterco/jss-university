@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Models\Banner;
 use App\Models\Happening;
+use App\Models\Recruiter;
 use App\Models\Testimonial;
+use App\Models\FactsAndFigures;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -19,16 +21,20 @@ class School extends Model
         'about_school_title', 'about_school_subtitle', 'about_school_description',
         'about_school_url', 'about_school_chancellor_img', 'about_school_chancellor_logo',
         'about_school_logo_content', 'about_school_stats_number', 'about_school_stats_content',
-        'highlight_1_rank', 'highlight_1_text', 'highlight_1_source', 'button_1_text',
-        'button_1_url', 'button_2_text', 'button_2_url', 'button_3_text', 'button_3_url',
+        'about_highlights', 'about_buttons',
 
         'department_title', 'department_desc', 'department_programs_count',
-        'department_programs_text', 'department_button_1_text', 'department_button_1_url',
-        'department_button_2_text', 'department_button_2_url',
+        'department_programs_text', 'department_buttons',
 
         'placement_title', 'placement_subtitle', 'hall_of_fame_image', 'hall_of_fame_heading',
         'hall_of_fame_url', 'testimonial_title', 'testimonial_subtitle', 'happening_title',
         'happening_subtitle',
+    ];
+
+    protected $casts = [
+        'about_highlights' => 'array',
+        'about_buttons' => 'array',
+        'department_buttons' => 'array',
     ];
 
     public function banners()
@@ -44,6 +50,16 @@ class School extends Model
     public function happenings()
     {
         return $this->belongsToMany(Happening::class, 'happening_school', 'school_id', 'happening_id')->withTimestamps();
+    }
+
+    public function recruiters()
+    {
+        return $this->belongsToMany(Recruiter::class, 'recruiters_school', 'school_id', 'recruiter_id')->withTimestamps();
+    }
+
+    public function factsAndFigures()
+    {
+        return $this->belongsToMany(FactsAndFigures::class, 'facts_and_figures_school', 'school_id', 'facts_and_figures_id')->withTimestamps();
     }
 
     public function scopeFilter(Builder $query, $filters)

@@ -25,7 +25,7 @@ const Edit = ({ factsAndFigures }) => {
                         <div className="row">
                             {/* Title */}
                             <div className="mb-3 col-md-12">
-                                <label htmlFor="title" className="form-label">Title</label>
+                                <label htmlFor="title" className="form-label">Title <span className="text-danger">*</span></label>
                                 <input
                                     type="text"
                                     id="title"

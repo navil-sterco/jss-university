@@ -161,9 +161,9 @@ const Index = (props) => {
                         <tbody className="table-border-bottom-0">
                             {testimonials.data.map((testimonial) => (
                                 <tr key={testimonial.id}>
-                                    <td><i className="bx bx-category bx-sm me-3"></i>{testimonial.type}</td>
-                                    <td><i className="bx bx-heading bx-sm me-3"></i>{testimonial.title}</td>
-                                    <td><i className="bx bx-link bx-sm me-3"></i>{testimonial.slug}</td>
+                                    <td className='description-cell'><i className="bx bx-category bx-sm me-3"></i>{testimonial.type}</td>
+                                    <td className='description-cell'><i className="bx bx-heading bx-sm me-3"></i>{testimonial.title}</td>
+                                    <td className='description-cell'><i className="bx bx-link bx-sm me-3"></i>{testimonial.slug}</td>
                                     <td>
                                         {testimonial.image ? (
                                             <img
@@ -328,6 +328,18 @@ const Index = (props) => {
                                                 Author Details
                                             </h6>
                                             <div className="row g-3">
+                                                <div className="col-sm-6">
+                                                    <label className="form-label fw-semibold text-muted small">Name</label>
+                                                    <p className="mb-0">{selectedTestimonial.name || <span className="text-muted">—</span>}</p>
+                                                </div>
+                                                <div className="col-sm-6">
+                                                    <label className="form-label fw-semibold text-muted small">Batch</label>
+                                                    <p className="mb-0">{selectedTestimonial.batch || <span className="text-muted">—</span>}</p>
+                                                </div>
+                                                <div className="col-sm-6">
+                                                    <label className="form-label fw-semibold text-muted small">Course</label>
+                                                    <p className="mb-0">{selectedTestimonial.course || <span className="text-muted">—</span>}</p>
+                                                </div>
                                                 <div className="col-sm-6">
                                                     <label className="form-label fw-semibold text-muted small">Designation</label>
                                                     <p className="mb-0">{selectedTestimonial.designation || <span className="text-muted">—</span>}</p>

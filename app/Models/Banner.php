@@ -15,6 +15,7 @@ class Banner extends Model
         'linked_text',
         'link',
         'image',
+        'mobile_image',
         'display_order',
         'status',
         'show_on_home',

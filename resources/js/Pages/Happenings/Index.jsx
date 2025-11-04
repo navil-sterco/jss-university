@@ -186,8 +186,8 @@ const Index = (props) => {
                                             {happening.upcoming_event ? "Yes" : "No"}
                                         </span>
                                     </td>
-                                    <td><i className="bx bx-heading bx-sm me-3"></i>{happening.title}</td>
-                                    <td><i className="bx bx-link bx-sm me-3"></i>{happening.slug}</td>
+                                    <td className='description-cell'><i className="bx bx-heading bx-sm me-3"></i>{happening.title}</td>
+                                    <td className='description-cell'><i className="bx bx-link bx-sm me-3"></i>{happening.slug}</td>
                                     <td>
                                         {happening.image ? (
                                             <img

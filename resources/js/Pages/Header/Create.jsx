@@ -111,7 +111,7 @@ const Create = (props) => {
                             )}
 
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="title" className="form-label">Menu Title *</label>
+                                <label htmlFor="title" className="form-label">Menu Title <span className="text-danger">*</span></label>
                                 <input
                                     className="form-control"
                                     type="text"

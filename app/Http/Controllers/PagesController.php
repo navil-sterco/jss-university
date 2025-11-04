@@ -9,6 +9,7 @@ use App\Models\PageSection;
 use App\Models\Testimonial;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PagesController extends Controller
 {
@@ -23,6 +24,8 @@ class PagesController extends Controller
             return [
                 'id' => $page->id,
                 'title' => $page->title,
+                'type' => $page->type,
+                'image' => $page->image ? asset($page->image) : asset('assets/img/placeholder.png'),
                 'slug' => $page->slug,
                 'target_blank' => $page->target_blank,
                 'status' => $page->status,
@@ -53,6 +56,7 @@ class PagesController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
             'slug' => [
                 'nullable',
                 'string',
@@ -60,21 +64,28 @@ class PagesController extends Controller
                 'unique:pages,slug',
                 'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
             ],
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'sub_title' => 'nullable|string|max:255',
             'target_blank' => 'required|boolean',
             'publish_date' => 'required|date',
         ]);
 
         if (empty($validated['slug'])) {
-            $slug = Str::slug($validated['title']);
+            $validated['slug'] = Str::slug($validated['title']);
 
-            $originalSlug = $slug;
-            $count = 1;
-            while (Pages::where('slug', $slug)->exists()) {
-                $slug = $originalSlug . '-' . $count++;
+            if (Pages::where('slug', $validated['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
             }
+        }
 
-            $validated['slug'] = $slug;
+        // Handle file uploads
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('assets/img/pages/'), $imageName);
+            $validated['image'] = 'assets/img/pages/' . $imageName;
         }
 
         Pages::create($validated);
@@ -108,11 +119,12 @@ class PagesController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
             'slug' => [
                 'nullable',
                 'string',
                 'max:255',
-                'unique:happenings,slug,' . $page->id,
+                'unique:pages,slug,' . $page->id,
                 'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
             ],
             'sub_title' => 'nullable|string|max:255',
@@ -121,29 +133,53 @@ class PagesController extends Controller
         ]);
 
         if (empty($validated['slug'])) {
-            $slug = Str::slug($validated['title']);
-            $originalSlug = $slug;
-            $count = 1;
-            while (\App\Models\Pages::where('slug', $slug)->where('id', '!=', $page->id)->exists()) {
-                $slug = $originalSlug . '-' . $count++;
-            }
+            $validated['slug'] = Str::slug($validated['title']);
 
-            $validated['slug'] = $slug;
+            $exists = Pages::where('slug', $validated['slug'])
+                ->where('id', '!=', $page->id)
+                ->exists();
+
+            if ($exists) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
         }
+
+        if ($request->hasFile('image')) {
+            $request->validate(['image' => 'image|mimes:jpg,jpeg,png,webp|max:2048']);
+            if ($page->image && file_exists(public_path($page->image))) {
+                unlink(public_path($page->image));
+            }
+            $image = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('assets/img/pages/'), $imageName);
+            $validated['image'] = 'assets/img/pages/' . $imageName;
+        } elseif ($request->has('remove_image') && $request->remove_image) {
+            if ($page->image && file_exists(public_path($page->image))) {
+                unlink(public_path($page->image));
+            }
+            $validated['image'] = null;
+        }
+
 
         $page->update($validated);
 
         return redirect()->route('pages.index')->with('success', 'Page updated successfully!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Pages $page)
     {
+        if ($page->image && file_exists(public_path($page->image))) {
+            @unlink(public_path($page->image));
+        }
+
+        $page->sections()->delete();
         $page->delete();
+
         return redirect()->route('pages.index')->with('warning', 'Page deleted successfully!');
     }
+
 
     public function toggleStatus($id)
     {
@@ -156,16 +192,36 @@ class PagesController extends Controller
 
     public function duplicate(Pages $page)
     {
-        $newPage = $page->replicate();
-        $newPage->title = $page->title . ' (Copy)';
-        $newPage->slug = $page->slug . '-copy';
+        try {
+            DB::beginTransaction();
 
-        while (Pages::where('slug', $newPage->slug)->exists()) {
-            $newPage->slug .= '-' . rand(100, 999);
+            $newPage = $page->replicate();
+            $newPage->title = $page->title . ' (Copy)';
+            $newPage->slug = $page->slug . '-copy';
+
+            while (Pages::where('slug', $newPage->slug)->exists()) {
+                $newPage->slug .= '-' . rand(100, 999);
+            }
+            
+            
+
+            $newPage->save();
+            if ($page->sections) {
+                foreach ($page->sections as $section) {
+                    $newSection = $section->replicate();
+                    $newSection->page_id = $newPage->id;
+                
+                    $newSection->save();
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('pages.index')->with('success', 'Page duplicated successfully with all sections.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Page duplication failed: ' . $e->getMessage());
+            return redirect()->route('pages.index')->with('error', 'Failed to duplicate page sections Please try again.');
         }
-
-        $newPage->save();
-
-        return redirect()->route('pages.index')->with('success', 'Page duplicated successfully.');
     }
 }

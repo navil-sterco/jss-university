@@ -37,14 +37,14 @@ const Create = () => {
                                     className="form-control"
                                     ref={fileInputRef}
                                     onChange={(e) => setData("image", e.target.files[0])}
-                                    accept="image/png, image/jpeg"
+                                    accept="image/png, image/jpeg, image/webp"
                                 />
                                 <div className="form-text text-danger">{errors.image}</div>
                             </div>
 
                             {/* Name */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="name" className="form-label">Program Name</label>
+                                <label htmlFor="name" className="form-label">Program Name <span className="text-danger">*</span></label>
                                 <input
                                     className="form-control"
                                     type="text"

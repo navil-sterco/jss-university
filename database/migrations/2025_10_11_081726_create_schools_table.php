@@ -43,25 +43,15 @@ return new class extends Migration
             $table->string('about_school_logo_content')->nullable();
             $table->string('about_school_stats_number')->nullable();
             $table->string('about_school_stats_content')->nullable();
-            $table->string('highlight_1_rank')->nullable();
-            $table->string('highlight_1_text')->nullable();
-            $table->string('highlight_1_source')->nullable();
-            $table->string('button_1_text')->nullable();
-            $table->string('button_1_url')->nullable();
-            $table->string('button_2_text')->nullable();
-            $table->string('button_2_url')->nullable();
-            $table->string('button_3_text')->nullable();
-            $table->string('button_3_url')->nullable();
+            $table->json('about_highlights')->nullable();
+            $table->json('about_buttons')->nullable();
 
             // Department Section
             $table->string('department_title')->nullable();
             $table->string('department_desc')->nullable();
             $table->string('department_programs_count')->nullable();
             $table->string('department_programs_text')->nullable();
-            $table->string('department_button_1_text')->nullable();
-            $table->string('department_button_1_url')->nullable();
-            $table->string('department_button_2_text')->nullable();
-            $table->string('department_button_2_url')->nullable();
+            $table->json('department_buttons')->nullable();
 
             // Placement Section
             $table->string('placement_title')->nullable();

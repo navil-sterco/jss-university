@@ -12,6 +12,9 @@ const Edit = ({ testimonial }) => {
         slug: testimonial.slug || "",
         alt_text: testimonial.alt_text || "",
         short_description: testimonial.short_description || "",
+        name: testimonial.name || "",
+        batch: testimonial.batch || "",
+        course: testimonial.course || "",
         description: testimonial.description || "",
         designation: testimonial.designation || "",
         location: testimonial.location || "",
@@ -48,7 +51,7 @@ const Edit = ({ testimonial }) => {
                         <div className="row">
                             {/* Type */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="type" className="form-label">Type</label>
+                                <label htmlFor="type" className="form-label">Type <span className="text-danger">*</span></label>
                                 <select
                                     id="type"
                                     className="form-select"
@@ -65,7 +68,7 @@ const Edit = ({ testimonial }) => {
 
                             {/* Title */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="title" className="form-label">Title</label>
+                                <label htmlFor="title" className="form-label">Title <span className="text-danger">*</span></label>
                                 <input
                                     type="text"
                                     id="title"
@@ -157,6 +160,45 @@ const Edit = ({ testimonial }) => {
                                     onChange={(e) => setData("description", e.target.value)}
                                 ></textarea>
                                 <div className="form-text text-danger">{errors.description}</div>
+                            </div>
+
+                            {/* Name */}
+                            <div className="mb-3 col-md-4">
+                                <label htmlFor="name" className="form-label">Name</label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    className="form-control"
+                                    value={data.name}
+                                    onChange={(e) => setData("name", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.name}</div>
+                            </div>
+
+                            {/* Batch */}
+                            <div className="mb-3 col-md-4">
+                                <label htmlFor="batch" className="form-label">Batch</label>
+                                <input
+                                    type="text"
+                                    id="batch"
+                                    className="form-control"
+                                    value={data.batch}
+                                    onChange={(e) => setData("batch", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.location}</div>
+                            </div>
+
+                            {/* Course */}
+                            <div className="mb-3 col-md-4">
+                                <label htmlFor="course" className="form-label">Course</label>
+                                <input
+                                    type="text"
+                                    id="course"
+                                    className="form-control"
+                                    value={data.course}
+                                    onChange={(e) => setData("course", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.course}</div>
                             </div>
 
                             {/* Designation */}

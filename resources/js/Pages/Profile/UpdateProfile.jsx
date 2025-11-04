@@ -65,7 +65,7 @@ const UpdateProfile = () => {
                 <div className="card-body">
                     <form onSubmit={submit}>
                         <div className="mb-3">
-                            <label className="form-label" htmlFor="full_name">Full Name</label>
+                            <label className="form-label" htmlFor="full_name">Full Name <span className="text-danger">*</span></label>
                             <div className="input-group input-group-merge">
                                 <span id="basic-icon-default-fullname2" className="input-group-text">
                                     <i className="bx bx-user"></i>
@@ -82,7 +82,7 @@ const UpdateProfile = () => {
                             <div className="form-text text-danger">{errors.name}</div>
                         </div>
                         <div className="mb-3">
-                            <label className="form-label" htmlFor="email">Email</label>
+                            <label className="form-label" htmlFor="email">Email <span className="text-danger">*</span></label>
                             <div className="input-group input-group-merge">
                                 <span className="input-group-text"><i className="bx bx-envelope"></i></span>
                                 <input
@@ -125,7 +125,7 @@ const UpdateProfile = () => {
                 <div className="card-body">
                     <form onSubmit={updatePassword}>
                         <div className="mb-3">
-                            <label className="form-label" htmlFor="current_password">Current Password</label>
+                            <label className="form-label" htmlFor="current_password">Current Password <span className="text-danger">*</span></label>
                             <div className="input-group input-group-merge">
                                 <span id="basic-icon-default-fullname2" className="input-group-text">
                                     <i className="bx bx-dots-horizontal"></i>
@@ -145,7 +145,7 @@ const UpdateProfile = () => {
                             <div className="form-text text-danger">{errors.current_password}</div>
                         </div>
                         <div className="mb-3">
-                            <label className="form-label" htmlFor="password">New Password</label>
+                            <label className="form-label" htmlFor="password">New Password <span className="text-danger">*</span></label>
                             <div className="input-group input-group-merge">
                                 <span className="input-group-text"><i className="bx bx-dots-horizontal"></i></span>
                                 <input
@@ -161,7 +161,7 @@ const UpdateProfile = () => {
                             <div className="form-text text-danger">{errors.password}</div>
                         </div>
                         <div className="mb-3">
-                            <label className="form-label" htmlFor="password_confirmation">Confirm Password</label>
+                            <label className="form-label" htmlFor="password_confirmation">Confirm Password <span className="text-danger">*</span></label>
                             <div className="input-group input-group-merge">
                                 <span className="input-group-text"><i className="bx bx-dots-horizontal"></i></span>
                                 <input

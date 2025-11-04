@@ -1,8 +1,10 @@
-import { useForm } from '@inertiajs/react';
-import React, { useState } from 'react'
+import { useForm, usePage } from '@inertiajs/react';
+import React, { useRef } from 'react'
 
 const Edit = (props) => {
+    const appUrl = usePage().props.appUrl;
     const { page } = props;
+    const fileInputRef = useRef(null);
     
     function parseDateInput(datetimeStr) {
         const date = new Date(datetimeStr);
@@ -10,9 +12,12 @@ const Edit = (props) => {
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
-    const { data, setData, put, progress, errors, processing } = useForm({
+    const { data, setData, post, progress, errors, processing } = useForm({
+        _method: "PUT",
         title: page.title || "",
         slug: page.slug || "",
+        type: page.type || "",
+        image: null,
         sub_title: page.sub_title || "",
         target_blank: page.target_blank ? "1" : "0",
         publish_date: parseDateInput(page.publish_date),
@@ -20,7 +25,7 @@ const Edit = (props) => {
 
     const submit = (e) => {
         e.preventDefault();
-        put(route("pages.update", page.id));
+        post(route("pages.update", page.id));
     };
 
 return (
@@ -31,7 +36,21 @@ return (
                 <div className="card-body">
                     <div className="row">
                         <div className="mb-3 col-md-6">
-                            <label htmlFor="title" className="form-label">Title</label>
+                            <label htmlFor="type" className="form-label">Page Type <span className="text-danger">*</span></label>
+                            <select
+                                id="type"
+                                className="form-select"
+                                value={data.type}
+                                onChange={(e) => setData("type", e.target.value)}
+                            >
+                                <option value="">Select Type</option>
+                                <option value="Content-Page">Content Page</option>
+                                <option value="Laboratory">Laboratory</option>
+                            </select>
+                            <div className="form-text text-danger">{errors.type}</div>
+                        </div>
+                        <div className="mb-3 col-md-6">
+                            <label htmlFor="title" className="form-label">Title <span className="text-danger">*</span></label>
                             <input
                                 className="form-control"
                                 type="text"
@@ -68,6 +87,37 @@ return (
                                 onChange={(e) => setData("sub_title",e.target.value)}
                             />
                             <div className="form-text text-danger">{errors.sub_title}</div> 
+                        </div>
+                        <div className="mb-3 col-md-4">
+                            <label htmlFor="image" className="form-label">Image</label>
+                            <input
+                                type="file"
+                                id="image"
+                                ref={fileInputRef}
+                                className="form-control"
+                                onChange={(e) => setData("image", e.target.files[0])}
+                                accept="image/png, image/jpeg, image/webp"
+                            />
+                            <div className="form-text text-danger">{errors.image}</div>
+                        </div>
+                        <div className="mb-3 col-md-2">
+                            <label className="form-label">Current Image</label>
+                            <div className="mb-2">
+                                {page.image ? (
+                                    <img
+                                        src={`${appUrl}/${page.image}`}
+                                        alt="Current Program"
+                                        style={{
+                                            width: "100px",
+                                            height: "60px",
+                                            objectFit: "cover",
+                                            borderRadius: "4px",
+                                        }}
+                                    />
+                                ): (
+                                    <span className="text-muted">No image</span>
+                                )}
+                            </div>
                         </div>
                         <div className="mb-3 col-md-6">
                             <label htmlFor="template_path" className="form-label">Overwrite Url</label>

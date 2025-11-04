@@ -72,11 +72,14 @@ class SchoolController extends Controller
 
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
-            $count = School::where('slug', 'LIKE', "{$data['slug']}%")->count();
-            if ($count > 0) {
-                $data['slug'] .= '-' . ($count + 1);
+
+            if (School::where('slug', $data['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
             }
         }
+
 
         $imageFields = [
             'image','prospectus'
@@ -84,12 +87,9 @@ class SchoolController extends Controller
 
         foreach ($imageFields as $field) {
             if ($request->hasFile($field)) {
-                // Delete old file if it exists
                 if (!empty($school->$field) && file_exists(public_path($school->$field))) {
                     unlink(public_path($school->$field));
                 }
-
-                // Upload new file
                 $file = $request->file($field);
                 $name = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                 $path = 'assets/img/schools/' . $name;
@@ -177,13 +177,18 @@ class SchoolController extends Controller
 
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
-            $count = School::where('slug', 'LIKE', "{$validated['slug']}%")
+
+            $exists = School::where('slug', $validated['slug'])
                 ->where('id', '!=', $school->id)
-                ->count();
-            if ($count > 0) {
-                $validated['slug'] .= '-' . ($count + 1);
+                ->exists();
+
+            if ($exists) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
             }
         }
+
 
         if ($request->hasFile('image')) {
             $request->validate(['image' => 'image|mimes:jpg,jpeg,png,webp|max:2048']);
@@ -292,25 +297,22 @@ class SchoolController extends Controller
             'about_school_logo_content' => 'nullable|string|max:255',
             'about_school_stats_number' => 'nullable|string|max:255',
             'about_school_stats_content' => 'nullable|string|max:255',
-            'highlight_1_rank' => 'nullable|string|max:255',
-            'highlight_1_text' => 'nullable|string|max:255',
-            'highlight_1_source' => 'nullable|string|max:255',
-            'button_1_text' => 'nullable|string|max:255',
-            'button_1_url' => 'nullable|url|max:255',
-            'button_2_text' => 'nullable|string|max:255',
-            'button_2_url' => 'nullable|url|max:255',
-            'button_3_text' => 'nullable|string|max:255',
-            'button_3_url' => 'nullable|url|max:255',
+            'about_highlights' => 'nullable|array',
+            'about_highlights.*.rank' => 'nullable|string|max:255',
+            'about_highlights.*.text' => 'nullable|string|max:255',
+            'about_highlights.*.source' => 'nullable|string|max:255',
+            'about_buttons' => 'nullable|array',
+            'about_buttons.*.text' => 'nullable|string|max:255',
+            'about_buttons.*.url' => 'nullable|url|max:255',
 
             // === DEPARTMENT SECTION ===
             'department_title' => 'nullable|string|max:255',
             'department_desc' => 'nullable|string',
             'department_programs_count' => 'nullable|string|max:255',
             'department_programs_text' => 'nullable|string|max:255',
-            'department_button_1_text' => 'nullable|string|max:255',
-            'department_button_1_url' => 'nullable|url|max:255',
-            'department_button_2_text' => 'nullable|string|max:255',
-            'department_button_2_url' => 'nullable|url|max:255',
+            'department_buttons' => 'nullable|array',
+            'department_buttons.*.text' => 'nullable|string|max:255',
+            'department_buttons.*.url' => 'nullable|url|max:255',
 
             // === PLACEMENT SECTION ===
             'placement_title' => 'nullable|string|max:255',
@@ -327,6 +329,8 @@ class SchoolController extends Controller
             'happening_subtitle' => 'nullable|string|max:255',
         ];
 
+
+
         // Conditionally validate images only if uploaded
         if ($request->hasFile('about_school_chancellor_img')) {
             $rules['about_school_chancellor_img'] = 'image|mimes:jpg,jpeg,png,webp|max:1000';
@@ -339,7 +343,8 @@ class SchoolController extends Controller
         if ($request->hasFile('hall_of_fame_image')) {
             $rules['hall_of_fame_image'] = 'image|mimes:jpg,jpeg,png,webp|max:1000';
         }
-
+        
+        
         $validated = $request->validate($rules);
 
         // Handle Chancellor Image
@@ -365,6 +370,18 @@ class SchoolController extends Controller
             $image->move(public_path('assets/img/schools/'), $imageName);
             $validated['hall_of_fame_image'] = 'assets/img/schools/' . $imageName;
         }
+
+            if ($request->has('about_highlights')) {
+                $school->about_highlights = json_encode($request->about_highlights);
+            }
+            
+            if ($request->has('about_buttons')) {
+                $school->about_buttons = json_encode($request->about_buttons);
+            }
+            
+            if ($request->has('department_buttons')) {
+                $school->department_buttons = json_encode($request->department_buttons);
+            }
 
         // Update School
         $school->update($validated);

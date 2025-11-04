@@ -4,6 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 
 const CreateOrUpdateHomepageSections = ({ homepage }) => {
     const [activeSections, setActiveSections] = useState([]);
+    const appUrl = usePage().props.appUrl;
 
     // Initialize form data with proper JSON parsing
     const { data, setData, post, progress, processing, errors } = useForm({
@@ -581,8 +582,20 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                         
                         {/* Show current file if exists in homepage data */}
                         {homepage[field.name] && typeof homepage[field.name] === 'string' && (
-                            <div className="form-text text-success">
-                                Current file: {homepage[field.name]}
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label" htmlFor="image">Current Image</label>
+                                <div className="mb-2">
+                                    <img
+                                        src={`${appUrl}/${homepage[field.name]}`}
+                                        alt="Current Banner"
+                                        style={{
+                                            width: "100px",
+                                            height: "60px",
+                                            objectFit: "cover",
+                                            borderRadius: "4px"
+                                        }}
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>

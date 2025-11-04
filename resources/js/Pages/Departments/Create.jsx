@@ -28,7 +28,7 @@ const Create = () => {
                         <div className="row">
                             {/* ================== BASIC INFO ================== */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Department Name</label>
+                                <label className="form-label">Department Name <span className="text-danger">*</span></label>
                                 <input
                                     className="form-control"
                                     type="text"
@@ -40,7 +40,7 @@ const Create = () => {
 
                             {/* School */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="school_id" className="form-label">School</label>
+                                <label htmlFor="school_id" className="form-label">School <span className="text-danger">*</span></label>
                                 <select
                                     id="school_id"
                                     className="form-select"

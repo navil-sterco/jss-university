@@ -3,11 +3,15 @@
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
+use App\Http\Controllers\FaqController;
+use App\Http\Controllers\TypeController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\FooterController;
 use App\Http\Controllers\HeaderController;
 use App\Http\Controllers\SchoolController;
+use App\Http\Controllers\FacultyController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
@@ -16,7 +20,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HappeningController;
 use App\Http\Controllers\RecruiterController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\LeadershipController;
 use App\Http\Controllers\MainHeaderController;
+use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\PageSectionController;
 use App\Http\Controllers\TestimonialController;
 use App\Http\Controllers\FactsAndFiguresController;
@@ -159,6 +165,36 @@ Route::middleware('auth', 'is_admin')->group(function () {
         Route::post('{id}/mapping', [RecruiterController::class, 'attachMapping'])->name('recruiters.mapping.attach');
     });
 
+    //Faq's
+    Route::resource('faq', FaqController::class)->except(['destroy']);
+    Route::prefix('faq')->group(function () {
+        Route::get('/{faq}/destroy', [FaqController::class, 'destroy'])->name('faq.destroy');
+        Route::post('/{id}/toggle-status', [FaqController::class, 'toggleStatus'])->name('faq.toggleStatus');
+        Route::get('/{faq}/mapping', [FaqController::class, 'mapping'])->name('faq.mapping');
+        Route::post('{id}/mapping', [FaqController::class, 'attachMapping'])->name('faq.mapping.attach');
+    });
+
+    //Faculties
+    Route::resource('faculty', FacultyController::class)->except(['destroy']);
+    Route::prefix('faculty')->group(function () {
+        Route::get('/{faculty}/destroy', [FacultyController::class, 'destroy'])->name('faculty.destroy');
+        Route::post('/{id}/toggle-status', [FacultyController::class, 'toggleStatus'])->name('faculty.toggleStatus');
+        Route::get('/{faculty}/mapping', [FacultyController::class, 'mapping'])->name('faculty.mapping');
+        Route::post('{id}/mapping', [FacultyController::class, 'attachMapping'])->name('faculty.mapping.attach');
+    });
+
+    //Leadership
+    Route::resource('leadership', LeadershipController::class)->except(['destroy']);
+    Route::prefix('leadership')->group(function () {
+        Route::get('/{leadership}/destroy', [LeadershipController::class, 'destroy'])->name('leadership.destroy');
+        Route::post('/{id}/toggle-status', [LeadershipController::class, 'toggleStatus'])->name('leadership.toggleStatus');
+        Route::get('/{leadership}/mapping', [LeadershipController::class, 'mapping'])->name('leadership.mapping');
+        Route::post('{id}/mapping', [LeadershipController::class, 'attachMapping'])->name('leadership.mapping.attach');
+    });
+
+    //Types
+    Route::resource('types', TypeController::class)->only(['store', 'update', 'destroy']);
+
     //Homepage
     Route::get('home', [HomepageController::class, 'createSections'])->name('home');
     Route::post('home/sections/update', [HomepageController::class, 'storeOrUpdate'])->name('home.section.update');
@@ -170,6 +206,14 @@ Route::middleware('auth', 'is_admin')->group(function () {
         Route::post('/update-order', [HeaderController::class, 'updateOrder'])->name('headers.update-order');
         Route::post('/{id}/toggle-status', [HeaderController::class, 'toggleStatus'])->name('headers.toggle-status');
     });
+
+    //Footer
+    Route::get('/footer',[FooterController::class, 'index'])->name('footer.index');
+    Route::put('/footer/update',[FooterController::class, 'update'])->name('footer.update');
+
+    //Contact Info
+    Route::get('/contact',[ContactInfoController::class, 'edit'])->name('contact.edit');
+    Route::put('/contact',[ContactInfoController::class, 'update'])->name('contact.update');
 });
 
 require __DIR__.'/auth.php';

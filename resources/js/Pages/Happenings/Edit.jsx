@@ -52,7 +52,7 @@ const Edit = ({ happening }) => {
                         <div className="row">
                             {/* Event Type */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="event_type" className="form-label">Event Type</label>
+                                <label htmlFor="event_type" className="form-label">Event Type <span className="text-danger">*</span></label>
                                 <select
                                     id="event_type"
                                     className="form-select"
@@ -70,7 +70,7 @@ const Edit = ({ happening }) => {
 
                             {/* Title */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="title" className="form-label">Title</label>
+                                <label htmlFor="title" className="form-label">Title <span className="text-danger">*</span></label>
                                 <input
                                     type="text"
                                     id="title"
@@ -245,7 +245,7 @@ const Edit = ({ happening }) => {
 
                             {/* Event Dates */}
                             <div className="mb-3 col-md-3">
-                                <label htmlFor="event_date_from" className="form-label">Event Start Date</label>
+                                <label htmlFor="event_date_from" className="form-label">Event Start Date <span className="text-danger">*</span></label>
                                 <input
                                     type="date"
                                     id="event_date_from"
@@ -257,7 +257,7 @@ const Edit = ({ happening }) => {
                             </div>
 
                             <div className="mb-3 col-md-3">
-                                <label htmlFor="event_date_to" className="form-label">Event End Date</label>
+                                <label htmlFor="event_date_to" className="form-label">Event End Date <span className="text-danger">*</span></label>
                                 <input
                                     type="date"
                                     id="event_date_to"

@@ -50,7 +50,7 @@ const Edit = ({ program }) => {
                                     className="form-control"
                                     ref={fileInputRef}
                                     onChange={(e) => setData("image", e.target.files[0])}
-                                    accept="image/png, image/jpeg"
+                                    accept="image/png, image/jpeg, image/webp"
                                 />
                                 {errors.image && <div className="form-text text-danger">{errors.image}</div>}
                             </div>
@@ -58,8 +58,8 @@ const Edit = ({ program }) => {
                             {/* Current Image Preview */}
                             <div className="mb-3 col-md-6">
                                 <label className="form-label">Current Image</label>
-                                {program.image && (
-                                    <div className="mb-2">
+                                <div className="mb-2">
+                                    {program.image ? (
                                         <img
                                             src={`${appUrl}/${program.image}`}
                                             alt="Current Program"
@@ -70,13 +70,15 @@ const Edit = ({ program }) => {
                                                 borderRadius: "4px",
                                             }}
                                         />
-                                    </div>
-                                )}
+                                    ): (
+                                        <span className="text-muted">No image</span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Name */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="name" className="form-label">Program Name</label>
+                                <label htmlFor="name" className="form-label">Program Name <span className="text-danger">*</span></label>
                                 <input
                                     className="form-control"
                                     type="text"

@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 
 const CreateOrUpdateSections = ({ course }) => {
     const [activeSections, setActiveSections] = useState([]);
+    const appUrl = usePage().props.appUrl;
     
     // Simplified flat data structure
     const { data, setData, post, processing, errors } = useForm({
@@ -374,8 +375,20 @@ const CreateOrUpdateSections = ({ course }) => {
                         
                         {/* Show current file if exists in course data */}
                         {course[field.name] && typeof course[field.name] === 'string' && (
-                            <div className="form-text text-success">
-                                Current file: {course[field.name]}
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label" htmlFor="image">Current Image</label>
+                                <div className="mb-2">
+                                    <img
+                                        src={`${appUrl}/${course[field.name]}`}
+                                        alt="Current Banner"
+                                        style={{
+                                            width: "100px",
+                                            height: "60px",
+                                            objectFit: "cover",
+                                            borderRadius: "4px"
+                                        }}
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>

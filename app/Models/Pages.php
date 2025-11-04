@@ -11,11 +11,26 @@ use Illuminate\Database\Eloquent\Builder;
 
 class Pages extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'parent_id',
+        'title',
+        'type',
+        'image',
+        'sub_title',
+        'publish_date',
+        'start_date',
+        'end_date',
+        'slug',
+        'page_group',
+        'display_order',
+        'template_path',
+        'status',
+        'target_blank',
+    ];
 
     public function sections()
     {
-        return $this->hasMany(PageSection::class);
+        return $this->hasMany(PageSection::class,'page_id');
     }
     
     public function banners()

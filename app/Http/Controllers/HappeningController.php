@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\Pages;
 use App\Models\School;
 use App\Models\Happening;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class HappeningController extends Controller
@@ -90,6 +91,16 @@ class HappeningController extends Controller
             'status' => 'nullable|boolean',
         ]);
 
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['title']);
+
+            if (Happening::where('slug', $validated['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
+        }
+
         // Handle file uploads
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -110,10 +121,6 @@ class HappeningController extends Controller
             $pdfName = time() . '_' . uniqid() . '.' . $pdf->getClientOriginalExtension();
             $pdf->move(public_path('assets/pdf/happenings/'), $pdfName);
             $validated['pdf'] = 'assets/pdf/happenings/' . $pdfName;
-        }
-        
-        if (empty($validated['slug'])) {
-            $validated['slug'] = \Str::slug($validated['title']);
         }
 
         Happening::create($validated);
@@ -166,9 +173,20 @@ class HappeningController extends Controller
             'show_on_home' => 'nullable|integer|in:0,1',
         ]);
 
-        if (empty($validated['slug']) && !empty($validated['title'])) {
-            $validated['slug'] = \Str::slug($validated['title']);
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['title']);
+
+            $exists = Happening::where('slug', $validated['slug'])
+                ->where('id', '!=', $happening->id)
+                ->exists();
+
+            if ($exists) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
         }
+
 
         // ===== Main Image =====
         if ($request->hasFile('image')) {

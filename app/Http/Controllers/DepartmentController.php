@@ -22,6 +22,7 @@ class DepartmentController extends Controller
             return [
                 'id' => $department->id,
                 'name' => $department->name,
+                'school' => $department->school->name,
                 'slug' => $department->slug,
                 'menu_name' => $department->menu_name,
                 'short_name' => $department->short_name,
@@ -60,7 +61,7 @@ class DepartmentController extends Controller
                 'nullable',
                 'string',
                 'max:255',
-                'unique:happenings,slug',
+                'unique:departments,slug',
                 'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
             ],
             'school_id' => 'required|exists:schools,id',
@@ -71,9 +72,11 @@ class DepartmentController extends Controller
 
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
-            $count = Department::where('slug', 'LIKE', "{$data['slug']}%")->count();
-            if ($count > 0) {
-                $data['slug'] .= '-' . ($count + 1);
+
+            if (Department::where('slug', $data['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
             }
         }
 
@@ -124,7 +127,7 @@ class DepartmentController extends Controller
                 'nullable',
                 'string',
                 'max:255',
-                'unique:happenings,slug,' . $department->id,
+                'unique:departments,slug,' . $department->id,
                 'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
             ],
             'menu_name' => 'nullable|string|max:255',
@@ -135,14 +138,17 @@ class DepartmentController extends Controller
 
         $data = $request->all();
 
-        // Generate slug if not provided
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
-            $count = Department::where('slug', 'LIKE', "{$data['slug']}%")
+
+            $exists = Department::where('slug', $data['slug'])
                 ->where('id', '!=', $department->id)
-                ->count();
-            if ($count > 0) {
-                $data['slug'] .= '-' . ($count + 1);
+                ->exists();
+
+            if ($exists) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
             }
         }
 

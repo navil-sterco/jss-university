@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { CircleArrowRight, Calendar, MapPin, Clock } from 'lucide-react';
 import React, { useEffect } from 'react'
 
-const Dashboard = ({ schoolcount, departmentcount, programcount, coursecount, bannercount, testimonialcount, happeningcount, factsandfigurescount, recruitercount, upcomingevent, schoolactivepercent, departmentactivepercent, programactivepercent, courseactivepercent }) => {
+const Dashboard = ({ schoolcount, departmentcount, programcount, coursecount, bannercount, testimonialcount, happeningcount, factsandfigurescount, recruitercount, upcomingevent, schoolactivepercent, departmentactivepercent, programactivepercent, courseactivepercent,contactinfo }) => {
     
     useEffect(() => {
         dashboardAnalitics();
@@ -265,7 +265,7 @@ const Dashboard = ({ schoolcount, departmentcount, programcount, coursecount, ba
                                     <div className="d-flex flex-column">
                                         <small className="text-muted">Location</small>
                                         <h6 className="mb-0">
-                                            Sector 62, Noida, Uttar Pradesh
+                                            {contactinfo.address}
                                         </h6>
                                     </div>
                                 </li>
@@ -273,13 +273,13 @@ const Dashboard = ({ schoolcount, departmentcount, programcount, coursecount, ba
                                 <li className="d-flex mb-4 pb-1">
                                     <div className="avatar flex-shrink-0 me-3">
                                         <span className="avatar-initial rounded bg-label-success">
-                                            <i className="bx bx-book-content"></i>
+                                            <i className="bx bx-map-alt"></i>
                                         </span>
                                     </div>
                                     <div className="d-flex flex-column">
-                                        <small className="text-muted">Affiliation</small>
+                                        <small className="text-muted">Map</small>
                                         <h6 className="mb-0">
-                                            Dr. A.P.J. Abdul Kalam Technical University
+                                            <a href={contactinfo.direction_url} target='_blank'>Get Direction</a>
                                         </h6>
                                     </div>
                                 </li>
@@ -313,13 +313,13 @@ const Dashboard = ({ schoolcount, departmentcount, programcount, coursecount, ba
                                 <li className="d-flex mb-4 pb-1">
                                     <div className="avatar flex-shrink-0 me-3">
                                         <span className="avatar-initial rounded bg-label-secondary">
-                                            <i className='bx bxs-book-content'></i>
+                                            <i className='bx bxs-copyright'></i>
                                         </span>
                                     </div>
                                     <div className="d-flex flex-column">
-                                        <small className="text-muted">Programs Offered</small>
+                                        <small className="text-muted">Copyright</small>
                                         <h6 className="mb-0 fst-italic">
-                                            25+ (Undergraduate, Postgraduate & Doctoral)
+                                            {contactinfo.copyright}
                                         </h6>
                                     </div>
                                 </li>
@@ -444,7 +444,7 @@ const Dashboard = ({ schoolcount, departmentcount, programcount, coursecount, ba
                                             </div>
                                             <div className="d-flex flex-column">
                                                 <small className="text-muted">Phone</small>
-                                                <h6 className="mb-0">+91-120-2400861</h6>
+                                                <h6 className="mb-0">{contactinfo.phone}</h6>
                                             </div>
                                         </li>
                                         <li className="d-flex mb-4 pb-1">
@@ -455,7 +455,7 @@ const Dashboard = ({ schoolcount, departmentcount, programcount, coursecount, ba
                                             </div>
                                             <div className="d-flex flex-column">
                                                 <small className="text-muted">Email</small>
-                                                <h6 className="mb-0">info@jssaten.ac.in</h6>
+                                                <h6 className="mb-0">{contactinfo.email}</h6>
                                             </div>
                                         </li>
                                     </ul>

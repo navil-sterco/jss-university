@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('linked_text')->nullable();
             $table->string('link')->nullable();
             $table->string('image');
+            $table->string('mobile_image');
             $table->integer('display_order')->default(100);
             $table->integer('show_on_home')->default(false);
             $table->boolean('status')->default(true);

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('page_sections', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('page_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
             $table->string('section_type');
             $table->unsignedBigInteger('section_id');
             $table->integer('position')->default(1);

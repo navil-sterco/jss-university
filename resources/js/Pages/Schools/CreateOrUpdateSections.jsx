@@ -4,6 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 
 const CreateOrUpdateSections = ({ school }) => {
     const [activeSections, setActiveSections] = useState([]);
+    const appUrl = usePage().props.appUrl;
 
     const { data, setData, post, progress, processing, errors } = useForm({
         // About School Section
@@ -16,25 +17,17 @@ const CreateOrUpdateSections = ({ school }) => {
         about_school_logo_content: school.about_school_logo_content || "",
         about_school_stats_number: school.about_school_stats_number || "",
         about_school_stats_content: school.about_school_stats_content || "",
-        highlight_1_rank: school.highlight_1_rank || "",
-        highlight_1_text: school.highlight_1_text || "",
-        highlight_1_source: school.highlight_1_source || "",
-        button_1_text: school.button_1_text || "",
-        button_1_url: school.button_1_url || "",
-        button_2_text: school.button_2_text || "",
-        button_2_url: school.button_2_url || "",
-        button_3_text: school.button_3_text || "",
-        button_3_url: school.button_3_url || "",
+        
+        // Dynamic arrays for highlights and buttons
+        about_highlights: school.about_highlights || [{ rank: "", text: "", source: "" }],
+        about_buttons: school.about_buttons || [{ text: "", url: "" }],
 
-        // School Department Section
+        // Department Section
         department_title: school.department_title || "",
         department_desc: school.department_desc || "",
         department_programs_count: school.department_programs_count || "",
         department_programs_text: school.department_programs_text || "",
-        department_button_1_text: school.department_button_1_text || "",
-        department_button_1_url: school.department_button_1_url || "",
-        department_button_2_text: school.department_button_2_text || "",
-        department_button_2_url: school.department_button_2_url || "",
+        department_buttons: school.department_buttons || [{ text: "", url: "" }],
 
         // Placement Section
         placement_title: school.placement_title || "",
@@ -51,7 +44,7 @@ const CreateOrUpdateSections = ({ school }) => {
         happening_title: school.happening_title || "",
         happening_subtitle: school.happening_subtitle || "",
     });
-
+    
     // Section configuration
     const sectionConfig = [
         {
@@ -110,58 +103,16 @@ const CreateOrUpdateSections = ({ school }) => {
                     placeholder: "e.g., Programs Offered"
                 },
                 {
-                    name: "highlight_1_rank",
-                    label: "Highlight Rank",
-                    type: "text",
-                    placeholder: "e.g., #1"
+                    name: "about_highlights",
+                    label: "Highlights",
+                    type: "highlights",
+                    placeholder: "Highlight"
                 },
                 {
-                    name: "highlight_1_text",
-                    label: "Highlight Text",
-                    type: "text",
-                    placeholder: "e.g., Best Engineering College"
-                },
-                {
-                    name: "highlight_1_source",
-                    label: "Highlight Source",
-                    type: "text",
-                    placeholder: "e.g., Times Ranking 2024"
-                },
-                {
-                    name: "button_1_text",
-                    label: "Button 1 Text",
-                    type: "text",
-                    placeholder: "e.g., Learn More"
-                },
-                {
-                    name: "button_1_url",
-                    label: "Button 1 URL",
-                    type: "url",
-                    placeholder: "https://example.com"
-                },
-                {
-                    name: "button_2_text",
-                    label: "Button 2 Text",
-                    type: "text",
-                    placeholder: "e.g., Apply Now"
-                },
-                {
-                    name: "button_2_url",
-                    label: "Button 2 URL",
-                    type: "url",
-                    placeholder: "https://example.com"
-                },
-                {
-                    name: "button_3_text",
-                    label: "Button 3 Text",
-                    type: "text",
-                    placeholder: "e.g., Contact Us"
-                },
-                {
-                    name: "button_3_url",
-                    label: "Button 3 URL",
-                    type: "url",
-                    placeholder: "https://example.com"
+                    name: "about_buttons",
+                    label: "Buttons",
+                    type: "buttons",
+                    placeholder: "Button"
                 }
             ]
         },
@@ -197,28 +148,10 @@ const CreateOrUpdateSections = ({ school }) => {
                     placeholder: "e.g., Programs Available"
                 },
                 {
-                    name: "department_button_1_text",
-                    label: "Button 1 Text",
-                    type: "text",
-                    placeholder: "e.g., View Departments"
-                },
-                {
-                    name: "department_button_1_url",
-                    label: "Button 1 URL",
-                    type: "url",
-                    placeholder: "https://example.com"
-                },
-                {
-                    name: "department_button_2_text",
-                    label: "Button 2 Text",
-                    type: "text",
-                    placeholder: "e.g., Explore Programs"
-                },
-                {
-                    name: "department_button_2_url",
-                    label: "Button 2 URL",
-                    type: "url",
-                    placeholder: "https://example.com"
+                    name: "department_buttons",
+                    label: "Department Buttons",
+                    type: "buttons",
+                    placeholder: "Button"
                 }
             ]
         },
@@ -309,6 +242,13 @@ const CreateOrUpdateSections = ({ school }) => {
             const hasData = section.fields.some(field => {
                 const value = data[field.name];
                 if (value === null || value === undefined) return false;
+                if (Array.isArray(value)) {
+                    return value.some(item => 
+                        typeof item === 'object' 
+                            ? Object.values(item).some(val => val && val !== "")
+                            : item && item !== ""
+                    );
+                }
                 return value !== "";
             });
             
@@ -354,11 +294,38 @@ const CreateOrUpdateSections = ({ school }) => {
             section.fields.forEach(field => {
                 if (field.type === 'file') {
                     setData(field.name, null);
+                } else if (field.type === 'highlights') {
+                    setData(field.name, [{ rank: "", text: "", source: "" }]);
+                } else if (field.type === 'buttons') {
+                    setData(field.name, [{ text: "", url: "" }]);
                 } else {
                     setData(field.name, "");
                 }
             });
         }
+    };
+
+    // Array management functions
+    const addArrayItem = (fieldName) => {
+        if (fieldName === 'about_highlights') {
+            setData(fieldName, [...data[fieldName], { rank: "", text: "", source: "" }]);
+        } else if (fieldName === 'about_buttons' || fieldName === 'department_buttons') {
+            setData(fieldName, [...data[fieldName], { text: "", url: "" }]);
+        }
+    };
+
+    const removeArrayItem = (fieldName, index) => {
+        const currentArray = data[fieldName];
+        if (currentArray.length > 1) {
+            const updatedArray = currentArray.filter((_, i) => i !== index);
+            setData(fieldName, updatedArray);
+        }
+    };
+
+    const handleArrayChange = (fieldName, index, field, value) => {
+        const updatedArray = [...data[fieldName]];
+        updatedArray[index][field] = value;
+        setData(fieldName, updatedArray);
     };
 
     // Field handlers
@@ -435,10 +402,122 @@ const CreateOrUpdateSections = ({ school }) => {
                         
                         {/* Show current file if exists in school data */}
                         {school[field.name] && typeof school[field.name] === 'string' && (
-                            <div className="form-text text-success">
-                                Current file: {school[field.name]}
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label" htmlFor="image">Current Image</label>
+                                <div className="mb-2">
+                                    <img
+                                        src={`${appUrl}/${school[field.name]}`}
+                                        alt="Current Banner"
+                                        style={{
+                                            width: "100px",
+                                            height: "60px",
+                                            objectFit: "cover",
+                                            borderRadius: "4px"
+                                        }}
+                                    />
+                                </div>
                             </div>
                         )}
+                    </div>
+                );
+
+            case 'highlights':
+                return (
+                    <div className="mb-3" key={field.name}>
+                        <label className="form-label">{field.label}</label>
+                        {value.map((item, index) => (
+                            <div key={index} className="d-flex gap-2 mb-2">
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Rank (e.g., #1)"
+                                    value={item.rank}
+                                    onChange={(e) => handleArrayChange(field.name, index, 'rank', e.target.value)}
+                                    disabled={processing}
+                                />
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Text (e.g., Best Engineering College)"
+                                    value={item.text}
+                                    onChange={(e) => handleArrayChange(field.name, index, 'text', e.target.value)}
+                                    disabled={processing}
+                                />
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Source (e.g., Times Ranking 2024)"
+                                    value={item.source}
+                                    onChange={(e) => handleArrayChange(field.name, index, 'source', e.target.value)}
+                                    disabled={processing}
+                                />
+                                {value.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-danger"
+                                        onClick={() => removeArrayItem(field.name, index)}
+                                        disabled={processing}
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                        {fieldError && <div className="invalid-feedback d-block">{fieldError}</div>}
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => addArrayItem(field.name)}
+                            disabled={processing}
+                        >
+                            + Add {field.label}
+                        </button>
+                    </div>
+                );
+
+            case 'buttons':
+                return (
+                    <div className="mb-3" key={field.name}>
+                        <label className="form-label">{field.label}</label>
+                        {value.map((item, index) => (
+                            <div key={index} className="d-flex gap-2 mb-2">
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Button Text"
+                                    value={item.text}
+                                    onChange={(e) => handleArrayChange(field.name, index, 'text', e.target.value)}
+                                    disabled={processing}
+                                />
+                                <input
+                                    type="url"
+                                    className="form-control"
+                                    placeholder="https://example.com"
+                                    value={item.url}
+                                    onChange={(e) => handleArrayChange(field.name, index, 'url', e.target.value)}
+                                    disabled={processing}
+                                />
+                                {value.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-danger"
+                                        onClick={() => removeArrayItem(field.name, index)}
+                                        disabled={processing}
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                        {fieldError && <div className="invalid-feedback d-block">{fieldError}</div>}
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => addArrayItem(field.name)}
+                            disabled={processing}
+                        >
+                            + Add {field.label}
+                        </button>
                     </div>
                 );
 
@@ -527,7 +606,6 @@ const CreateOrUpdateSections = ({ school }) => {
                                             <small className="text-muted">{section.description}</small>
                                         </div>
                                     </div>
-                                    {/* Always show remove button, even for the last section */}
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-outline-danger"
@@ -541,7 +619,7 @@ const CreateOrUpdateSections = ({ school }) => {
                                 <div className="card-body">
                                     <div className="row">
                                         {section.fields.map(field => 
-                                            (field.type === 'file' || field.type === 'textarea') ? (
+                                            (field.type === 'file' || field.type === 'textarea' || field.type === 'highlights' || field.type === 'buttons') ? (
                                                 <div className="col-12" key={field.name}>
                                                     {renderField(field)}
                                                 </div>
@@ -574,7 +652,7 @@ const CreateOrUpdateSections = ({ school }) => {
                     </div>
                 )}
 
-                {/* ALWAYS SHOW SUBMIT BUTTON - Even when no sections are active */}
+                {/* Submit Button */}
                 <div className="mt-4 p-4 bg-light rounded border">
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
@@ -602,7 +680,6 @@ const CreateOrUpdateSections = ({ school }) => {
                         </div>
                     </div>
                     
-                    {/* Show message when no sections are active */}
                     {activeSections.length === 0 && (
                         <div className="mt-3 alert alert-warning">
                             <i className="bx bx-alarm-exclamation bx-sm me-3"></i>

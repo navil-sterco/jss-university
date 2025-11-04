@@ -104,7 +104,7 @@ const EditGallery = ({ gallery }) => {
                         <div className="row">
                             {/* Type */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Type</label>
+                                <label className="form-label">Type <span className="text-danger">*</span></label>
                                 <select
                                     className="form-select"
                                     value={data.type}
@@ -120,7 +120,7 @@ const EditGallery = ({ gallery }) => {
 
                             {/* Title */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Title</label>
+                                <label className="form-label">Title <span className="text-danger">*</span></label>
                                 <input
                                     type="text"
                                     className="form-control"

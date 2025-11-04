@@ -21,7 +21,7 @@ Route::prefix('auth')->group(function() {
 Route::get('homepage/banners', [BannerController::class, 'index']);
 Route::get('/pages/{id}', [PageController::class, 'show']);
 
-Route::get('/school/{id}', [SchoolController::class, 'index']);
+Route::get('/school/{slug}', [SchoolController::class, 'index']);
 
 Route::prefix('happenings')->group(function () {
     Route::get('/', [HappeningController::class, 'index']);

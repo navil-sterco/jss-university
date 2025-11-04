@@ -26,7 +26,7 @@ const Edit = ({ department,schools }) => {
                         <div className="row">
                             {/* Department Name */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Department Name</label>
+                                <label className="form-label">Department Name <span className="text-danger">*</span></label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -38,7 +38,7 @@ const Edit = ({ department,schools }) => {
 
                             {/* School */}
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="school_id" className="form-label">School</label>
+                                <label htmlFor="school_id" className="form-label">School <span className="text-danger">*</span></label>
                                 <select
                                     id="school_id"
                                     className="form-select"

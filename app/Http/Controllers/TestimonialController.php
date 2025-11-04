@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\Pages;
 use App\Models\School;
 use App\Models\Testimonial;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class TestimonialController extends Controller
@@ -26,6 +27,9 @@ class TestimonialController extends Controller
                 'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
                 'video_url' => $item->video_url,
                 'short_description' => $item->short_description,
+                'name' => $item->name,
+                'batch' => $item->batch,
+                'course' => $item->course,
                 'description' => $item->description,
                 'designation' => $item->designation,
                 'location' => $item->location,
@@ -70,6 +74,9 @@ class TestimonialController extends Controller
             'video_url' => 'nullable|string|max:555',
             'short_description' => 'nullable|string',
             'description' => 'nullable|string',
+            'name' => 'nullable|string|max:255',
+            'batch' => 'nullable|string|max:255',
+            'course' => 'nullable|string|max:255',
             'designation' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
             'company' => 'nullable|string|max:255',
@@ -78,9 +85,14 @@ class TestimonialController extends Controller
             'display_order' => 'nullable|integer',
         ]);
 
-        // Auto-generate slug if not provided
-        if (empty($validated['slug']) && !empty($validated['title'])) {
-            $validated['slug'] = \Str::slug($validated['title']);
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['title']);
+
+            if (Testimonial::where('slug', $validated['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
         }
 
         // Handle image upload
@@ -134,6 +146,9 @@ class TestimonialController extends Controller
             'alt_text' => 'nullable|string|max:255',
             'short_description' => 'nullable|string',
             'description' => 'nullable|string',
+            'name' => 'nullable|string|max:255',
+            'batch' => 'nullable|string|max:255',
+            'course' => 'nullable|string|max:255',
             'designation' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
             'company' => 'nullable|string|max:255',
@@ -143,9 +158,20 @@ class TestimonialController extends Controller
             'show_on_home' => 'boolean',
         ]);
 
-        if (empty($validated['slug']) && !empty($validated['title'])) {
-            $validated['slug'] = \Str::slug($validated['title']);
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['title']);
+
+            $exists = Testimonial::where('slug', $validated['slug'])
+                ->where('id', '!=', $testimonial->id)
+                ->exists();
+
+            if ($exists) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
         }
+
 
         if ($request->hasFile('image')) {
             $request->validate([
