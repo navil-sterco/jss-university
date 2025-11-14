@@ -16,11 +16,19 @@ const Create = ({ departments, degree }) => {
         academic_year: "",
         apply_now_link: "",
         useful_links: [],
+        // New fields
+        banner: null,
+        eligibility_marks: "",
+        eligibility_desc: "",
+        program_structure: null,
+        scholarship: null,
     });
 
     const submit = (e) => {
         e.preventDefault();
-        post(route("course.store"));
+        post(route("course.store"), {
+            forceFormData: true, // Important for file uploads
+        });
     };
 
     // Add a new useful link
@@ -43,6 +51,11 @@ const Create = ({ departments, degree }) => {
             i === index ? { ...link, [field]: value } : link
         );
         setData("useful_links", updatedLinks);
+    };
+
+    // Handle file input changes
+    const handleFileChange = (field, file) => {
+        setData(field, file);
     };
 
     return (
@@ -199,7 +212,7 @@ const Create = ({ departments, degree }) => {
                             </div>
 
                             {/* Apply Now Link */}
-                            <div className="mb-3 col-md-12">
+                            <div className="mb-3 col-md-6">
                                 <label className="form-label">Apply Now Link</label>
                                 <input
                                     type="text"
@@ -210,6 +223,78 @@ const Create = ({ departments, degree }) => {
                                 <div className="form-text text-danger">{errors.apply_now_link}</div>
                             </div>
 
+                            {/* Banner Image */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Banner Image</label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange("banner", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload a banner image for the course (Recommended: 1200x400px)
+                                </div>
+                                <div className="form-text text-danger">{errors.banner}</div>
+                            </div>
+
+                            {/* Eligibility Marks */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Eligibility Marks</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="e.g., 60% in 12th standard"
+                                    value={data.eligibility_marks}
+                                    onChange={(e) => setData("eligibility_marks", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.eligibility_marks}</div>
+                            </div>
+
+                            {/* Eligibility Description */}
+                            <div className="mb-3 col-12">
+                                <label className="form-label">Eligibility Description</label>
+                                <textarea
+                                    className="form-control"
+                                    rows="4"
+                                    placeholder="Detailed eligibility criteria and requirements..."
+                                    value={data.eligibility_desc}
+                                    onChange={(e) => setData("eligibility_desc", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.eligibility_desc}</div>
+                            </div>
+
+                            {/* Program Structure PDF */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Program Structure (PDF)</label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept=".pdf,application/pdf"
+                                    onChange={(e) => handleFileChange("program_structure", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload program structure document in PDF format
+                                </div>
+                                <div className="form-text text-danger">{errors.program_structure}</div>
+                            </div>
+
+                            {/* Scholarship PDF */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Scholarship Details (PDF)</label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept=".pdf,application/pdf"
+                                    onChange={(e) => handleFileChange("scholarship", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload scholarship information in PDF format
+                                </div>
+                                <div className="form-text text-danger">{errors.scholarship}</div>
+                            </div>
+
+                            {/* Useful Links Section */}
                             <div className="col-12">
                                 <div className="card">
                                     <div className="card-header d-flex justify-content-between align-items-center">
@@ -250,13 +335,12 @@ const Create = ({ departments, degree }) => {
                                                             onChange={(e) => updateUsefulLink(index, "url", e.target.value)}
                                                         />
                                                     </div>
-                                                    <div className="col-md-1 d-flex align-items-end mb-1 mt-1">
+                                                    <div className="col-md-1 d-flex align-items-end mb-1">
                                                         <button
                                                             type="button"
                                                             className="btn btn-sm btn-outline-danger"
                                                             onClick={() => removeUsefulLink(index)}
                                                         >
-                                                            Remove 
                                                             <i className="bx bx-trash"></i>
                                                         </button>
                                                     </div>
@@ -269,14 +353,14 @@ const Create = ({ departments, degree }) => {
                             </div>
                         </div>
 
-                        {/* Submit */}
+                        {/* Submit Button */}
                         <div className="mt-4">
                             <button
                                 type="submit"
                                 className="btn btn-primary"
                                 disabled={processing}
                             >
-                                {processing ? "Saving..." : "Submit"}
+                                {processing ? "Saving..." : "Create Course"}
                             </button>
 
                             {progress && (

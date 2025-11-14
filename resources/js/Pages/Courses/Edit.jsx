@@ -1,7 +1,8 @@
-import { useForm } from "@inertiajs/react";
+import { useForm, usePage } from "@inertiajs/react";
 import React from "react";
 
 const Edit = ({ course, departments, degree }) => {
+    const appUrl = usePage().props.appUrl;
     const { data, setData, post, processing, errors, progress } = useForm({
         _method: "PUT",
         department_id: course.department_id || "",
@@ -17,14 +18,25 @@ const Edit = ({ course, departments, degree }) => {
         academic_year: course.academic_year || "",
         apply_now_link: course.apply_now_link || "",
         useful_links: course.useful_links || [],
+        // New fields
+        banner: null,
+        eligibility_marks: course.eligibility_marks || "",
+        eligibility_desc: course.eligibility_desc || "",
+        program_structure: null,
+        scholarship: null,
+        remove_banner: false,
+        remove_program_structure: false,
+        remove_scholarship: false,
     });
 
     const submit = (e) => {
         e.preventDefault();
-        post(route("course.update", course.id));
+        post(route("course.update", course.id), {
+            forceFormData: true, // Important for file uploads
+        });
     };
 
-        // Add a new useful link
+    // Add a new useful link
     const addUsefulLink = () => {
         setData("useful_links", [
             ...data.useful_links,
@@ -44,6 +56,17 @@ const Edit = ({ course, departments, degree }) => {
             i === index ? { ...link, [field]: value } : link
         );
         setData("useful_links", updatedLinks);
+    };
+
+    // Handle file input changes
+    const handleFileChange = (field, file) => {
+        setData(field, file);
+    };
+
+    // Handle file removal
+    const handleRemoveFile = (field) => {
+        setData(field, null);
+        setData(`remove_${field}`, true);
     };
 
     return (
@@ -198,7 +221,7 @@ const Edit = ({ course, departments, degree }) => {
                             </div>
 
                             {/* Apply Now Link */}
-                            <div className="mb-3 col-md-12">
+                            <div className="mb-3 col-md-6">
                                 <label className="form-label">Apply Now Link</label>
                                 <input
                                     type="text"
@@ -209,6 +232,98 @@ const Edit = ({ course, departments, degree }) => {
                                 <div className="form-text text-danger">{errors.apply_now_link}</div>
                             </div>
 
+                            {/* Banner Image */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Banner Image</label>                        
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange("banner", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload a new banner image (Recommended: 1200x400px)
+                                </div>
+                                <div className="form-text text-danger">{errors.banner}</div>
+                            </div>
+
+                            {/* Eligibility Marks */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Eligibility Marks</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="e.g., 60% in 12th standard"
+                                    value={data.eligibility_marks}
+                                    onChange={(e) => setData("eligibility_marks", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.eligibility_marks}</div>
+                            </div>
+
+                            {/* Current Banner Preview */}
+                            {course.banner && !data.remove_banner && (
+                                <div className="mb-2">
+                                    <p className="text-muted mb-1">Current Banner:</p>
+                                    <img 
+                                        src={`${appUrl}/${course.banner}`} 
+                                        alt="Current banner" 
+                                        className="img-thumbnail"
+                                        style={{ maxHeight: '150px' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-danger mt-1"
+                                        onClick={() => handleRemoveFile('banner')}
+                                    >
+                                        Remove Current Banner
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Eligibility Description */}
+                            <div className="mb-3 col-12">
+                                <label className="form-label">Eligibility Description</label>
+                                <textarea
+                                    className="form-control"
+                                    rows="4"
+                                    placeholder="Detailed eligibility criteria and requirements..."
+                                    value={data.eligibility_desc}
+                                    onChange={(e) => setData("eligibility_desc", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.eligibility_desc}</div>
+                            </div>
+
+                            {/* Program Structure PDF */}
+                            <div className="mb-3 col-md-12">
+                                <label className="form-label">Program Structure (PDF)</label>                                
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept=".pdf,application/pdf"
+                                    onChange={(e) => handleFileChange("program_structure", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload new program structure document in PDF format
+                                </div>
+                                <div className="form-text text-danger">{errors.program_structure}</div>
+                            </div>
+
+                            {/* Scholarship PDF */}
+                            <div className="mb-3 col-md-12">
+                                <label className="form-label">Scholarship Details (PDF)</label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept=".pdf,application/pdf"
+                                    onChange={(e) => handleFileChange("scholarship", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload new scholarship information in PDF format
+                                </div>
+                                <div className="form-text text-danger">{errors.scholarship}</div>
+                            </div>
+
+                            {/* Useful Links Section */}
                             <div className="col-12">
                                 <div className="card">
                                     <div className="card-header d-flex justify-content-between align-items-center">
@@ -249,7 +364,7 @@ const Edit = ({ course, departments, degree }) => {
                                                             onChange={(e) => updateUsefulLink(index, "url", e.target.value)}
                                                         />
                                                     </div>
-                                                    <div className="col-md-1 d-flex align-items-end mb-1 mt-1">
+                                                    <div className="col-md-1 d-flex align-items-end mb-1">
                                                         <button
                                                             type="button"
                                                             className="btn btn-sm btn-outline-danger"

@@ -42,6 +42,16 @@ class Course extends Model
         'fee_structure_image',
         'course_total_fees',
         'career_opportunities',
+        'banner',
+        'eligibility_marks',
+        'eligibility_desc',
+        'overview_title',
+        'overview_desc',
+        'overview_image',
+        'career_title',
+        'career_subtitle',
+        'career_desc',
+        'career_image',
     ];
 
     protected $casts = [

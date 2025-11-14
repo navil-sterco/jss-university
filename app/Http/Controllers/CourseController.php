@@ -12,9 +12,6 @@ use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -26,6 +23,11 @@ class CourseController extends Controller
                 'id' => $course->id,
                 'department_id' => $course->department_id,
                 'degree_id' => $course->degree_id,
+                'banner' => asset($course->banner),
+                'program_structure' => asset($course->program_structure),
+                'scholarship' => asset($course->scholarship),
+                'eligibility_marks' => $course->eligibility_marks,
+                'eligibility_desc' => $course->eligibility_desc,
                 'department_name' => $course->department ?  $course->department->name : null,
                 'degree_name' => $course->degree ?  $course->degree->name : null,
                 'name' => $course->name,
@@ -42,6 +44,7 @@ class CourseController extends Controller
             ];
         });
 
+
         return Inertia::render('Courses/Index', [
             'courses' => $courses,
             'departments' => $departments,
@@ -49,9 +52,6 @@ class CourseController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $departments = Department::select('id','name')->get();
@@ -63,9 +63,6 @@ class CourseController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -90,13 +87,43 @@ class CourseController extends Controller
             'useful_links' => 'nullable|array',
             'useful_links.*.text' => 'nullable|string|max:255',
             'useful_links.*.url' => 'nullable|url|max:500',
+            // New file validation rules
+            'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'eligibility_marks' => 'nullable|string|max:255',
+            'eligibility_desc' => 'nullable|string',
+            'program_structure' => 'nullable|file|mimes:pdf|max:10240',
+            'scholarship' => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
         $data = $request->all();
 
+        // Handle banner image upload
+        if ($request->hasFile('banner')) {
+            $banner = $request->file('banner');
+            $bannerName = time() . '_' . uniqid() . '.' . $banner->getClientOriginalExtension();
+            $banner->move(public_path('assets/img/courses/banners/'), $bannerName);
+            $data['banner'] = 'assets/img/courses/banners/' . $bannerName;
+        }
+
+        // Handle program structure PDF upload
+        if ($request->hasFile('program_structure')) {
+            $programStructure = $request->file('program_structure');
+            $programStructureName = time() . '_' . uniqid() . '_program.' . $programStructure->getClientOriginalExtension();
+            $programStructure->move(public_path('assets/files/courses/program-structure/'), $programStructureName);
+            $data['program_structure'] = 'assets/files/courses/program-structure/' . $programStructureName;
+        }
+
+        // Handle scholarship PDF upload
+        if ($request->hasFile('scholarship')) {
+            $scholarship = $request->file('scholarship');
+            $scholarshipName = time() . '_' . uniqid() . '_scholarship.' . $scholarship->getClientOriginalExtension();
+            $scholarship->move(public_path('assets/files/courses/scholarship/'), $scholarshipName);
+            $data['scholarship'] = 'assets/files/courses/scholarship/' . $scholarshipName;
+        }
+
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
-              
+            
             if (Course::where('slug', $data['slug'])->exists()) {
                 return back()
                     ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
@@ -122,9 +149,6 @@ class CourseController extends Controller
         return redirect()->route('course.index')->with('success', 'Course created successfully!');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Course $course)
     {
         $departments = Department::select('id','name')->get();
@@ -145,6 +169,12 @@ class CourseController extends Controller
             'academic_year',
             'useful_links',
             'apply_now_link',
+            // New fields
+            'banner',
+            'eligibility_marks',
+            'eligibility_desc',
+            'program_structure',
+            'scholarship',
         ]);
 
         if (isset($data['useful_links']) && is_string($data['useful_links'])) {
@@ -160,9 +190,6 @@ class CourseController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Course $course)
     {
         $validated = $request->validate([
@@ -187,9 +214,75 @@ class CourseController extends Controller
             'useful_links' => 'nullable|array',
             'useful_links.*.text' => 'nullable|string|max:255',
             'useful_links.*.url' => 'nullable|url|max:500',
+            // New file validation rules
+            'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'eligibility_marks' => 'nullable|string|max:255',
+            'eligibility_desc' => 'nullable|string',
+            'program_structure' => 'nullable|file|mimes:pdf|max:10240',
+            'scholarship' => 'nullable|file|mimes:pdf|max:10240',
+            'remove_banner' => 'nullable|boolean',
+            'remove_program_structure' => 'nullable|boolean',
+            'remove_scholarship' => 'nullable|boolean',
         ]);
 
         $data = $request->all();
+
+        // Handle banner image upload/removal
+        if ($request->has('remove_banner') && $request->remove_banner) {
+            // Remove existing banner
+            if ($course->banner && file_exists(public_path($course->banner))) {
+                unlink(public_path($course->banner));
+            }
+            $data['banner'] = null;
+        } elseif ($request->hasFile('banner')) {
+            // Remove existing banner if new one is uploaded
+            if ($course->banner && file_exists(public_path($course->banner))) {
+                unlink(public_path($course->banner));
+            }
+            
+            $banner = $request->file('banner');
+            $bannerName = time() . '_' . uniqid() . '.' . $banner->getClientOriginalExtension();
+            $banner->move(public_path('assets/img/courses/banners/'), $bannerName);
+            $data['banner'] = 'assets/img/courses/banners/' . $bannerName;
+        }
+
+        // Handle program structure PDF upload/removal
+        if ($request->has('remove_program_structure') && $request->remove_program_structure) {
+            // Remove existing program structure
+            if ($course->program_structure && file_exists(public_path($course->program_structure))) {
+                unlink(public_path($course->program_structure));
+            }
+            $data['program_structure'] = null;
+        } elseif ($request->hasFile('program_structure')) {
+            // Remove existing program structure if new one is uploaded
+            if ($course->program_structure && file_exists(public_path($course->program_structure))) {
+                unlink(public_path($course->program_structure));
+            }
+            
+            $programStructure = $request->file('program_structure');
+            $programStructureName = time() . '_' . uniqid() . '_program.' . $programStructure->getClientOriginalExtension();
+            $programStructure->move(public_path('assets/files/courses/program-structure/'), $programStructureName);
+            $data['program_structure'] = 'assets/files/courses/program-structure/' . $programStructureName;
+        }
+
+        // Handle scholarship PDF upload/removal
+        if ($request->has('remove_scholarship') && $request->remove_scholarship) {
+            // Remove existing scholarship
+            if ($course->scholarship && file_exists(public_path($course->scholarship))) {
+                unlink(public_path($course->scholarship));
+            }
+            $data['scholarship'] = null;
+        } elseif ($request->hasFile('scholarship')) {
+            // Remove existing scholarship if new one is uploaded
+            if ($course->scholarship && file_exists(public_path($course->scholarship))) {
+                unlink(public_path($course->scholarship));
+            }
+            
+            $scholarship = $request->file('scholarship');
+            $scholarshipName = time() . '_' . uniqid() . '_scholarship.' . $scholarship->getClientOriginalExtension();
+            $scholarship->move(public_path('assets/files/courses/scholarship/'), $scholarshipName);
+            $data['scholarship'] = 'assets/files/courses/scholarship/' . $scholarshipName;
+        }
 
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
@@ -218,13 +311,13 @@ class CourseController extends Controller
         return redirect()->route('course.index')->with('success', 'Course updated successfully!');
     }
 
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Course $course)
     {
         $fileFields = [
+            'banner',
+            'program_structure',
+            'scholarship',
+            // Keep existing fields
             'curriculum_image',
             'curriculum_pdf',
             'fee_structure_image',
@@ -241,7 +334,6 @@ class CourseController extends Controller
 
         return redirect()->route('course.index')->with('success', 'Course deleted successfully along with all files.');
     }
-
 
     public function toggleStatus($id)
     {
@@ -291,14 +383,27 @@ class CourseController extends Controller
             'fee_structure_title' => 'nullable|string|max:255',
             'fee_structure_short_description' => 'nullable|string|max:255',
             'course_total_fees' => 'nullable|string|max:255',
-
+            
             // Career Opportunities
-            'career_opportunities' => 'nullable|array',
-            'career_opportunities.*' => 'nullable|string|max:255',
+            'career_title' => 'nullable|string|max:255',
+            'career_subtitle' => 'nullable|string|max:255',
+            'career_desc' => 'nullable|string|max:255',
+
+            // Overview
+            'overview_title' => 'nullable|string|max:255',
+            'overview_desc' => 'nullable|string|max:255',
         ];
 
         if ($request->hasFile('curriculum_image')) {
             $rules['curriculum_image'] = 'image|mimes:jpg,jpeg,png,webp|max:2000';
+        }
+
+        if ($request->hasFile('overview_image')) {
+            $rules['overview_image'] = 'image|mimes:jpg,jpeg,png,webp|max:2000';
+        }
+
+        if ($request->hasFile('career_image')) {
+            $rules['career_image'] = 'image|mimes:jpg,jpeg,png,webp|max:2000';
         }
 
         if ($request->hasFile('curriculum_pdf')) {
@@ -317,6 +422,8 @@ class CourseController extends Controller
 
         $fileFields = [
             'curriculum_image' => 'courses/curriculum/',
+            'overview_image' => 'courses/overview/',
+            'career_image' => 'courses/career/',
             'curriculum_pdf' => 'courses/curriculum/',
             'fee_structure_image' => 'courses/fee_structure/',
             'fee_structure_pdf' => 'courses/fee_structure/',
@@ -354,5 +461,4 @@ class CourseController extends Controller
 
         return redirect()->back()->with('success', 'Course section updated successfully.');
     }
-
 }

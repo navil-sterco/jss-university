@@ -278,6 +278,24 @@ const Index = (props) => {
                                 <div className="row g-0">
                                     {/* Main Content - Left Side */}
                                     <div className="col-md-8 p-4 border-end">
+                                        {/* Banner Image */}
+                                        {selectedCourse.banner && (
+                                            <div className="mb-4">
+                                                <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                    <i className="bx bx-image me-2"></i>
+                                                    Banner Image
+                                                </h6>
+                                                <div className="text-center">
+                                                    <img 
+                                                        src={selectedCourse.banner} 
+                                                        alt="Course banner" 
+                                                        className="img-fluid rounded shadow-sm"
+                                                        style={{ maxHeight: '200px' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Basic Information */}
                                         <div className="mb-4">
                                             <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
@@ -342,33 +360,109 @@ const Index = (props) => {
                                                         <span>{selectedCourse.academic_year || <span className="text-muted">—</span>}</span>
                                                     </div>
                                                 </div>
-                                                <div className="mb-4">
-                                                    <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
-                                                        <i className="bx bx-link-alt me-2"></i>
-                                                        Links & Resources
-                                                    </h6>
-                                                    <div className="row g-3">
-                                                        <div className="col-12">
-                                                            <label className="form-label fw-semibold text-muted small">Apply Now Link</label>
-                                                            {selectedCourse.apply_now_link ? (
-                                                                <a 
-                                                                    href={selectedCourse.apply_now_link} 
-                                                                    target="_blank" 
-                                                                    rel="noopener noreferrer"
-                                                                    className="d-flex align-items-center text-primary text-decoration-none"
-                                                                >
-                                                                    <i className="bx bx-link-external me-2"></i>
-                                                                    <span className="text-truncate">{selectedCourse.apply_now_link}</span>
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-muted">—</span>
-                                                            )}
-                                                        </div>
-                                                        <div className="col-12">
-                                                            <label className="form-label fw-semibold text-muted small">Useful Links</label>
-                                                            {renderUsefulLinks(selectedCourse.useful_links)}
-                                                        </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Eligibility Information */}
+                                        <div className="mb-4">
+                                            <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                <i className="bx bx-check-circle me-2"></i>
+                                                Eligibility Criteria
+                                            </h6>
+                                            <div className="row g-3">
+                                                <div className="col-12">
+                                                    <label className="form-label fw-semibold text-muted small">Eligibility Marks</label>
+                                                    <div className="d-flex align-items-center">
+                                                        <i className="bx bx-award text-success me-2"></i>
+                                                        <span>{selectedCourse.eligibility_marks || <span className="text-muted">—</span>}</span>
                                                     </div>
+                                                </div>
+                                                <div className="col-12">
+                                                    <label className="form-label fw-semibold text-muted small">Eligibility Description</label>
+                                                    <div className="bg-light p-3 rounded border">
+                                                        {selectedCourse.eligibility_desc ? (
+                                                            <p className="mb-0 text-dark">{selectedCourse.eligibility_desc}</p>
+                                                        ) : (
+                                                            <span className="text-muted">—</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Links & Resources */}
+                                        <div className="mb-4">
+                                            <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                <i className="bx bx-link-alt me-2"></i>
+                                                Links & Resources
+                                            </h6>
+                                            <div className="row g-3">
+                                                <div className="col-12">
+                                                    <label className="form-label fw-semibold text-muted small">Apply Now Link</label>
+                                                    {selectedCourse.apply_now_link ? (
+                                                        <a 
+                                                            href={selectedCourse.apply_now_link} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="d-flex align-items-center text-primary text-decoration-none"
+                                                        >
+                                                            <i className="bx bx-link-external me-2"></i>
+                                                            <span className="text-truncate">{selectedCourse.apply_now_link}</span>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-muted">—</span>
+                                                    )}
+                                                </div>
+                                                <div className="col-12">
+                                                    <label className="form-label fw-semibold text-muted small">Useful Links</label>
+                                                    {renderUsefulLinks(selectedCourse.useful_links)}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Documents Section */}
+                                        <div className="mb-4">
+                                            <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                <i className="bx bx-file me-2"></i>
+                                                Documents
+                                            </h6>
+                                            <div className="row g-3">
+                                                {/* Program Structure PDF */}
+                                                <div className="col-12">
+                                                    <label className="form-label fw-semibold text-muted small">Program Structure</label>
+                                                    {selectedCourse.program_structure ? (
+                                                        <a 
+                                                            href={selectedCourse.program_structure} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="d-flex align-items-center text-primary text-decoration-none"
+                                                        >
+                                                            <i className="bx bx-file me-2"></i>
+                                                            <span>View Program Structure PDF</span>
+                                                            <i className="bx bx-link-external ms-2 small"></i>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-muted">—</span>
+                                                    )}
+                                                </div>
+
+                                                {/* Scholarship PDF */}
+                                                <div className="col-12">
+                                                    <label className="form-label fw-semibold text-muted small">Scholarship Details</label>
+                                                    {selectedCourse.scholarship ? (
+                                                        <a 
+                                                            href={selectedCourse.scholarship} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="d-flex align-items-center text-primary text-decoration-none"
+                                                        >
+                                                            <i className="bx bx-file me-2"></i>
+                                                            <span>View Scholarship Details PDF</span>
+                                                            <i className="bx bx-link-external ms-2 small"></i>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-muted">—</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -427,6 +521,34 @@ const Index = (props) => {
                                                     <i className="bx bx-trash me-1"></i>
                                                     Delete Course
                                                 </button>
+                                            </div>
+                                        </div>
+
+                                        {/* File Information */}
+                                        <div className="mt-4">
+                                            <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                <i className="bx bx-folder me-2"></i>
+                                                File Information
+                                            </h6>
+                                            <div className="space-y-2">
+                                                <div className="d-flex justify-content-between align-items-center p-2 bg-white rounded border">
+                                                    <span className="small">Banner Image</span>
+                                                    <span className={`badge ${selectedCourse.banner ? "bg-success" : "bg-secondary"}`}>
+                                                        {selectedCourse.banner ? "Uploaded" : "Not Set"}
+                                                    </span>
+                                                </div>
+                                                <div className="d-flex justify-content-between align-items-center p-2 bg-white rounded border">
+                                                    <span className="small">Program Structure</span>
+                                                    <span className={`badge ${selectedCourse.program_structure ? "bg-success" : "bg-secondary"}`}>
+                                                        {selectedCourse.program_structure ? "Uploaded" : "Not Set"}
+                                                    </span>
+                                                </div>
+                                                <div className="d-flex justify-content-between align-items-center p-2 bg-white rounded border">
+                                                    <span className="small">Scholarship</span>
+                                                    <span className={`badge ${selectedCourse.scholarship ? "bg-success" : "bg-secondary"}`}>
+                                                        {selectedCourse.scholarship ? "Uploaded" : "Not Set"}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
