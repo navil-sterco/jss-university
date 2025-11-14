@@ -96,7 +96,7 @@
         "header": "",
         "items": [
             {
-                "text": "Galleries",
+                "text": "Happenings Images",
                 "icon": "bx bx-image",
                 "available": true,
                 "link": "galleries.index"
@@ -125,6 +125,12 @@
                 "link": "program.index"
             },
             {
+                "text": "Degree",
+                "icon": "bx bx-bookmark",
+                "available": true,
+                "link": "degree.index"
+            },
+            {
                 "text": "Courses",
                 "icon": "bx bx-receipt",
                 "available": true,
@@ -142,6 +148,18 @@
                 "link": "headers.index"
             },
             {
+                "text": "School Header",
+                "icon": "bx bx-layout",
+                "available": true,
+                "link": "school-header.index"
+            },
+            {
+                "text": "Admission",
+                "icon": "bx bx-notepad",
+                "available": true,
+                "link": "admission.edit"
+            },
+            {
                 "text": "Footer",
                 "icon": "bx bx-layout",
                 "available": true,
@@ -152,6 +170,12 @@
     {
         "header": "Settings",
         "items": [
+            {
+                "text": "Contact Form",
+                "icon": "bx bx-book",
+                "available": true,
+                "link": "form.index"
+            },
             {
                 "text": "Contact info",
                 "icon": "bx bx-phone",

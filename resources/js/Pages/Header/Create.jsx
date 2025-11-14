@@ -10,52 +10,145 @@ const Create = (props) => {
         reference_id: "",
         parent_id: "",
         url: "",
+
+        // Section fields
+        section_title: "",
+        section_subtitle: "",
+        section_description: "",
+        section_button_text: "",
+        section_button_url: "",
+
+        boxes: [],
+
         display_order: 100,
         is_active: true,
     });
 
-    const submit = (e) => {
-        e.preventDefault();
-        post(route("headers.store"), {
-            onSuccess: () => reset()
+    // ✅ Handle file change
+    const handleFileChange = (boxIndex, files) => {
+        if (!files || !files.length) return;
+        const updatedBoxes = [...data.boxes];
+        updatedBoxes[boxIndex].image = files[0];
+        setData("boxes", updatedBoxes);
+    };
+
+    // ✅ Add new box
+    const addBox = () => {
+        if (data.boxes.length < 3) {
+            setData("boxes", [
+                ...data.boxes,
+                { title: "", url: "", image: null },
+            ]);
+        }
+    };
+
+    // ✅ Remove a box
+    const removeBox = (index) => {
+        setData(
+            "boxes",
+            data.boxes.filter((_, i) => i !== index)
+        );
+    };
+
+    // ✅ Update a box field
+    const updateBox = (index, field, value) => {
+        const newBoxes = data.boxes.map((box, i) =>
+            i === index ? { ...box, [field]: value } : box
+        );
+        setData("boxes", newBoxes);
+    };
+
+    const removeImage = (index) => {
+        updateBox(index, "image", null);
+    };
+
+    // ✅ Handle type change (custom/school/department/page)
+    const handleTypeChange = (type) => {
+        setData({
+            ...data,
+            type,
+            reference_id: "",
+            url: "",
+            title: "",
         });
     };
 
-    const handleTypeChange = (type) => {
-        setData('type', type);
-        setData('reference_id', '');
-        setData('url', '');
-        setData('title', ''); // Reset title when type changes
+    // ✅ Handle reference change
+    const handleReferenceChange = (referenceId) => {
+        setData("reference_id", referenceId);
+
+        if (data.type === "school") {
+            const school = schools.find((s) => s.id == referenceId);
+            if (school) setData("title", school.name);
+        } else if (data.type === "department") {
+            const department = departments.find((d) => d.id == referenceId);
+            if (department) setData("title", department.name);
+        } else if (data.type === "page") {
+            const page = pages.find((p) => p.id == referenceId);
+            if (page) setData("title", page.title);
+        }
     };
 
-    const handleReferenceChange = (referenceId) => {
-        setData('reference_id', referenceId);
-        
-        // Auto-fill title based on selection
-        if (data.type === 'school') {
-            const school = schools.find(s => s.id == referenceId);
-            if (school) setData('title', school.name);
-        } else if (data.type === 'department') {
-            const department = departments.find(d => d.id == referenceId);
-            if (department) setData('title', department.name);
-        } else if (data.type === 'page') {
-            const page = pages.find(p => p.id == referenceId);
-            if (page) setData('title', page.title);
-        }
+    // ✅ Submit function (fixed)
+    const submit = (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+
+        // Append basic fields
+        const fields = {
+            title: data.title,
+            type: data.type,
+            reference_id: data.reference_id,
+            parent_id: data.parent_id,
+            url: data.url,
+            section_title: data.section_title,
+            section_subtitle: data.section_subtitle,
+            section_description: data.section_description,
+            section_button_text: data.section_button_text,
+            section_button_url: data.section_button_url,
+            display_order: data.display_order,
+            is_active: data.is_active ? 1 : 0,
+        };
+
+        Object.entries(fields).forEach(([key, value]) => {
+            formData.append(key, value ?? "");
+        });
+
+        // ✅ Append boxes
+        data.boxes.forEach((box, index) => {
+            formData.append(`boxes[${index}][title]`, box.title || "");
+            formData.append(`boxes[${index}][url]`, box.url || "");
+            if (box.image instanceof File) {
+                formData.append(`boxes[${index}][image]`, box.image);
+            } else {
+                formData.append(`boxes[${index}][image]`, "");
+            }
+        });
+
+        // ✅ Send request (no forceFormData)
+        post(route("headers.store"), formData, {
+            preserveScroll: true,
+            onSuccess: () => reset(),
+        });
     };
 
     return (
         <>
             <h1 className="text-muted">Create Menu Item</h1>
-            
+
             <div className="card mb-4">
                 <div className="card-body">
-                    <form onSubmit={submit}>
+                    <form onSubmit={submit} encType="multipart/form-data">
                         <div className="row">
+                            {/* --- BASIC INFO --- */}
+                            <div className="col-12">
+                                <h5 className="mb-3">Basic Information</h5>
+                            </div>
+
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="type" className="form-label">Menu Type</label>
+                                <label className="form-label">Menu Type</label>
                                 <select
-                                    id="type"
                                     className="form-select"
                                     value={data.type}
                                     onChange={(e) => handleTypeChange(e.target.value)}
@@ -68,79 +161,75 @@ const Create = (props) => {
                             </div>
 
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="parent_id" className="form-label">Parent Menu (Optional)</label>
+                                <label className="form-label">Parent Menu (Optional)</label>
                                 <select
-                                    id="parent_id"
                                     className="form-select"
                                     value={data.parent_id}
-                                    onChange={(e) => setData('parent_id', e.target.value)}
+                                    onChange={(e) => setData("parent_id", e.target.value)}
                                 >
                                     <option value="">No Parent (Main Menu)</option>
-                                    {props.menuItems?.filter(item => !item.parent_id).map(item => (
-                                        <option key={item.id} value={item.id}>{item.title}</option>
+                                    {props.menuItems?.filter(i => !i.parent_id).map(i => (
+                                        <option key={i.id} value={i.id}>{i.title}</option>
                                     ))}
                                 </select>
                             </div>
 
-                            {data.type !== 'custom' && (
+                            {data.type !== "custom" && (
                                 <div className="mb-3 col-md-6">
-                                    <label htmlFor="reference_id" className="form-label">
-                                        {data.type === 'school' && 'Select School'}
-                                        {data.type === 'department' && 'Select Department'}
-                                        {data.type === 'page' && 'Select Page'}
+                                    <label className="form-label">
+                                        {data.type === "school" && "Select School"}
+                                        {data.type === "department" && "Select Department"}
+                                        {data.type === "page" && "Select Page"}
                                     </label>
                                     <select
-                                        id="reference_id"
                                         className="form-select"
                                         value={data.reference_id}
                                         onChange={(e) => handleReferenceChange(e.target.value)}
                                     >
                                         <option value="">Select {data.type}</option>
-                                        {data.type === 'school' && schools.map(school => (
-                                            <option key={school.id} value={school.id}>{school.name}</option>
-                                        ))}
-                                        {data.type === 'department' && departments.map(dept => (
-                                            <option key={dept.id} value={dept.id}>{dept.name}</option>
-                                        ))}
-                                        {data.type === 'page' && pages.map(page => (
-                                            <option key={page.id} value={page.id}>{page.title}</option>
-                                        ))}
+                                        {data.type === "school" &&
+                                            schools.map((s) => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.name}
+                                                </option>
+                                            ))}
+                                        {data.type === "department" &&
+                                            departments.map((d) => (
+                                                <option key={d.id} value={d.id}>
+                                                    {d.name}
+                                                </option>
+                                            ))}
+                                        {data.type === "page" &&
+                                            pages.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.title}
+                                                </option>
+                                            ))}
                                     </select>
-                                    <div className="form-text text-danger">{errors.reference_id}</div>
                                 </div>
                             )}
 
                             <div className="mb-3 col-md-6">
-                                <label htmlFor="title" className="form-label">Menu Title <span className="text-danger">*</span></label>
+                                <label className="form-label">Menu Title</label>
                                 <input
                                     className="form-control"
                                     type="text"
-                                    id="title"
                                     value={data.title}
-                                    onChange={(e) => setData('title', e.target.value)}
-                                    placeholder="Enter menu title"
+                                    onChange={(e) => setData("title", e.target.value)}
                                 />
                                 <div className="form-text text-danger">{errors.title}</div>
                             </div>
 
-                            {/* Only show URL field for custom links */}
-                            {data.type === 'custom' && (
+                            {data.type === "custom" && (
                                 <div className="mb-3 col-md-6">
-                                    <label htmlFor="url" className="form-label">
-                                        URL (Optional)
-                                    </label>
+                                    <label className="form-label">URL (Optional)</label>
                                     <input
                                         className="form-control"
                                         type="text"
-                                        id="url"
                                         value={data.url}
-                                        onChange={(e) => setData('url', e.target.value)}
+                                        onChange={(e) => setData("url", e.target.value)}
                                         placeholder="/example-page or https://example.com"
                                     />
-                                    <div className="form-text">
-                                        Enter full URL path or leave empty for no link
-                                    </div>
-                                    <div className="form-text text-danger">{errors.url}</div>
                                 </div>
                             )}
 
@@ -154,7 +243,6 @@ const Create = (props) => {
                                     onChange={(e) => setData('display_order', parseInt(e.target.value) || 0)}
                                     min="0"
                                 />
-                                <div className="form-text">Lower numbers appear first</div>
                                 <div className="form-text text-danger">{errors.display_order}</div>
                             </div>
 
@@ -171,16 +259,183 @@ const Create = (props) => {
                                 </select>
                                 <div className="form-text text-danger">{errors.is_active}</div>
                             </div>
+
+                            {/* Section Information */}
+                            <div className="col-12 mt-4">
+                                <hr />
+                                <h5 className="mb-3">Section Information (Optional)</h5>
+                                <p className="text-muted">These fields are used for mega menu or dropdown sections.</p>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="section_title" className="form-label">Section Title</label>
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    id="section_title"
+                                    value={data.section_title}
+                                    onChange={(e) => setData('section_title', e.target.value)}
+                                    placeholder="Enter section title"
+                                />
+                                <div className="form-text text-danger">{errors.section_title}</div>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="section_subtitle" className="form-label">Section Subtitle</label>
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    id="section_subtitle"
+                                    value={data.section_subtitle}
+                                    onChange={(e) => setData('section_subtitle', e.target.value)}
+                                    placeholder="Enter section subtitle"
+                                />
+                                <div className="form-text text-danger">{errors.section_subtitle}</div>
+                            </div>
+
+                            <div className="mb-3 col-12">
+                                <label htmlFor="section_description" className="form-label">Section Description</label>
+                                <textarea
+                                    className="form-control"
+                                    id="section_description"
+                                    rows="3"
+                                    value={data.section_description}
+                                    onChange={(e) => setData('section_description', e.target.value)}
+                                    placeholder="Enter section description"
+                                />
+                                <div className="form-text text-danger">{errors.section_description}</div>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="section_button_text" className="form-label">Button Text</label>
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    id="section_button_text"
+                                    value={data.section_button_text}
+                                    onChange={(e) => setData('section_button_text', e.target.value)}
+                                    placeholder="e.g., Learn More, View All"
+                                />
+                                <div className="form-text text-danger">{errors.section_button_text}</div>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="section_button_url" className="form-label">Button URL</label>
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    id="section_button_url"
+                                    value={data.section_button_url}
+                                    onChange={(e) => setData('section_button_url', e.target.value)}
+                                    placeholder="/button-link or https://example.com"
+                                />
+                                <div className="form-text text-danger">{errors.section_button_url}</div>
+                            </div>
+
+                            {/* --- BOXES --- */}
+                            <div className="col-12 mt-4">
+                                <hr />
+                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 className="mb-0">Boxes (Max 3)</h5>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-primary"
+                                        onClick={addBox}
+                                        disabled={data.boxes.length >= 3}
+                                    >
+                                        <i className="fas fa-plus me-1"></i>Add Box
+                                    </button>
+                                </div>
+                            </div>
+
+                            {data.boxes.map((box, index) => (
+                                <div key={index} className="col-12 mb-4">
+                                    <div className="card">
+                                        <div className="card-header d-flex justify-content-between align-items-center">
+                                            <h6 className="mb-0">Box {index + 1}</h6>
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-danger"
+                                                onClick={() => removeBox(index)}
+                                            >
+                                                <i className="fas fa-trash me-1"></i>Remove
+                                            </button>
+                                        </div>
+                                        <div className="card-body">
+                                            <div className="row">
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label">Box Title</label>
+                                                    <input
+                                                        className="form-control"
+                                                        type="text"
+                                                        value={box.title}
+                                                        onChange={(e) =>
+                                                            updateBox(index, "title", e.target.value)
+                                                        }
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label">Box URL</label>
+                                                    <input
+                                                        className="form-control"
+                                                        type="text"
+                                                        value={box.url}
+                                                        onChange={(e) =>
+                                                            updateBox(index, "url", e.target.value)
+                                                        }
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label">Box Image</label>
+                                                    <div className="d-flex align-items-center">
+                                                        <input
+                                                            className="form-control"
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) =>
+                                                                handleFileChange(
+                                                                    index,
+                                                                    e.target.files
+                                                                )
+                                                            }
+                                                        />
+                                                        {box.image && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-danger ms-2"
+                                                                onClick={() => removeImage(index)}
+                                                            >
+                                                                <i class='bx bx-x'></i>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {box.image && (
+                                                        <div className="form-text text-success">
+                                                            <i className="fas fa-check me-1"></i>
+                                                            {box.image.name}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
-                        <div className="mt-3">
-                            <button 
-                                type="submit" 
-                                className="btn btn-primary"
+                        <div className="mt-4">
+                            <button
+                                type="submit"
+                                className="btn btn-primary me-2"
                                 disabled={processing}
                             >
-                                {processing ? 'Creating...' : 'Create Menu Item'}
+                                {processing ? "Creating..." : "Create Menu Item"}
                             </button>
+                            <a href={route("headers.index")} className="btn btn-secondary">
+                                Cancel
+                            </a>
                         </div>
                     </form>
                 </div>

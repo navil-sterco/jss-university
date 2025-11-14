@@ -60,10 +60,10 @@ const Edit = ({ happening }) => {
                                     onChange={(e) => setData("event_type", e.target.value)}
                                 >
                                     <option value="">Select Type</option>
-                                    <option value="Event">Event</option>
-                                    <option value="News">News</option>
-                                    <option value="Announcement">Announcement</option>
-                                    <option value="Media Coverage">Media Coverage</option>
+                                    <option value="News-Event">News & Event</option>
+                                    <option value="Gallery">Gallery</option>
+                                    <option value="Media-Coverage">Media Coverage</option>
+                                    <option value="Press-Release">Press-Release</option>
                                 </select>
                                 <div className="form-text text-danger">{errors.event_type}</div>
                             </div>

@@ -17,10 +17,12 @@ import {
   Images,
   CircleArrowRight,
   Blocks,
+  HandCoins,
 } from "lucide-react";
 
 const componentIcons = {
   testimonials: <Quote size={20} />,
+  values: <HandCoins size={20} />,
   pricing: <Wallpaper size={20} />,
   hero: <Images size={20} />,
   features: <Blocks size={20} />,

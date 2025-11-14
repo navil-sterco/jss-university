@@ -119,6 +119,7 @@ const Index = (props) => {
                             <tr>
                                 <th>Heading</th>
                                 <th>Subheading</th>
+                                <th>Shown On</th>
                                 <th>Link</th>
                                 <th>Linked Text</th>
                                 <th>Desktop Banner</th>
@@ -134,6 +135,7 @@ const Index = (props) => {
                                 <tr key={banner.id}>
                                     <td className='description-cell'><i className="bx bx-news bx-sm me-3"></i>{banner.heading}</td>
                                     <td className='description-cell'><i className="bx bx-news bx-sm me-3"></i>{banner.subheading}</td>
+                                    <td className='description-cell'><i className="bx bx-image bx-sm me-3"></i>{banner.banner_shown_on}</td>
                                     <td className='description-cell'><i className="bx bx-link bx-sm me-3"></i>{banner.link}</td>
                                     <td className='description-cell'><i className="bx bx-link bx-sm me-3"></i>{banner.linked_text}</td>
                                     <td>

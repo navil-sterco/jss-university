@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('short_description')->nullable();
             $table->string('slug')->unique();
             $table->string('image')->nullable();
+            $table->string('apply_now_link')->nullable();
+            $table->json('useful_links')->nullable();
             $table->string('program_image')->nullable();
             $table->string('course_image')->nullable();
             $table->string('prospectus')->nullable();

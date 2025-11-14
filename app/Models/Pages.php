@@ -13,6 +13,7 @@ class Pages extends Model
 {
     protected $fillable = [
         'parent_id',
+        'department_id',
         'title',
         'type',
         'image',

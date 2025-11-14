@@ -13,7 +13,7 @@ class ProgramController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-{
+    {
         $search = $request->input('search');
 
         $programs = Program::filter(['search' => $search])->orderBy('display_order', 'asc')->paginate(10)->withQueryString()->through(function ($program) {

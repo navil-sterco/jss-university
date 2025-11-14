@@ -5,16 +5,16 @@ import { ToastContainer, toast } from 'react-toastify';
 const CreateOrUpdateHomepageSections = ({ homepage }) => {
     const [activeSections, setActiveSections] = useState([]);
     const appUrl = usePage().props.appUrl;
-
-    // Initialize form data with proper JSON parsing
     const { data, setData, post, progress, processing, errors } = useForm({
         // About Section
         about_title: homepage.about_title || "",
         about_subtitle: homepage.about_subtitle || "",
         about_description: homepage.about_description || "",
         about_url: homepage.about_url || "",
+        about_chancellor_video_url: homepage.about_chancellor_video_url || "",
         about_chancellor_img: null,
-        about_chancellor_message: homepage.about_chancellor_message || "",
+        about_chancellor_title: homepage.about_chancellor_title || "",
+        about_chancellor_name: homepage.about_chancellor_name || "",
         highlights: Array.isArray(homepage.highlights) ? homepage.highlights : [],
         buttons: Array.isArray(homepage.buttons) ? homepage.buttons : [],
         logo_content: Array.isArray(homepage.logo_content) ? homepage.logo_content : [],
@@ -26,7 +26,8 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
 
         // Department Section
         department_title: homepage.department_title || "",
-        department_desc: homepage.department_desc || "",
+        department_subtitle: homepage.department_subtitle || "",
+        programs_title: homepage.programs_title || "",
         department_programs_count: homepage.department_programs_count || "",
         department_programs_text: homepage.department_programs_text || "",
         department_button_1_text: homepage.department_button_1_text || "",
@@ -50,7 +51,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         happening_subtitle: homepage.happening_subtitle || "",
     });
 
-    // Section configuration
     const sectionConfig = [
         {
             id: "about",
@@ -73,7 +73,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                 {
                     name: "about_description",
                     label: "Description",
-                    type: "textarea",
+                    type: "text",
                     placeholder: "About description",
                     rows: 4
                 },
@@ -90,11 +90,22 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                     accept: "image/*"
                 },
                 {
-                    name: "about_chancellor_message",
-                    label: "Chancellor Message",
-                    type: "textarea",
-                    placeholder: "Chancellor's message",
-                    rows: 3
+                    name: "about_chancellor_title",
+                    label: "Chancellor Title",
+                    type: "text",
+                    placeholder: "Chancellor Title",
+                },
+                {
+                    name: "about_chancellor_name",
+                    label: "Chancellor Name",
+                    type: "text",
+                    placeholder: "Chancellor Name",
+                },
+                {
+                    name: "about_chancellor_video_url",
+                    label: "Video URL",
+                    type: "url",
+                    placeholder: "https://youtube.com/chancellor"
                 }
             ],
             dynamicFields: [
@@ -180,11 +191,16 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                     placeholder: "Our Departments"
                 },
                 {
-                    name: "department_desc",
-                    label: "Description",
-                    type: "textarea",
-                    placeholder: "Department description",
-                    rows: 3
+                    name: "department_subtitle",
+                    label: "Subtitle",
+                    type: "text",
+                    placeholder: "Department Subtitle",
+                },
+                {
+                    name: "programs_title",
+                    label: "Program Title",
+                    type: "text",
+                    placeholder: "Program Title",
                 },
                 {
                     name: "department_programs_count",
@@ -304,7 +320,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         }
     ];
 
-    // Initialize active sections based on existing data
     useEffect(() => {
         const initiallyActive = [];
         sectionConfig.forEach(section => {
@@ -403,7 +418,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         }
     }, [flash]);
 
-    // Section management
     const addSection = (sectionId) => {
         if (!activeSections.includes(sectionId)) {
             setActiveSections(prev => [...prev, sectionId]);
@@ -413,7 +427,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
     const removeSection = (sectionId) => {
         setActiveSections(prev => prev.filter(id => id !== sectionId));
         
-        // Reset section data when removed
         const section = sectionConfig.find(s => s.id === sectionId);
         if (section) {
             section.fields.forEach(field => {
@@ -424,7 +437,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                 }
             });
             
-            // Reset dynamic fields
             if (section.dynamicFields) {
                 section.dynamicFields.forEach(dynamicField => {
                     setData(dynamicField.name, []);
@@ -433,12 +445,10 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         }
     };
 
-    // Field handlers
     const handleFieldChange = (fieldName, value) => {
         setData(fieldName, value);
     };
 
-    // Dynamic field handlers
     const addDynamicField = (fieldName, template = {}) => {
         const currentFields = data[fieldName] || [];
         setData(fieldName, [...currentFields, template]);
@@ -460,7 +470,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         setData(fieldName, updatedFields);
     };
 
-    // Nested dynamic field handlers for facilities
     const addNestedDynamicField = (parentFieldName, parentIndex, nestedFieldName, template = {}) => {
         const currentFields = data[parentFieldName] || [];
         const updatedFields = [...currentFields];
@@ -502,7 +511,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         setData(parentFieldName, updatedFields);
     };
 
-    // Handle file input for dynamic fields
     const handleDynamicFileChange = (fieldName, index, fileKey, file) => {
         const currentFields = data[fieldName] || [];
         const updatedFields = [...currentFields];
@@ -513,7 +521,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         setData(fieldName, updatedFields);
     };
 
-    // Render field based on type
     const renderField = (field) => {
         const value = data[field.name];
         const fieldError = errors[field.name];
@@ -580,7 +587,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                         />
                         {fieldError && <div className="invalid-feedback">{fieldError}</div>}
                         
-                        {/* Show current file if exists in homepage data */}
                         {homepage[field.name] && typeof homepage[field.name] === 'string' && (
                             <div className="mb-3 col-md-3">
                                 <label className="form-label" htmlFor="image">Current Image</label>
@@ -606,7 +612,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         }
     };
 
-    // Render dynamic fields
     const renderDynamicFields = (dynamicFieldConfig) => {
         const fieldName = dynamicFieldConfig.name;
         const fields = data[fieldName] || [];
@@ -718,7 +723,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         );
     };
 
-    // Render nested dynamic fields (for facility links)
     const renderNestedDynamicFields = (parentFieldName, parentIndex, nestedFieldConfig) => {
         const parentFields = data[parentFieldName] || [];
         const nestedFields = parentFields[parentIndex]?.[nestedFieldConfig.name] || [];
@@ -798,7 +802,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         );
     };
 
-    // Available sections (not yet added)
     const availableSections = sectionConfig.filter(
         section => !activeSections.includes(section.id)
     );
@@ -824,7 +827,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                 </h4>
             </div>
 
-            {/* Add Section Panel */}
             {availableSections.length > 0 && (
                 <div className="card mb-4">
                     <div className="card-header bg-light">
@@ -862,7 +864,6 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
             )}
 
             <form onSubmit={submit} encType="multipart/form-data">
-                {/* Active Sections */}
                 <div className="sections-container">
                     {activeSections.map(sectionId => {
                         const section = sectionConfig.find(s => s.id === sectionId);

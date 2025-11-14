@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('faculties', function (Blueprint $table) {
             $table->id();
             $table->foreignId('type_id')->constrained('types')->onDelete('cascade');
+            $table->foreignId('school_id')->constrained('schools')->onDelete('cascade');
             $table->string('name');
+            $table->string('slug');
             $table->string('email')->unique()->nullable();
             $table->string('profile')->nullable();
             $table->string('image')->nullable();

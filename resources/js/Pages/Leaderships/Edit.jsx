@@ -2,9 +2,11 @@ import { useForm, router, usePage } from "@inertiajs/react";
 import React, { useEffect, useRef, useState } from "react";
 
 const Edit = ({ leadership, types: initialTypes }) => {
-    const { data, setData, put, processing, errors, progress } = useForm({
+    const { data, setData, post, processing, errors, progress } = useForm({
+        _method: "PUT",
         type_id: leadership.type_id || "",
         name: leadership.name || "",
+        slug: leadership.slug || "",
         short_description: leadership.short_description || "",
         description: leadership.description?.length ? leadership.description : [""],
         biography: leadership.biography || "",
@@ -34,7 +36,7 @@ const Edit = ({ leadership, types: initialTypes }) => {
 
     const submit = (e) => {
         e.preventDefault();
-        put(route("leadership.update", leadership.id));
+        post(route("leadership.update", leadership.id));
     };
 
     const addField = (fieldName) => {
@@ -155,7 +157,6 @@ const Edit = ({ leadership, types: initialTypes }) => {
                                             className="form-control"
                                             value={data.type_id}
                                             onChange={(e) => setData("type_id", e.target.value)}
-                                            required
                                         >
                                             <option value="">Select Type</option>
                                             {initialTypes.map((type) => (
@@ -175,9 +176,20 @@ const Edit = ({ leadership, types: initialTypes }) => {
                                             className="form-control"
                                             value={data.name}
                                             onChange={(e) => setData("name", e.target.value)}
-                                            required
                                         />
                                         <div className="form-text text-danger">{errors.name}</div>
+                                    </div>
+
+                                    {/* Slug */}
+                                    <div className="mb-3 col-md-12">
+                                        <label className="form-label">Slug</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={data.slug}
+                                            onChange={(e) => setData("slug", e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.slug}</div>
                                     </div>
 
                                     {/* Short Description */}
@@ -189,7 +201,6 @@ const Edit = ({ leadership, types: initialTypes }) => {
                                             value={data.short_description}
                                             onChange={(e) => setData("short_description", e.target.value)}
                                             placeholder="Brief description"
-                                            required
                                         />
                                         <div className="form-text text-danger">{errors.short_description}</div>
                                     </div>

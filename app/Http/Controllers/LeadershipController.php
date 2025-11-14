@@ -4,7 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Type;
 use Inertia\Inertia;
+use App\Models\Pages;
+use App\Models\Course;
+use App\Models\School;
+use App\Models\Department;
 use App\Models\Leadership;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class LeadershipController extends Controller
@@ -17,6 +22,7 @@ class LeadershipController extends Controller
             return [
                 'id' => $item->id,
                 'name' => $item->name,
+                'slug' => $item->slug,
                 'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
                 'banner_image' => $item->banner_image ? asset($item->banner_image) : asset('assets/img/placeholder.png'),
                 'video' => $item->video,
@@ -51,18 +57,35 @@ class LeadershipController extends Controller
         $validated = $request->validate([
             'type_id' => 'required|exists:types,id',
             'name' => 'required|string|max:255',
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:leaderships,slug',
+                'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
+            ],
             'short_description' => 'required|string',
             'description' => 'nullable|array',
             'description.*' => 'nullable|string',
             'biography' => 'nullable|string',
-            'banner_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'banner_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'video' => 'nullable|file|mimes:mp4,avi,mov,webm|max:2048',
             'message' => 'nullable|array',
             'message.*' => 'nullable|string',
             'status' => 'nullable|boolean',
             'display_order' => 'nullable|integer|min:0',
         ]);
+
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+
+            if (Leadership::where('slug', $validated['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
+        }
 
         $validated['description'] = array_filter($validated['description'] ?? []);
         $validated['message'] = array_filter($validated['message'] ?? []);
@@ -108,18 +131,39 @@ class LeadershipController extends Controller
         $validated = $request->validate([
             'type_id' => 'required|exists:types,id',
             'name' => 'required|string|max:255',
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:leaderships,slug,' . $leadership->id,
+                'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
+            ],
             'short_description' => 'required|string',
             'description' => 'nullable|array',
             'description.*' => 'nullable|string',
             'biography' => 'nullable|string',
-            'banner_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'banner_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'video' => 'nullable|file|mimes:mp4,avi,mov|max:10240',
             'message' => 'nullable|array',
             'message.*' => 'nullable|string',
             'status' => 'nullable|boolean',
             'display_order' => 'nullable|integer|min:0',
         ]);
+
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+
+            $exists = Leadership::where('slug', $validated['slug'])
+                ->where('id', '!=', $leadership->id)
+                ->exists();
+
+            if ($exists) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
+        }
 
         $validated['description'] = array_filter($validated['description'] ?? []);
         $validated['message'] = array_filter($validated['message'] ?? []);
@@ -176,6 +220,11 @@ class LeadershipController extends Controller
             unlink(public_path($leadership->video));
         }
 
+        $leadership->schools()->detach();
+        $leadership->pages()->detach();
+        $leadership->departments()->detach();
+        $leadership->courses()->detach();
+
         $leadership->delete();
 
         return redirect()->route('leadership.index')->with('success', 'Leadership member deleted successfully!');
@@ -188,5 +237,51 @@ class LeadershipController extends Controller
         $leadership->save();
 
         return redirect()->route('leadership.index')->with('success', 'Leadership Status Updated!');
+    }
+
+    public function mapping($id)
+    {
+        $leaderships = Leadership::with(['schools:id,name', 'pages:id,title', 'departments:id,name', 'courses:id,name'])->findOrFail($id);
+        $schools = School::select('id', 'name')->get();
+        $pages = Pages::select('id', 'title')->get();
+        $departments = Department::with('school:id,name')->get()->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'name' => $department->name,
+                'school' => $department->school ? $department->school->name : null,
+            ];
+        });
+        $courses = Course::select('id', 'name')->get();
+
+        return Inertia::render('Leaderships/Mapping', [
+            'leaderships' => $leaderships,
+            'schools' => $schools,
+            'pages' => $pages,
+            'departments' => $departments,
+            'courses' => $courses,
+        ]);
+    }
+
+    public function attachMapping(Request $request, $id)
+    {
+        $leaderships = Leadership::findOrFail($id);
+
+        $validated = $request->validate([
+            'school_ids' => 'nullable|array',
+            'school_ids.*' => 'exists:schools,id',
+            'page_ids' => 'nullable|array',
+            'page_ids.*' => 'exists:pages,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
+            'course_ids' => 'nullable|array',
+            'course_ids.*' => 'exists:courses,id',
+        ]);
+
+        $leaderships->schools()->sync($validated['school_ids'] ?? []);
+        $leaderships->pages()->sync($validated['page_ids'] ?? []);
+        $leaderships->departments()->sync($validated['department_ids'] ?? []);
+        $leaderships->courses()->sync($validated['course_ids'] ?? []);
+
+        return redirect()->route('leadership.index', $leaderships->id)->with('success', 'Leadership mapped successfully!');
     }
 }

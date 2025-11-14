@@ -5,6 +5,7 @@ const Create = ({ types: initialTypes }) => {
     const { data, setData, post, processing, errors, progress } = useForm({
         type_id: "",
         name: "",
+        slug: "",
         short_description: "",
         description: [""],
         biography: "",
@@ -149,7 +150,6 @@ const Create = ({ types: initialTypes }) => {
                                             className="form-control"
                                             value={data.type_id}
                                             onChange={(e) => setData("type_id", e.target.value)}
-                                            required
                                         >
                                             <option value="">Select Type</option>
                                             {initialTypes.map((type) => (
@@ -169,9 +169,20 @@ const Create = ({ types: initialTypes }) => {
                                             className="form-control"
                                             value={data.name}
                                             onChange={(e) => setData("name", e.target.value)}
-                                            required
                                         />
                                         <div className="form-text text-danger">{errors.name}</div>
+                                    </div>
+
+                                    {/* Slug */}
+                                    <div className="mb-3 col-md-12">
+                                        <label className="form-label">Slug</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={data.slug}
+                                            onChange={(e) => setData("slug", e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.slug}</div>
                                     </div>
 
                                     {/* Short Description */}
@@ -183,7 +194,6 @@ const Create = ({ types: initialTypes }) => {
                                             value={data.short_description}
                                             onChange={(e) => setData("short_description", e.target.value)}
                                             placeholder="Brief description"
-                                            required
                                         />
                                         <div className="form-text text-danger">{errors.short_description}</div>
                                     </div>

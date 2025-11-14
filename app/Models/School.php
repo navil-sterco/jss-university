@@ -16,7 +16,8 @@ class School extends Model
         'name', 'menu_name', 'name_short', 'short_description', 'slug', 'image',
         'program_image', 'course_image', 'prospectus', 'alt_prospectus', 'icons',
         'thumbnail_image', 'status', 'display_order', 'academic_years', 'dean_message',
-        'mobile_contact', 'virtual_tour', 'virtual_display_order',
+        'mobile_contact', 'virtual_tour', 'virtual_display_order','apply_now_link',
+        'useful_links',
 
         'about_school_title', 'about_school_subtitle', 'about_school_description',
         'about_school_url', 'about_school_chancellor_img', 'about_school_chancellor_logo',
@@ -35,6 +36,7 @@ class School extends Model
         'about_highlights' => 'array',
         'about_buttons' => 'array',
         'department_buttons' => 'array',
+        'useful_links' => 'array',
     ];
 
     public function banners()

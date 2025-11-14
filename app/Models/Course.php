@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Degree;
 use App\Models\Program;
 use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
@@ -11,11 +12,12 @@ class Course extends Model
 {
     protected $fillable = [
         'department_id',
-        'program_id',
+        'degree_id',
         'name',
         'menu_name',
         'name_short',
         'slug',
+        'useful_links',
         'display_order',
         'status',
         'course_duration',
@@ -49,6 +51,7 @@ class Course extends Model
         'pso' => 'array',
         'curriculum_desc' => 'array',
         'career_opportunities' => 'array',
+        'useful_links' => 'array',
     ];
 
     public function department()
@@ -56,9 +59,9 @@ class Course extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function program()
+    public function degree()
     {
-        return $this->belongsTo(Program::class);
+        return $this->belongsTo(Degree::class);
     }
 
     public function scopeFilter(Builder $query, $filters)

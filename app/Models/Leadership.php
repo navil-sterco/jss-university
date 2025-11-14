@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use App\Models\Type;
+use App\Models\Pages;
+use App\Models\Course;
+use App\Models\School;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -10,7 +14,8 @@ class Leadership extends Model
 {
     protected $fillable = [
         'type_id',
-        'name', 
+        'name',
+        'slug',
         'image',
         'banner_image',
         'video',
@@ -26,6 +31,26 @@ class Leadership extends Model
         'description' => 'array',
         'message' => 'array',
     ];
+
+    public function schools()
+    {
+        return $this->belongsToMany(School::class, 'leaderships_school', 'leadership_id', 'school_id')->withTimestamps();
+    }
+
+    public function pages()
+    {
+        return $this->belongsToMany(Pages::class, 'leaderships_page', 'leadership_id', 'page_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'leaderships_department', 'leadership_id', 'department_id')->withTimestamps();
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'leaderships_courses', 'leadership_id', 'course_id')->withTimestamps();
+    }
 
     public function type()
     {

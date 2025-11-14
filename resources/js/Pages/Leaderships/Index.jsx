@@ -154,6 +154,7 @@ const Index = (props) => {
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Slug</th>
                                 <th>Type</th>
                                 <th>Image</th>
                                 <th>Display Order</th>
@@ -167,6 +168,10 @@ const Index = (props) => {
                                     <td>
                                         <i className="bx bx-user bx-sm me-3"></i>
                                         {leader.name}
+                                    </td>
+                                    <td>
+                                        <i className="bx bx-link bx-sm me-3"></i>
+                                        {leader.slug}
                                     </td>
                                     <td>
                                         <i className="bx bx-category bx-sm me-3"></i>
@@ -206,6 +211,12 @@ const Index = (props) => {
                                     </td>
                                     <td>
                                         <div className="d-flex align-items-center gap-1">
+                                            <Link
+                                                className="btn btn-sm btn-outline-primary p-1 m-1"
+                                                href={route("leadership.mapping", leader.id)}
+                                            >
+                                                <span className="tf-icons bx bx-right-arrow-circle bx-18px me-2"></span>Mapping
+                                            </Link>
                                             <div className="dropdown">
                                                 <button
                                                     className="btn btn-outline-secondary p-1 dropdown-toggle hide-arrow"

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('type_id')->constrained('types')->onDelete('cascade');
             $table->string('name');
+            $table->string('slug');
             $table->text('short_description');
             $table->json('description')->nullable();
             $table->text('biography')->nullable();

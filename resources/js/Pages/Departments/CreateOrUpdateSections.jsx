@@ -19,6 +19,7 @@ const Section = ({ department }) => {
         status: 1,
 
         // Dean/HOD Message
+        hod_title: department.hod_title || "",
         hod_name: department.hod_name || "",
         hod_designation: department.hod_designation || "",
         hod_messages: department.hod_messages || [""],
@@ -26,6 +27,7 @@ const Section = ({ department }) => {
 
         // Courses
         courses_title: department.courses_title || "",
+        courses_subtitle: department.courses_subtitle || "",
         courses_image: null,
 
         // Faculty
@@ -35,6 +37,8 @@ const Section = ({ department }) => {
         // Laboratories
         lab_title: department.lab_title || "",
         lab_subtitle: department.lab_subtitle || "",
+        lab_description: department.lab_description || "",
+        lab_url: department.lab_url || "",
 
         // Happening
         happening_title: department.happening_title || "",
@@ -109,6 +113,12 @@ const Section = ({ department }) => {
             description: "Head of Department message and information",
             fields: [
                 {
+                    name: "hod_title",
+                    label: "HOD Title",
+                    type: "text",
+                    placeholder: "HOD Message"
+                },
+                {
                     name: "hod_name",
                     label: "HOD Name",
                     type: "text",
@@ -145,6 +155,12 @@ const Section = ({ department }) => {
                     label: "Courses Title",
                     type: "text",
                     placeholder: "Courses Offered"
+                },
+                {
+                    name: "courses_subtitle",
+                    label: "Courses SubTitle",
+                    type: "text",
+                    placeholder: "Courses"
                 },
                 {
                     name: "courses_image",
@@ -191,7 +207,19 @@ const Section = ({ department }) => {
                     label: "Laboratory Subtitle",
                     type: "text",
                     placeholder: "Explore Our Advanced Labs"
-                }
+                },
+                {
+                    name: "lab_description",
+                    label: "Laboratory Description",
+                    type: "text",
+                    placeholder: "Our Laboratories is Wide"
+                },
+                {
+                    name: "lab_url",
+                    label: "Laboratory Url",
+                    type: "text",
+                    placeholder: "/chemistry-lab"
+                },
             ]
         },
         {

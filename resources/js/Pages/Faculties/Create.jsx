@@ -1,21 +1,26 @@
 import { useForm, router } from "@inertiajs/react";
 import React, { useEffect, useRef, useState } from "react";
 
-const Create = ({ types: initialTypes }) => {
+const Create = ({ types: initialTypes, schools }) => {
     const { data, setData, post, processing, errors, progress } = useForm({
         type_id: "",
+        school_id: "",
         name: "",
+        slug: "",
         email: "",
         profile: "",
         image: null,
         linkedin_url: "",
         education: [""],
-        research: [""],
+        research: [{ title: "", image: null, link: "" }],
         teaching: [""],
         award: [""],
         social_engagement: [""],
         display_order: 100,
     });
+
+    console.log(errors);
+    
 
     const modalRef = useRef(null);
     const modalInstance = useRef(null);
@@ -33,7 +38,11 @@ const Create = ({ types: initialTypes }) => {
     };
 
     const addField = (fieldName) => {
-        setData(fieldName, [...data[fieldName], ""]);
+        if (fieldName === 'research') {
+            setData(fieldName, [...data[fieldName], { title: "", image: null, link: "" }]);
+        } else {
+            setData(fieldName, [...data[fieldName], ""]);
+        }
     };
 
     const removeField = (fieldName, index) => {
@@ -47,6 +56,34 @@ const Create = ({ types: initialTypes }) => {
         setData(fieldName, updatedFields);
     };
 
+    // Research specific functions
+    const updateResearchField = (researchIndex, field, value) => {
+        const updatedResearch = [...data.research];
+        updatedResearch[researchIndex] = {
+            ...updatedResearch[researchIndex],
+            [field]: value
+        };
+        setData("research", updatedResearch);
+    };
+
+    const handleResearchImageChange = (researchIndex, file) => {
+        const updatedResearch = [...data.research];
+        updatedResearch[researchIndex] = {
+            ...updatedResearch[researchIndex],
+            image: file
+        };
+        setData("research", updatedResearch);
+    };
+
+    const removeResearchImage = (researchIndex) => {
+        const updatedResearch = [...data.research];
+        updatedResearch[researchIndex] = {
+            ...updatedResearch[researchIndex],
+            image: null
+        };
+        setData("research", updatedResearch);
+    };
+
     const addType = (e) => {
         e.preventDefault();
         if (!newType.trim()) return;
@@ -54,7 +91,7 @@ const Create = ({ types: initialTypes }) => {
         setTypeLoading(true);
         router.post(route('types.store'), {
             name: newType,
-            element:"faculty"
+            element: "faculty"
         }, {
             preserveScroll: true,
             onSuccess: () => {
@@ -80,7 +117,7 @@ const Create = ({ types: initialTypes }) => {
         setTypeLoading(true);
         router.put(route('types.update', editingType), {
             name: editTypeName,
-            element:"faculty"
+            element: "faculty"
         }, {
             preserveScroll: true,
             onSuccess: () => {
@@ -109,7 +146,7 @@ const Create = ({ types: initialTypes }) => {
 
     const deleteType = () => {
         if (!itemIdDelete) return;
-        
+
         setTypeLoading(true);
         router.delete(route('types.destroy', itemIdDelete), {
             preserveScroll: true,
@@ -133,10 +170,20 @@ const Create = ({ types: initialTypes }) => {
         setEditTypeName("");
     };
 
+    // Function to get image source for display
+    const getImageSrc = (image) => {
+        if (image instanceof File) {
+            return URL.createObjectURL(image);
+        } else if (image && typeof image === 'string') {
+            return image;
+        }
+        return null;
+    };
+
     return (
         <>
             <h1 className="text-muted">Add Faculty/Staff</h1>
-            
+
             <div className="row">
                 <div className="col-md-8 mb-2">
                     <div className="card">
@@ -150,7 +197,6 @@ const Create = ({ types: initialTypes }) => {
                                             className="form-control"
                                             value={data.type_id}
                                             onChange={(e) => setData("type_id", e.target.value)}
-                                            required
                                         >
                                             <option value="">Select Type</option>
                                             {initialTypes.map((type) => (
@@ -162,6 +208,25 @@ const Create = ({ types: initialTypes }) => {
                                         <div className="form-text text-danger">{errors.type_id}</div>
                                     </div>
 
+                                    {/* School */}
+                                    <div className="mb-3 col-md-6">
+                                        <label className="form-label">School <span className="text-danger">*</span></label>
+                                        <select
+                                            className="form-control"
+                                            value={data.school_id}
+                                            onChange={(e) => setData("school_id", e.target.value)}
+                                            
+                                        >
+                                            <option value="">Select Type</option>
+                                            {schools.map((school) => (
+                                                <option key={school.id} value={school.id}>
+                                                    {school.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="form-text text-danger">{errors.school_id}</div>
+                                    </div>
+
                                     {/* Name */}
                                     <div className="mb-3 col-md-6">
                                         <label className="form-label">Full Name <span className="text-danger">*</span></label>
@@ -170,9 +235,21 @@ const Create = ({ types: initialTypes }) => {
                                             className="form-control"
                                             value={data.name}
                                             onChange={(e) => setData("name", e.target.value)}
-                                            required
+                                            
                                         />
                                         <div className="form-text text-danger">{errors.name}</div>
+                                    </div>
+
+                                    {/* Slug */}
+                                    <div className="mb-3 col-md-12">
+                                        <label className="form-label">Slug</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={data.slug}
+                                            onChange={(e) => setData("slug", e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.slug}</div>
                                     </div>
 
                                     {/* Email */}
@@ -191,7 +268,7 @@ const Create = ({ types: initialTypes }) => {
                                     <div className="mb-3 col-md-6">
                                         <label className="form-label">LinkedIn URL</label>
                                         <input
-                                            type="url"
+                                            type="text"
                                             className="form-control"
                                             value={data.linkedin_url}
                                             onChange={(e) => setData("linkedin_url", e.target.value)}
@@ -262,7 +339,7 @@ const Create = ({ types: initialTypes }) => {
                                         <div className="form-text text-danger">{errors.education}</div>
                                     </div>
 
-                                    {/* Research - Dynamic Fields */}
+                                    {/* Research - Enhanced Dynamic Fields */}
                                     <div className="mb-3 col-12">
                                         <div className="d-flex justify-content-between align-items-center mb-2">
                                             <label className="form-label">Research</label>
@@ -271,27 +348,86 @@ const Create = ({ types: initialTypes }) => {
                                                 className="btn btn-sm btn-outline-primary"
                                                 onClick={() => addField('research')}
                                             >
-                                                <i className="bx bx-plus me-1"></i> Add Research Area
+                                                <i className="bx bx-plus me-1"></i> Add Research
                                             </button>
                                         </div>
-                                        {data.research.map((research, index) => (
-                                            <div key={index} className="input-group mb-2">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    value={research}
-                                                    onChange={(e) => updateField('research', index, e.target.value)}
-                                                    placeholder="Research interests and areas"
-                                                />
-                                                {data.research.length > 1 && (
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-outline-danger"
-                                                        onClick={() => removeField('research', index)}
-                                                    >
-                                                        <i className="bx bx-trash"></i>
-                                                    </button>
-                                                )}
+
+                                        {data.research.map((research, researchIndex) => (
+                                            <div key={researchIndex} className="card mb-3">
+                                                <div className="card-header d-flex justify-content-between align-items-center">
+                                                    <h6 className="mb-0">Research {researchIndex + 1}</h6>
+                                                    {data.research.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-danger"
+                                                            onClick={() => removeField('research', researchIndex)}
+                                                        >
+                                                            <i className="bx bx-trash"></i>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="card-body">
+                                                    {/* Research Title */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Research Title</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={research.title}
+                                                            onChange={(e) => updateResearchField(researchIndex, 'title', e.target.value)}
+                                                            placeholder="Research project title or area"
+                                                        />
+                                                        <div className="form-text text-danger">
+                                                            {errors[`research.${researchIndex}.title`]}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Research Image */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Research Image</label>
+                                                        <div className="d-flex align-items-center">
+                                                            <input
+                                                                type="file"
+                                                                className="form-control"
+                                                                onChange={(e) => handleResearchImageChange(researchIndex, e.target.files[0])}
+                                                                accept="image/*"
+                                                            />
+                                                            {(research.image instanceof File || (research.image && typeof research.image === 'string')) && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-danger ms-2"
+                                                                    onClick={() => removeResearchImage(researchIndex)}
+                                                                >
+                                                                    <i className='bx bx-x'></i>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        {(research.image instanceof File || (research.image && typeof research.image === 'string')) && (
+                                                            <div className="form-text text-success">
+                                                                <i className="fas fa-check me-1"></i>
+                                                                {research.image instanceof File ? research.image.name : 'Image exists'}
+                                                            </div>
+                                                        )}
+                                                        <div className="form-text text-danger">
+                                                            {errors[`research.${researchIndex}.image`]}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Research Link */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Research Link</label>
+                                                        <input
+                                                            type="url"
+                                                            className="form-control"
+                                                            value={research.link}
+                                                            onChange={(e) => updateResearchField(researchIndex, 'link', e.target.value)}
+                                                            placeholder="https://example.com/research"
+                                                        />
+                                                        <div className="form-text text-danger">
+                                                            {errors[`research.${researchIndex}.link`]}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                         <div className="form-text text-danger">{errors.research}</div>
@@ -468,8 +604,8 @@ const Create = ({ types: initialTypes }) => {
                                         onChange={(e) => setNewType(e.target.value)}
                                         disabled={typeLoading}
                                     />
-                                    <button 
-                                        type="submit" 
+                                    <button
+                                        type="submit"
                                         className="btn btn-primary"
                                         disabled={!newType.trim() || typeLoading}
                                     >
@@ -499,8 +635,8 @@ const Create = ({ types: initialTypes }) => {
                                                         disabled={typeLoading}
                                                     />
 
-                                                    <button 
-                                                        type="submit" 
+                                                    <button
+                                                        type="submit"
                                                         className="btn btn-success btn-sm me-1"
                                                         disabled={!editTypeName.trim() || typeLoading}
                                                     >
@@ -510,8 +646,8 @@ const Create = ({ types: initialTypes }) => {
                                                             <i className="bx bx-check"></i>
                                                         )}
                                                     </button>
-                                                    <button 
-                                                        type="button" 
+                                                    <button
+                                                        type="button"
                                                         className="btn btn-secondary btn-sm"
                                                         onClick={cancelEdit}
                                                         disabled={typeLoading}
@@ -523,14 +659,14 @@ const Create = ({ types: initialTypes }) => {
                                                 <>
                                                     <span>{type.name}</span>
                                                     <div className="btn-group btn-group-sm">
-                                                        <button 
+                                                        <button
                                                             className="btn btn-outline-primary"
                                                             onClick={() => startEditType(type)}
                                                             disabled={typeLoading}
                                                         >
                                                             <i className="bx bx-edit"></i>
                                                         </button>
-                                                        <button 
+                                                        <button
                                                             className="btn btn-outline-danger"
                                                             onClick={() => showDeleteModal(type.id)}
                                                             disabled={typeLoading}
@@ -557,9 +693,9 @@ const Create = ({ types: initialTypes }) => {
                                             Are you sure you want to delete this type? This action cannot be undone.
                                         </div>
                                         <div className="modal-footer">
-                                            <button 
-                                                type="button" 
-                                                className="btn btn-secondary" 
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary"
                                                 data-bs-dismiss="modal"
                                             >
                                                 Cancel

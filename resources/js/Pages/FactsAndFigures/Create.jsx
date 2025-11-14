@@ -1,15 +1,17 @@
 import { useForm } from '@inertiajs/react';
-import React from 'react';
+import React, { useRef } from 'react';
 
 const Create = () => {
     const { data, setData, post, errors, processing,progress } = useForm({
         title: "",
         description: "",
         figure: "",
+        image: "",
         status: 1,
         show_on_home: 0,
         display_order: 100,
     });
+    const fileInputRef = useRef(null);
 
     const submit = (e) => {
         e.preventDefault();
@@ -24,8 +26,8 @@ const Create = () => {
                     <div className="card-body">
                         <div className="row">
                             {/* Title */}
-                            <div className="mb-3 col-md-12">
-                                <label htmlFor="title" className="form-label">Title <span className="text-danger">*</span></label>
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="title" className="form-label">Title</label>
                                 <input
                                     type="text"
                                     id="title"
@@ -35,6 +37,22 @@ const Create = () => {
                                     placeholder="Enter title"
                                 />
                                 <div className="form-text text-danger">{errors.title}</div>
+                            </div>
+
+                            {/* Image */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label" htmlFor="image">Image <span className="text-danger">*</span></label>
+                                <input
+                                    type="file"
+                                    id="image"
+                                    className="form-control"
+                                    ref={fileInputRef}
+                                    onChange={(e) =>
+                                        setData("image", e.target.files[0])
+                                    }
+                                    accept="image/png, image/jpeg, image/webp"
+                                />
+                                <div className="form-text text-danger">{errors.image}</div>
                             </div>
 
                             {/* Description */}

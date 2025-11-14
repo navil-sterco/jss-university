@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Pages;
+use App\Models\Course;
 use App\Models\School;
 use App\Models\Recruiter;
+use App\Models\Department;
 use Illuminate\Http\Request;
 
 class RecruiterController extends Controller
@@ -129,6 +131,11 @@ class RecruiterController extends Controller
         if ($recruiter->image && file_exists(public_path($recruiter->image))) {
             @unlink(public_path($recruiter->image));
         }
+
+        $recruiter->schools()->detach();
+        $recruiter->pages()->detach();
+        $recruiter->departments()->detach();
+        $recruiter->courses()->detach();
         
         $recruiter->delete();
 
@@ -146,14 +153,24 @@ class RecruiterController extends Controller
 
     public function mapping($id)
     {
-        $recruiters = Recruiter::with(['schools:id,name', 'pages:id,title'])->findOrFail($id);
+        $recruiters = Recruiter::with(['schools:id,name', 'pages:id,title', 'departments:id,name', 'courses:id,name'])->findOrFail($id);
         $schools = School::select('id', 'name')->get();
         $pages = Pages::select('id', 'title')->get();
+        $departments = Department::with('school:id,name')->get()->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'name' => $department->name,
+                'school' => $department->school ? $department->school->name : null,
+            ];
+        });
+        $courses = Course::select('id', 'name')->get();
 
         return Inertia::render('Recruiters/Mapping', [
             'recruiters' => $recruiters,
             'schools' => $schools,
             'pages' => $pages,
+            'departments' => $departments,
+            'courses' => $courses,
         ]);
     }
 
@@ -166,14 +183,19 @@ class RecruiterController extends Controller
             'school_ids.*' => 'exists:schools,id',
             'page_ids' => 'nullable|array',
             'page_ids.*' => 'exists:pages,id',
-            'show_on_home' =>'nullable',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
+            'course_ids' => 'nullable|array',
+            'course_ids.*' => 'exists:courses,id',
         ]);
 
         $recruiters->show_on_home = $request->show_on_home;
         $recruiters->save();
         $recruiters->schools()->sync($validated['school_ids'] ?? []);
         $recruiters->pages()->sync($validated['page_ids'] ?? []);
+        $recruiters->departments()->sync($validated['department_ids'] ?? []);
+        $recruiters->courses()->sync($validated['course_ids'] ?? []);
 
-        return redirect()->route('recruiters.mapping', $recruiters->id)->with('success', 'Recruiter mapped successfully!');
+        return redirect()->route('recruiters.index', $recruiters->id)->with('success', 'Recruiter mapped successfully!');
     }
 }

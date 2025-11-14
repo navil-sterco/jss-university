@@ -8,6 +8,11 @@ const CreateOrUpdateSections = ({ course }) => {
     
     // Simplified flat data structure
     const { data, setData, post, processing, errors } = useForm({
+        // Overview
+        overview_title: course.overview_title || "",
+        overview_desc: course.overview_desc || "",
+        overview_image: null,
+
         // Eligibility
         eligibility_criteria: course.eligibility_criteria || "",
         eligibility_criteria_desc: course.eligibility_criteria_desc || "",
@@ -34,13 +39,42 @@ const CreateOrUpdateSections = ({ course }) => {
         course_total_fees: course.course_total_fees || "",
         fee_structure_pdf: null,
         fee_structure_image: null,
-
+        
         // Career Opportunities
-        career_opportunities: course.career_opportunities || [""],
+        career_title: course.career_title || "",
+        career_subtitle: course.career_subtitle || "",
+        career_desc: course.career_desc || "",
+        career_image: null,
     });
 
     // Section configuration
     const sectionConfig = [
+        {
+            id: "Overview",
+            label: "Overview Info",
+            icon: "⏳",
+            description: "Overview Image And Title",
+            fields: [
+                {
+                    name: "overview_title",
+                    label: "Title",
+                    type: "text",
+                    placeholder: "Title"
+                },
+                {
+                    name: "overview_image",
+                    label: "Overview Image",
+                    type: "file",
+                    accept: "image/*"
+                },
+                {
+                    name: "overview_desc",
+                    label: "Description",
+                    type: "textarea",
+                    placeholder: "Desc"
+                }
+            ]
+        },
         {
             id: "eligibility",
             label: "Eligibility Criteria",
@@ -190,10 +224,25 @@ const CreateOrUpdateSections = ({ course }) => {
             description: "Career prospects and opportunities",
             fields: [
                 {
-                    name: "career_opportunities",
-                    label: "Career Opportunities",
-                    type: "array",
-                    placeholder: "Add career opportunity"
+                    name: "career_title",
+                    label: "Career Title",
+                    type: "text",
+                },
+                {
+                    name: "career_subtitle",
+                    label: "Career SubTitle",
+                    type: "text",
+                },
+                {
+                    name: "career_desc",
+                    label: "Career Desc",
+                    type: "textarea",
+                },
+                {
+                    name: "career_image",
+                    label: "Career Image",
+                    type: "file",
+                    accept: "image/*"
                 }
             ]
         }

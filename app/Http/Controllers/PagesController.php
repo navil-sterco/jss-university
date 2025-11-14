@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Pages;
 use App\Models\Banner;
+use App\Models\Department;
 use App\Models\PageSection;
 use App\Models\Testimonial;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 class PagesController extends Controller
@@ -45,7 +47,10 @@ class PagesController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Pages/Create');
+        $departments = Department::select('id','name')->get();
+        return Inertia::render('Pages/Create',[
+            'departments' => $departments,
+        ]);
     }
 
     /**
@@ -53,7 +58,6 @@ class PagesController extends Controller
      */
     public function store(Request $request)
     {
-
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|string|max:255',
@@ -68,6 +72,13 @@ class PagesController extends Controller
             'sub_title' => 'nullable|string|max:255',
             'target_blank' => 'required|boolean',
             'publish_date' => 'required|date',
+            'department_id' => [
+                'nullable',
+                Rule::requiredIf(function () use ($request) {
+                    return in_array($request->type, ['Laboratory', 'Facility']);
+                }),
+                'exists:departments,id'
+            ],
         ]);
 
         if (empty($validated['slug'])) {
@@ -107,8 +118,10 @@ class PagesController extends Controller
      */
     public function edit(Pages $page)
     {
+        $departments = Department::select('id','name')->get();
         return Inertia::render('Pages/Edit',[
             'page'=> $page,
+            'departments' => $departments,
         ]);
     }
 
@@ -130,6 +143,13 @@ class PagesController extends Controller
             'sub_title' => 'nullable|string|max:255',
             'target_blank' => 'required|boolean',
             'publish_date' => 'required|date',
+            'department_id' => [
+                'nullable',
+                Rule::requiredIf(function () use ($request) {
+                    return in_array($request->type, ['Laboratory', 'Facility']);
+                }),
+                'exists:departments,id'
+            ],
         ]);
 
         if (empty($validated['slug'])) {

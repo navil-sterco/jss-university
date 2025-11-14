@@ -4,7 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Type;
 use Inertia\Inertia;
+use App\Models\Pages;
+use App\Models\Course;
+use App\Models\School;
 use App\Models\Faculty;
+use App\Models\Department;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class FacultyController extends Controller
@@ -14,9 +19,25 @@ class FacultyController extends Controller
         $search = $request->input('search');
 
         $faculty = Faculty::with('type')->filter(['search' => $search])->orderBy('display_order', 'asc')->paginate(10)->withQueryString()->through(function ($faculty) {
+            $researchData = [];
+            if ($faculty->research) {
+                $parsedResearch = is_array($faculty->research) ? $faculty->research : json_decode($faculty->research, true);
+                if (is_array($parsedResearch)) {
+                    $researchData = array_map(function($research) {
+                        return [
+                            'title' => $research['title'] ?? null,
+                            'link' => $research['link'] ?? null,
+                            'image' => $research['image'] ? asset($research['image']) : null
+                        ];
+                    }, $parsedResearch);
+                }
+            }
+
             return [
                 'id' => $faculty->id,
                 'name' => $faculty->name,
+                'school' => $faculty->school->name ?? 'N/A',
+                'slug' => $faculty->slug,
                 'email' => $faculty->email,
                 'profile' => $faculty->profile,
                 'image' => $faculty->image ? asset($faculty->image) : asset('assets/img/placeholder.png'),
@@ -24,7 +45,7 @@ class FacultyController extends Controller
                 'type' => $faculty->type->name ?? 'N/A',
                 'type_id' => $faculty->type_id,
                 'education' => $faculty->education,
-                'research' => $faculty->research,
+                'research' => $researchData, // Updated research structure
                 'teaching' => $faculty->teaching,
                 'award' => $faculty->award,
                 'social_engagement' => $faculty->social_engagement,
@@ -34,7 +55,7 @@ class FacultyController extends Controller
                 'updated_at' => $faculty->updated_at->format('M d, Y'),
             ];
         });
-
+        
         return Inertia::render('Faculties/Index', [
             'faculty' => $faculty,
             'searchTerm' => $search ?? '',
@@ -45,6 +66,7 @@ class FacultyController extends Controller
     {
         return Inertia::render('Faculties/Create', [
             'types' => Type::where('element', 'faculty')->get(),
+            'schools' => School::select('id', 'name')->get(),
         ]);
     }
 
@@ -52,15 +74,25 @@ class FacultyController extends Controller
     {
         $validated = $request->validate([
             'type_id' => 'required|exists:types,id',
+            'school_id' => 'required|exists:schools,id',
             'name' => 'required|string|max:255',
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:faculties,slug',
+                'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
+            ],
             'email' => 'nullable|email|unique:faculties,email',
             'profile' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'linkedin_url' => 'nullable|url|max:255',
+            'linkedin_url' => 'nullable|max:255',
             'education' => 'nullable|array',
             'education.*' => 'nullable|string|max:500',
             'research' => 'nullable|array',
-            'research.*' => 'nullable|string|max:500',
+            'research.*.title' => 'nullable|string|max:255',
+            'research.*.link' => 'nullable|url|max:500',
+            'research.*.image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'teaching' => 'nullable|array',
             'teaching.*' => 'nullable|string|max:500',
             'award' => 'nullable|array',
@@ -71,19 +103,57 @@ class FacultyController extends Controller
             'status' => 'nullable|boolean',
         ]);
 
+        // Filter empty fields
         $validated['education'] = array_filter($validated['education'] ?? []);
-        $validated['research'] = array_filter($validated['research'] ?? []);
         $validated['teaching'] = array_filter($validated['teaching'] ?? []);
         $validated['award'] = array_filter($validated['award'] ?? []);
         $validated['social_engagement'] = array_filter($validated['social_engagement'] ?? []);
         $validated['status'] = $validated['status'] ?? true;
+        
+        // Handle slug generation
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['name']);
 
+            if (Faculty::where('slug', $validated['slug'])->exists()) {
+                return back()
+                    ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                    ->withInput();
+            }
+        }
+
+        // Handle main profile image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
             $image->move(public_path('assets/img/faculty/'), $imageName);
             $validated['image'] = 'assets/img/faculty/' . $imageName;
         }
+
+        // Handle research images
+        if ($request->has('research') && is_array($validated['research'])) {
+            foreach ($validated['research'] as $index => &$research) {
+                // Handle research image upload
+                if ($request->hasFile("research.{$index}.image")) {
+                    $researchImage = $request->file("research.{$index}.image");
+                    $researchImageName = time() . '_research_' . $index . '_' . uniqid() . '.' . $researchImage->getClientOriginalExtension();
+                    $researchImage->move(public_path('assets/img/faculty/research/'), $researchImageName);
+                    $research['image'] = 'assets/img/faculty/research/' . $researchImageName;
+                } else {
+                    $research['image'] = null;
+                }
+            }
+        }
+
+        // Convert research array to JSON for storage
+        if (isset($validated['research'])) {
+            $validated['research'] = json_encode($validated['research']);
+        }
+
+        // Convert other arrays to JSON
+        $validated['education'] = !empty($validated['education']) ? json_encode($validated['education']) : null;
+        $validated['teaching'] = !empty($validated['teaching']) ? json_encode($validated['teaching']) : null;
+        $validated['award'] = !empty($validated['award']) ? json_encode($validated['award']) : null;
+        $validated['social_engagement'] = !empty($validated['social_engagement']) ? json_encode($validated['social_engagement']) : null;
 
         Faculty::create($validated);
 
@@ -93,10 +163,12 @@ class FacultyController extends Controller
     public function edit(Faculty $faculty)
     {
         $types = Type::where('element', 'faculty')->get();
+        $schools = School::select('id', 'name')->get();
         
         return Inertia::render('Faculties/Edit', [
             'faculty' => $faculty,
             'types' => $types,
+            'schools' => $schools,
         ]);
     }
 
@@ -104,14 +176,23 @@ class FacultyController extends Controller
     {
         $validated = $request->validate([
             'type_id' => 'required|exists:types,id',
+            'school_id' => 'required|exists:schools,id',
             'name' => 'required|string|max:255',
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:faculties,slug,' . $faculty->id,
+                'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
+            ],
             'email' => 'nullable|email|unique:faculties,email,' . $faculty->id,
             'profile' => 'nullable|string',
-            'linkedin_url' => 'nullable|url|max:255',
+            'linkedin_url' => 'nullable|max:255',
             'education' => 'nullable|array',
             'education.*' => 'nullable|string|max:500',
             'research' => 'nullable|array',
-            'research.*' => 'nullable|string|max:500',
+            'research.*.title' => 'nullable|string|max:255',
+            'research.*.link' => 'nullable|url|max:500',
             'teaching' => 'nullable|array',
             'teaching.*' => 'nullable|string|max:500',
             'award' => 'nullable|array',
@@ -120,34 +201,112 @@ class FacultyController extends Controller
             'social_engagement.*' => 'nullable|string|max:500',
             'display_order' => 'nullable|integer',
             'status' => 'nullable|boolean',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $validated['education'] = array_filter($validated['education'] ?? []);
-        $validated['research'] = array_filter($validated['research'] ?? []);
-        $validated['teaching'] = array_filter($validated['teaching'] ?? []);
-        $validated['award'] = array_filter($validated['award'] ?? []);
-        $validated['social_engagement'] = array_filter($validated['social_engagement'] ?? []);
-        $validated['status'] = $validated['status'] ?? true;
-
-        if ($request->hasFile('image')) {
-
-            $request->validate([
-                'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            ]);
-
-            if ($faculty->image && file_exists(public_path($faculty->image))) {
-                unlink(public_path($faculty->image));
+        // Validate research images only when they are actually uploaded files
+        if ($request->has('research')) {
+            foreach ($request->input('research') as $index => $research) {
+                if ($request->hasFile("research.{$index}.image")) {
+                    $request->validate([
+                        "research.{$index}.image" => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+                    ]);
+                }
             }
-
-            $image = $request->file('image');
-            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('assets/img/faculty/'), $imageName);
-            $validated['image'] = 'assets/img/faculty/' . $imageName;
         }
 
-        $faculty->update($validated);
+        try {
+            // Handle slug generation
+            if (empty($validated['slug'])) {
+                $validated['slug'] = Str::slug($validated['name']);
 
-        return redirect()->route('faculty.index')->with('success', 'Faculty/Staff updated successfully!');
+                $exists = Faculty::where('slug', $validated['slug'])
+                    ->where('id', '!=', $faculty->id)
+                    ->exists();
+
+                if ($exists) {
+                    return back()
+                        ->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])
+                        ->withInput();
+                }
+            }
+
+            // Filter empty fields
+            $validated['education'] = array_filter($validated['education'] ?? []);
+            $validated['teaching'] = array_filter($validated['teaching'] ?? []);
+            $validated['award'] = array_filter($validated['award'] ?? []);
+            $validated['social_engagement'] = array_filter($validated['social_engagement'] ?? []);
+            $validated['status'] = $validated['status'] ?? true;
+
+            // Handle main profile image upload
+            if ($request->hasFile('image')) {
+                // Delete old image if exists
+                if ($faculty->image && file_exists(public_path($faculty->image))) {
+                    unlink(public_path($faculty->image));
+                }
+
+                $image = $request->file('image');
+                $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('assets/img/faculty/'), $imageName);
+                $validated['image'] = 'assets/img/faculty/' . $imageName;
+            } else {
+                // Keep existing image
+                $validated['image'] = $faculty->image;
+            }
+
+            // Handle research data
+            $researchData = [];
+            if ($request->has('research') && is_array($validated['research'])) {
+                // Get existing research data to preserve images
+                $existingResearch = $faculty->research ? 
+                    (is_string($faculty->research) ? json_decode($faculty->research, true) : $faculty->research) 
+                    : [];
+
+                foreach ($validated['research'] as $index => $research) {
+                    $researchItem = [
+                        'title' => $research['title'] ?? '',
+                        'link' => $research['link'] ?? '',
+                        'image' => $existingResearch[$index]['image'] ?? null // Preserve existing image
+                    ];
+
+                    // Handle research image upload - only if a file was actually uploaded
+                    if ($request->hasFile("research.{$index}.image") && $request->file("research.{$index}.image")->isValid()) {
+                        // Delete old research image if exists
+                        if (isset($existingResearch[$index]['image']) && 
+                            $existingResearch[$index]['image'] && 
+                            file_exists(public_path($existingResearch[$index]['image']))) {
+                            unlink(public_path($existingResearch[$index]['image']));
+                        }
+
+                        $researchImage = $request->file("research.{$index}.image");
+                        $researchImageName = time() . '_research_' . $index . '_' . uniqid() . '.' . $researchImage->getClientOriginalExtension();
+                        $researchImage->move(public_path('assets/img/faculty/research/'), $researchImageName);
+                        $researchItem['image'] = 'assets/img/faculty/research/' . $researchImageName;
+                    }
+
+                    // Only add research item if it has a title
+                    if (!empty($researchItem['title'])) {
+                        $researchData[] = $researchItem;
+                    }
+                }
+            }
+
+            // Convert arrays to JSON for storage
+            $validated['research'] = !empty($researchData) ? json_encode($researchData) : null;
+            $validated['education'] = !empty($validated['education']) ? json_encode($validated['education']) : null;
+            $validated['teaching'] = !empty($validated['teaching']) ? json_encode($validated['teaching']) : null;
+            $validated['award'] = !empty($validated['award']) ? json_encode($validated['award']) : null;
+            $validated['social_engagement'] = !empty($validated['social_engagement']) ? json_encode($validated['social_engagement']) : null;
+
+            $faculty->update($validated);
+
+            return redirect()->route('faculty.index')->with('success', 'Faculty/Staff updated successfully!');
+
+        } catch (\Exception $e) {
+            return back()
+                ->with('error', 'Failed to update faculty/staff: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     public function destroy(Faculty $faculty)
@@ -155,6 +314,11 @@ class FacultyController extends Controller
         if ($faculty->image && file_exists(public_path($faculty->image))) {
             unlink(public_path($faculty->image));
         }
+
+        $faculty->schools()->detach();
+        $faculty->pages()->detach();
+        $faculty->departments()->detach();
+        $faculty->courses()->detach();
 
         $faculty->delete();
 
@@ -168,5 +332,51 @@ class FacultyController extends Controller
         $faculty->save();
 
         return redirect()->route('faculty.index')->with('success', 'Faculty Status Updated!');
+    }
+
+    public function mapping($id)
+    {
+        $faculties = Faculty::with(['schools:id,name', 'pages:id,title', 'departments:id,name', 'courses:id,name'])->findOrFail($id);
+        $schools = School::select('id', 'name')->get();
+        $pages = Pages::select('id', 'title')->get();
+        $departments = Department::with('school:id,name')->get()->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'name' => $department->name,
+                'school' => $department->school ? $department->school->name : null,
+            ];
+        });
+        $courses = Course::select('id', 'name')->get();
+
+        return Inertia::render('Faculties/Mapping', [
+            'faculties' => $faculties,
+            'schools' => $schools,
+            'pages' => $pages,
+            'departments' => $departments,
+            'courses' => $courses,
+        ]);
+    }
+
+    public function attachMapping(Request $request, $id)
+    {
+        $faculties = Faculty::findOrFail($id);
+
+        $validated = $request->validate([
+            'school_ids' => 'nullable|array',
+            'school_ids.*' => 'exists:schools,id',
+            'page_ids' => 'nullable|array',
+            'page_ids.*' => 'exists:pages,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
+            'course_ids' => 'nullable|array',
+            'course_ids.*' => 'exists:courses,id',
+        ]);
+
+        $faculties->schools()->sync($validated['school_ids'] ?? []);
+        $faculties->pages()->sync($validated['page_ids'] ?? []);
+        $faculties->departments()->sync($validated['department_ids'] ?? []);
+        $faculties->courses()->sync($validated['course_ids'] ?? []);
+
+        return redirect()->route('faculty.index', $faculties->id)->with('success', 'Faculty mapped successfully!');
     }
 }

@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use Carbon\Carbon;
 use App\Models\Banner;
+use App\Models\School;
+use App\Models\Program;
 use App\Models\Homepage;
 use App\Models\Happening;
+use App\Models\Recruiter;
 use App\Models\Testimonial;
 use Illuminate\Http\Request;
+use App\Models\FactsAndFigures;
 use App\Http\Controllers\Controller;
 
 class HomepageController extends Controller
@@ -25,36 +29,29 @@ class HomepageController extends Controller
         }
 
         $sections = [
-            'banner_section' => [
-                'banner_section' => Banner::where('status', 1)
-                    ->where('show_on_home', 1)
-                    ->orderBy('display_order', 'asc')
-                    ->take(5)
-                    ->get()
-                    ->map(function ($banner) {
-                        return [
-                            'id' => $banner->id,
-                            'heading' => $banner->heading,
-                            'subheading' => $banner->subheading,
-                            'link' => $banner->link ? asset($banner->link) : null,
-                            'linked_text' => $banner->linked_text,
-                            'image' => $banner->image ? asset($banner->image) : asset('assets/img/placeholder.png'),
-                            'status' => $banner->status,
-                            'show_on_home' => $banner->show_on_home,
-                            'display_order' => $banner->display_order,
-                        ];
-                    }),
-            ],
+            'banners' => Banner::where('status', 1)->where('show_on_home', 1)->orderBy('display_order', 'asc')->take(5)->get()
+                ->map(function ($banner) {
+                    return [
+                        'id' => $banner->id,
+                        'title' => $banner->heading,
+                        'desc' => $banner->subheading,
+                        'url' => $banner->link ? asset($banner->link) : null,
+                        'linked_text' => $banner->linked_text,
+                        'desktop_banner' => asset($banner->image),
+                        'mobile_banner' => asset($banner->mobile_image),
+                        'display_order' => $banner->display_order,
+                    ];
+                }),
 
             'about_section' => [
                 'title' => $homepage->about_title,
                 'subtitle' => $homepage->about_subtitle,
                 'description' => $homepage->about_description,
                 'url' => $homepage->about_url,
-                'chancellor' => [
-                    'image' => $homepage->about_chancellor_img ? asset($homepage->about_chancellor_img) : null,
-                    'message' => $homepage->about_chancellor_message,
-                ],
+                'chancellor_title' => $homepage->about_chancellor_title,
+                'chancellor_name' => $homepage->about_chancellor_name,
+                'chancellor_img' => $homepage->about_chancellor_img ? asset($homepage->about_chancellor_img) : asset('assets/img/placeholder.png'),
+                'video_url' => $homepage->about_chancellor_video_url,
                 'highlights' => array_map(function($highlight) {
                     return [
                         'rank' => $highlight['rank'] ?? null,
@@ -97,7 +94,25 @@ class HomepageController extends Controller
 
             'departments_section' => [
                 'title' => $homepage->department_title,
-                'description' => $homepage->department_desc,
+                'subtitle' => $homepage->department_subtitle,
+                'programs' => Program::where('status', 1)->orderBy('display_order', 'asc')->take(5)->get()->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
+                        'name_short' => $item->name_short,
+                        'slug' => $item->slug,
+                    ];
+                }),
+                'programs_title' => $homepage->programs_title,
+                'departments' => School::where('status', 1)->orderBy('display_order', 'asc')->take(6)->get()->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'slug' => $item->slug,
+                        'short_name' => $item->name_short,
+                    ];
+                }),
                 'programs_count' => $homepage->department_programs_count,
                 'programs_text' => $homepage->department_programs_text,
                 'buttons' => [
@@ -115,11 +130,38 @@ class HomepageController extends Controller
             'placement_section' => [
                 'title' => $homepage->placement_title,
                 'subtitle' => $homepage->placement_subtitle,
+                'facts_and_figures' => FactsAndFigures::where('show_on_home', true)->where('status', true)->orderBy('display_order', 'asc')->take(5)->get()->map(fn($item) => [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'description' => $item->description,
+                    'figure' => $item->figure,
+                ]),
                 'hall_of_fame' => [
                     'image' => $homepage->hall_of_fame_image ? asset($homepage->hall_of_fame_image) : null,
                     'heading' => $homepage->hall_of_fame_heading,
                     'url' => $homepage->hall_of_fame_url,
                 ],
+                'testimonials' => Testimonial::where('show_on_home', true)->where('type','placement')->where('status', true)->orderBy('display_order', 'asc')->take(15)->get()->map(fn($item) => [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'name' => $item->name,
+                    'course' => $item->course,
+                    'batch' => $item->batch,
+                    'slug' => $item->slug,
+                    'alt_text' => $item->alt_text,
+                    'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
+                    'video_url' => $item->video_url,
+                    'short_description' => $item->short_description,
+                    'designation' => $item->designation,
+                    'location' => $item->location,
+                    'company' => $item->company,
+                ]),
+                'recruiters' => Recruiter::where('show_on_home', true)->where('status', true)->orderBy('display_order', 'asc')->take(20)->get()->map(fn($item) => [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
+                    'description' => $item->description,
+                ]),
             ],
 
             'testimonial_section' => [
@@ -127,19 +169,21 @@ class HomepageController extends Controller
                 'subtitle' => $homepage->testimonial_subtitle,
                 'testimonials' => Testimonial::where('status', 1)
                 ->where('show_on_home', 1)
+                ->whereNot('type','placement')
                 ->orderBy('display_order', 'asc')
-                ->take(8)
+                ->take(5)
                 ->get()
                 ->map(function ($item) {
                     return [
                         'id' => $item->id,
-                        'type' => $item->type,
                         'title' => $item->title,
+                        'name' => $item->name,
+                        'course' => $item->course,
+                        'batch' => $item->batch,
                         'slug' => $item->slug,
-                        'alt_text' => $item->alt_text,
-                        'image' => $item->image 
-                            ? asset($item->image) 
-                            : asset('assets/img/placeholder.png'),
+                        'alt_text' => $item->title,
+                        'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
+                        'video_url' => $item->video_url,
                         'short_description' => $item->short_description,
                         'designation' => $item->designation,
                         'location' => $item->location,
@@ -154,7 +198,7 @@ class HomepageController extends Controller
                 'happenings' => Happening::where('status', 1)
                     ->where('show_on_home', 1)
                     ->orderBy('display_order', 'asc')
-                    ->take(8)
+                    ->take(9)
                     ->get()
                     ->map(function ($happening) use ($today) {
                         return [
@@ -163,7 +207,7 @@ class HomepageController extends Controller
                             'upcoming_event' => $happening->event_date_from > $today,
                             'title' => $happening->title,
                             'slug' => $happening->slug,
-                            'alt_text' => $happening->alt_text,
+                            'alt_text' => $happening->title,
                             'image' => $happening->image 
                                 ? asset($happening->image) 
                                 : asset('assets/img/placeholder.png'),

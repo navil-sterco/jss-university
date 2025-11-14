@@ -92,6 +92,33 @@ const Index = (props) => {
         router.get(route('school.section.create', id));
     };
 
+    const renderUsefulLinks = (links) => {
+        
+        if (!links || links.length === 0) return <span className="text-muted">—</span>;
+        
+        return (
+            <div className="space-y-2 mb-1">
+                {links.map((link, index) => (
+                    <div key={index} className="d-flex align-items-center p-2 bg-white rounded border mb-1">
+                        <i className="bx bx-link text-primary me-2"></i>
+                        <div className="flex-grow-1">
+                            <div className="fw-medium">{link.text || 'No text'}</div>
+                            <a 
+                                href={link.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary small text-truncate d-block"
+                                style={{ maxWidth: '200px' }}
+                            >
+                                {link.url}
+                            </a>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <>
             <h1 className="text-muted">Schools List</h1>
@@ -413,6 +440,36 @@ const Index = (props) => {
                                                     ) : (
                                                         <span className="text-muted">—</span>
                                                     )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Links & Resources */}
+                                        <div className="mb-4">
+                                            <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                <i className="bx bx-link-alt me-2"></i>
+                                                Links & Resources
+                                            </h6>
+                                            <div className="row g-3">
+                                                <div className="col-12">
+                                                    <label className="form-label fw-semibold text-muted small">Apply Now Link</label>
+                                                    {selectedSchool.apply_now_link ? (
+                                                        <a 
+                                                            href={selectedSchool.apply_now_link} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="d-flex align-items-center text-primary text-decoration-none"
+                                                        >
+                                                            <i className="bx bx-link-external me-2"></i>
+                                                            <span className="text-truncate">{selectedSchool.apply_now_link}</span>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-muted">—</span>
+                                                    )}
+                                                </div>
+                                                <div className="col-12">
+                                                    <label className="form-label fw-semibold text-muted small">Useful Links</label>
+                                                    {renderUsefulLinks(selectedSchool.useful_links)}
                                                 </div>
                                             </div>
                                         </div>

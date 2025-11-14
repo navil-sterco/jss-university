@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Pages;
+use App\Models\Course;
 use App\Models\School;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -37,6 +39,16 @@ class Testimonial extends Model
     public function pages()
     {
         return $this->belongsToMany(Pages::class, 'testimonial_page', 'testimonial_id', 'page_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'testimonials_department', 'testimonial_id', 'department_id')->withTimestamps();
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'testimonials_courses', 'testimonial_id', 'course_id')->withTimestamps();
     }
     
     public function scopeFilter(Builder $query, $filters)

@@ -8,6 +8,7 @@ use App\Http\Controllers\TypeController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\DegreeController;
 use App\Http\Controllers\FooterController;
 use App\Http\Controllers\HeaderController;
 use App\Http\Controllers\SchoolController;
@@ -16,15 +17,18 @@ use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\HomepageController;
+use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HappeningController;
 use App\Http\Controllers\RecruiterController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\LeadershipController;
 use App\Http\Controllers\MainHeaderController;
+use App\Http\Controllers\ContactFormController;
 use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\PageSectionController;
 use App\Http\Controllers\TestimonialController;
+use App\Http\Controllers\SchoolHeaderController;
 use App\Http\Controllers\FactsAndFiguresController;
 
 Route::get('/', function () {
@@ -147,6 +151,15 @@ Route::middleware('auth', 'is_admin')->group(function () {
         Route::post('{id}/mapping', [ProgramController::class, 'attachMapping'])->name('program.mapping.attach');
     });
 
+    //Degree
+    Route::resource('degree', DegreeController::class)->except(['destroy']);
+    Route::prefix('degree')->group(function () {
+        Route::get('/{degree}/destroy', [DegreeController::class, 'destroy'])->name('degree.destroy');
+        Route::post('/{id}/toggle-status', [DegreeController::class, 'toggleStatus'])->name('degree.toggleStatus');
+        Route::get('/{degree}/mapping', [DegreeController::class, 'mapping'])->name('degree.mapping');
+        Route::post('{id}/mapping', [DegreeController::class, 'attachMapping'])->name('degree.mapping.attach');
+    });
+
     //Facts And Figures
     Route::resource('facts-and-figures', FactsAndFiguresController::class)->except(['destroy']);
     Route::prefix('facts-and-figures')->group(function () {
@@ -199,12 +212,20 @@ Route::middleware('auth', 'is_admin')->group(function () {
     Route::get('home', [HomepageController::class, 'createSections'])->name('home');
     Route::post('home/sections/update', [HomepageController::class, 'storeOrUpdate'])->name('home.section.update');
 
-    //Main header
+    //Main Header
     Route::resource('headers', HeaderController::class)->except(['destroy']);
     Route::prefix('headers')->group(function () {
         Route::get('/{header}/destroy', [HeaderController::class, 'destroy'])->name('headers.destroy');
         Route::post('/update-order', [HeaderController::class, 'updateOrder'])->name('headers.update-order');
         Route::post('/{id}/toggle-status', [HeaderController::class, 'toggleStatus'])->name('headers.toggle-status');
+    });
+
+    //School Header
+    Route::resource('school-header', SchoolHeaderController::class)->except(['destroy']);
+    Route::prefix('school-headers')->group(function () {
+        Route::get('/{schoolHeader}/destroy', [SchoolHeaderController::class, 'destroy'])->name('school-header.destroy');
+        Route::post('/update-order', [SchoolHeaderController::class, 'updateOrder'])->name('school-header.update-order');
+        Route::post('/{schoolHeader}/toggle-status', [SchoolHeaderController::class, 'toggleStatus'])->name('school-header.toggle-status');
     });
 
     //Footer
@@ -214,6 +235,16 @@ Route::middleware('auth', 'is_admin')->group(function () {
     //Contact Info
     Route::get('/contact',[ContactInfoController::class, 'edit'])->name('contact.edit');
     Route::put('/contact',[ContactInfoController::class, 'update'])->name('contact.update');
+
+    //Contact Form
+    Route::resource('form', ContactFormController::class)->except(['destroy']);
+    Route::prefix('form')->group(function () {
+        Route::get('/{contactForm}/destroy', [ContactFormController::class, 'destroy'])->name('form.destroy');
+    });
+
+    //Admission
+    Route::get('/admission',[AdmissionController::class, 'edit'])->name('admission.edit');
+    Route::put('/admission',[AdmissionController::class, 'update'])->name('admission.update');
 });
 
 require __DIR__.'/auth.php';

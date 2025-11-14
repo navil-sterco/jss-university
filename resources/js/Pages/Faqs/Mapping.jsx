@@ -1,12 +1,41 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, usePage } from "@inertiajs/react";
 import { ToastContainer, toast } from "react-toastify";
 
-const Mapping = ({ faq, schools, pages }) => {
+const Mapping = ({ faq, schools, pages, departments, courses }) => {
     const { data, setData, post, processing, errors } = useForm({
         school_ids: faq.schools?.map((s) => s.id) || [],
         page_ids: faq.pages?.map((p) => p.id) || [],
+        department_ids: faq.departments?.map((d) => d.id) || [],
+        course_ids: faq.courses?.map((c) => c.id) || [],
     });
+
+    // Group departments by school
+    const [groupedDepartments, setGroupedDepartments] = useState({});
+    const [expandedSchools, setExpandedSchools] = useState(new Set());
+
+    useEffect(() => {
+        // Group departments by school name
+        const grouped = departments.reduce((acc, dept) => {
+            const schoolName = dept.school || 'Other';
+            if (!acc[schoolName]) {
+                acc[schoolName] = [];
+            }
+            acc[schoolName].push(dept);
+            return acc;
+        }, {});
+        setGroupedDepartments(grouped);
+    }, [departments]);
+
+    const toggleSchool = (schoolName) => {
+        const newExpanded = new Set(expandedSchools);
+        if (newExpanded.has(schoolName)) {
+            newExpanded.delete(schoolName);
+        } else {
+            newExpanded.add(schoolName);
+        }
+        setExpandedSchools(newExpanded);
+    };
 
     const toggleItem = (id, field) => {
         const ids = data[field];
@@ -15,7 +44,6 @@ const Mapping = ({ faq, schools, pages }) => {
             ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
         );
     };
-
 
     const { flash } = usePage().props;
     useEffect(() => {
@@ -32,7 +60,7 @@ const Mapping = ({ faq, schools, pages }) => {
     };
 
     const renderTransferList = (items, field, label) => (
-        <div className="col-md-6 mb-3">
+        <div className="col-md-3 mb-3">
             <h6 className="fw-bold mb-2">{label}</h6>
             <div className="border rounded p-2" style={{ minHeight: 250 }}>
                 {items.map((item) => (
@@ -59,13 +87,60 @@ const Mapping = ({ faq, schools, pages }) => {
         </div>
     );
 
+    const renderDepartmentList = () => (
+        <div className="col-md-3 mb-3">
+            <h6 className="fw-bold mb-2">📚 Departments</h6>
+            <div className="border rounded p-2" style={{ minHeight: 250 }}>
+                {Object.entries(groupedDepartments).map(([schoolName, schoolDepts]) => (
+                    <div key={schoolName} className="mb-2">
+                        {/* School Header */}
+                        <div
+                            onClick={() => toggleSchool(schoolName)}
+                            className="p-2 rounded d-flex justify-content-between align-items-center bg-secondary text-white"
+                            style={{ cursor: "pointer" }}
+                        >
+                            <span className="fw-bold">{schoolName}</span>
+                            <i className={`bi bi-chevron-${expandedSchools.has(schoolName) ? 'up' : 'down'}`}></i>
+                        </div>
+                        
+                        {/* Departments List */}
+                        {expandedSchools.has(schoolName) && (
+                            <div className="mt-1">
+                                {schoolDepts.map((dept) => (
+                                    <div
+                                        key={dept.id}
+                                        onClick={() => toggleItem(dept.id, "department_ids")}
+                                        className={`p-2 mb-1 rounded d-flex justify-content-between align-items-center ${
+                                            data.department_ids.includes(dept.id)
+                                                ? "bg-primary text-white"
+                                                : "bg-light"
+                                        }`}
+                                        style={{ cursor: "pointer", marginLeft: '10px' }}
+                                    >
+                                        <span>{dept.name}</span>
+                                        {data.department_ids.includes(dept.id) && (
+                                            <i className="bi bi-check-lg"></i>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+            {errors.department_ids && (
+                <div className="text-danger small mt-1">{errors.department_ids}</div>
+            )}
+        </div>
+    );
+
     return (
         <div className="container py-4">
             <ToastContainer />
             <div className="card shadow-sm">
                 <div className="card-header bg-white">
                     <h5>
-                        Map Faq:{" "}
+                        Map FAQ:{" "}
                         <span className="text-grey">{faq.title}</span>
                     </h5>
                 </div>
@@ -75,6 +150,8 @@ const Mapping = ({ faq, schools, pages }) => {
                         <div className="row">
                             {renderTransferList(schools, "school_ids", "🎓 Schools")}
                             {renderTransferList(pages, "page_ids", "📄 Pages")}
+                            {renderDepartmentList()} {/* Use the new department list */}
+                            {renderTransferList(courses, "course_ids", "✏️ Courses")}
                         </div>
 
                         <div className="text-end mt-4">

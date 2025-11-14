@@ -1,20 +1,27 @@
 import { useForm, router, usePage } from "@inertiajs/react";
 import React, { useEffect, useRef, useState } from "react";
 
-const Edit = ({ faculty, types: initialTypes }) => {
+const Edit = ({ faculty, types: initialTypes, schools }) => {
+    // Parse research data from JSON if it exists
+    const initialResearch = faculty.research 
+        ? (typeof faculty.research === 'string' ? JSON.parse(faculty.research) : faculty.research)
+        : [{ title: "", image: null, link: "" }];
+
     const { data, setData, post, processing, errors, progress } = useForm({
         _method: "PUT",
         type_id: faculty.type_id || "",
+        school_id: faculty.school_id || "",
         name: faculty.name || "",
+        slug: faculty.slug || "",
         email: faculty.email || "",
         profile: faculty.profile || "",
         image: null,
         linkedin_url: faculty.linkedin_url || "",
-        education: faculty.education?.length ? faculty.education : [""],
-        research: faculty.research?.length ? faculty.research : [""],
-        teaching: faculty.teaching?.length ? faculty.teaching : [""],
-        award: faculty.award?.length ? faculty.award : [""],
-        social_engagement: faculty.social_engagement?.length ? faculty.social_engagement : [""],
+        education: faculty.education?.length ? (typeof faculty.education === 'string' ? JSON.parse(faculty.education) : faculty.education) : [""],
+        research: initialResearch,
+        teaching: faculty.teaching?.length ? (typeof faculty.teaching === 'string' ? JSON.parse(faculty.teaching) : faculty.teaching) : [""],
+        award: faculty.award?.length ? (typeof faculty.award === 'string' ? JSON.parse(faculty.award) : faculty.award) : [""],
+        social_engagement: faculty.social_engagement?.length ? (typeof faculty.social_engagement === 'string' ? JSON.parse(faculty.social_engagement) : faculty.social_engagement) : [""],
         display_order: faculty.display_order || 100,
     });
     const imageRef = useRef(null);
@@ -37,7 +44,11 @@ const Edit = ({ faculty, types: initialTypes }) => {
     };
 
     const addField = (fieldName) => {
-        setData(fieldName, [...data[fieldName], ""]);
+        if (fieldName === 'research') {
+            setData(fieldName, [...data[fieldName], { title: "", image: null, link: "" }]);
+        } else {
+            setData(fieldName, [...data[fieldName], ""]);
+        }
     };
 
     const removeField = (fieldName, index) => {
@@ -49,6 +60,34 @@ const Edit = ({ faculty, types: initialTypes }) => {
         const updatedFields = [...data[fieldName]];
         updatedFields[index] = value;
         setData(fieldName, updatedFields);
+    };
+
+    // Research specific functions
+    const updateResearchField = (researchIndex, field, value) => {
+        const updatedResearch = [...data.research];
+        updatedResearch[researchIndex] = {
+            ...updatedResearch[researchIndex],
+            [field]: value
+        };
+        setData("research", updatedResearch);
+    };
+
+    const handleResearchImageChange = (researchIndex, file) => {
+        const updatedResearch = [...data.research];
+        updatedResearch[researchIndex] = {
+            ...updatedResearch[researchIndex],
+            image: file
+        };
+        setData("research", updatedResearch);
+    };
+
+    const removeResearchImage = (researchIndex) => {
+        const updatedResearch = [...data.research];
+        updatedResearch[researchIndex] = {
+            ...updatedResearch[researchIndex],
+            image: null
+        };
+        setData("research", updatedResearch);
     };
 
     const addType = (e) => {
@@ -84,7 +123,7 @@ const Edit = ({ faculty, types: initialTypes }) => {
         setTypeLoading(true);
         router.put(route('types.update', editingType), {
             name: editTypeName,
-            element:"faculty"
+            element: "faculty"
         }, {
             preserveScroll: true,
             onSuccess: () => {
@@ -137,6 +176,16 @@ const Edit = ({ faculty, types: initialTypes }) => {
         setEditTypeName("");
     };
 
+    // Function to get image source for display
+    const getImageSrc = (image) => {
+        if (image instanceof File) {
+            return URL.createObjectURL(image);
+        } else if (image && typeof image === 'string') {
+            return `${appUrl}/${image}`;
+        }
+        return null;
+    };
+
     return (
         <>
             <h1 className="text-muted">Edit Faculty/Staff</h1>
@@ -154,7 +203,6 @@ const Edit = ({ faculty, types: initialTypes }) => {
                                             className="form-control"
                                             value={data.type_id}
                                             onChange={(e) => setData("type_id", e.target.value)}
-                                            required
                                         >
                                             <option value="">Select Type</option>
                                             {initialTypes.map((type) => (
@@ -166,6 +214,24 @@ const Edit = ({ faculty, types: initialTypes }) => {
                                         <div className="form-text text-danger">{errors.type_id}</div>
                                     </div>
 
+                                    {/* School */}
+                                    <div className="mb-3 col-md-6">
+                                        <label className="form-label">School <span className="text-danger">*</span></label>
+                                        <select
+                                            className="form-control"
+                                            value={data.school_id}
+                                            onChange={(e) => setData("school_id", e.target.value)}
+                                        >
+                                            <option value="">Select School</option>
+                                            {schools.map((school) => (
+                                                <option key={school.id} value={school.id}>
+                                                    {school.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="form-text text-danger">{errors.school_id}</div>
+                                    </div>
+
                                     {/* Name */}
                                     <div className="mb-3 col-md-6">
                                         <label className="form-label">Full Name <span className="text-danger">*</span></label>
@@ -174,9 +240,20 @@ const Edit = ({ faculty, types: initialTypes }) => {
                                             className="form-control"
                                             value={data.name}
                                             onChange={(e) => setData("name", e.target.value)}
-                                            required
                                         />
                                         <div className="form-text text-danger">{errors.name}</div>
+                                    </div>
+
+                                    {/* Slug */}
+                                    <div className="mb-3 col-md-12">
+                                        <label className="form-label">Slug</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={data.slug}
+                                            onChange={(e) => setData("slug", e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.slug}</div>
                                     </div>
 
                                     {/* Email */}
@@ -195,7 +272,7 @@ const Edit = ({ faculty, types: initialTypes }) => {
                                     <div className="mb-3 col-md-6">
                                         <label className="form-label">LinkedIn URL</label>
                                         <input
-                                            type="url"
+                                            type="text"
                                             className="form-control"
                                             value={data.linkedin_url}
                                             onChange={(e) => setData("linkedin_url", e.target.value)}
@@ -278,7 +355,7 @@ const Edit = ({ faculty, types: initialTypes }) => {
                                         <div className="form-text text-danger">{errors.education}</div>
                                     </div>
 
-                                    {/* Research - Dynamic Fields */}
+                                    {/* Research - Enhanced Dynamic Fields */}
                                     <div className="mb-3 col-12">
                                         <div className="d-flex justify-content-between align-items-center mb-2">
                                             <label className="form-label">Research</label>
@@ -287,27 +364,98 @@ const Edit = ({ faculty, types: initialTypes }) => {
                                                 className="btn btn-sm btn-outline-primary"
                                                 onClick={() => addField('research')}
                                             >
-                                                <i className="bx bx-plus me-1"></i> Add Research Area
+                                                <i className="bx bx-plus me-1"></i> Add Research
                                             </button>
                                         </div>
-                                        {data.research.map((research, index) => (
-                                            <div key={index} className="input-group mb-2">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    value={research}
-                                                    onChange={(e) => updateField('research', index, e.target.value)}
-                                                    placeholder="Research interests and areas"
-                                                />
-                                                {data.research.length > 1 && (
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-outline-danger"
-                                                        onClick={() => removeField('research', index)}
-                                                    >
-                                                        <i className="bx bx-trash"></i>
-                                                    </button>
-                                                )}
+
+                                        {data.research.map((research, researchIndex) => (
+                                            <div key={researchIndex} className="card mb-3">
+                                                <div className="card-header d-flex justify-content-between align-items-center">
+                                                    <h6 className="mb-0">Research {researchIndex + 1}</h6>
+                                                    {data.research.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-danger"
+                                                            onClick={() => removeField('research', researchIndex)}
+                                                        >
+                                                            <i className="bx bx-trash"></i>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="card-body">
+                                                    {/* Research Title */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Research Title</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={research.title}
+                                                            onChange={(e) => updateResearchField(researchIndex, 'title', e.target.value)}
+                                                            placeholder="Research project title or area"
+                                                        />
+                                                        <div className="form-text text-danger">
+                                                            {errors[`research.${researchIndex}.title`]}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Research Image */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Research Image</label>
+                                                        <div className="d-flex align-items-center">
+                                                            <input
+                                                                type="file"
+                                                                className="form-control"
+                                                                onChange={(e) => handleResearchImageChange(researchIndex, e.target.files[0])}
+                                                                accept="image/*"
+                                                            />
+                                                            {(research.image instanceof File || (research.image && typeof research.image === 'string')) && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-danger ms-2"
+                                                                    onClick={() => removeResearchImage(researchIndex)}
+                                                                >
+                                                                    <i className='bx bx-x'></i>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        {(research.image instanceof File || (research.image && typeof research.image === 'string')) && (
+                                                            <div className="form-text text-success">
+                                                                <i className="fas fa-check me-1"></i>
+                                                                {research.image instanceof File ? research.image.name : 'Image exists'}
+                                                            </div>
+                                                        )}
+                                                        {/* Show current research image if exists */}
+                                                        {research.image && typeof research.image === 'string' && (
+                                                            <div className="mt-2">
+                                                                <p className="text-muted mb-1">Current Image:</p>
+                                                                <img 
+                                                                    src={getImageSrc(research.image)} 
+                                                                    alt={research.title}
+                                                                    className="img-thumbnail"
+                                                                    style={{ maxWidth: '150px', maxHeight: '150px' }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <div className="form-text text-danger">
+                                                            {errors[`research.${researchIndex}.image`]}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Research Link */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Research Link</label>
+                                                        <input
+                                                            type="url"
+                                                            className="form-control"
+                                                            value={research.link}
+                                                            onChange={(e) => updateResearchField(researchIndex, 'link', e.target.value)}
+                                                            placeholder="https://example.com/research"
+                                                        />
+                                                        <div className="form-text text-danger">
+                                                            {errors[`research.${researchIndex}.link`]}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                         <div className="form-text text-danger">{errors.research}</div>

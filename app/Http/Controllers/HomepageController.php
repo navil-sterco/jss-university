@@ -39,7 +39,9 @@ class HomepageController extends Controller
             'about_subtitle' => 'nullable|string|max:255',
             'about_description' => 'nullable|string',
             'about_url' => 'nullable|url|max:255',
-            'about_chancellor_message' => 'nullable|string|max:255',
+            'about_chancellor_title' => 'nullable|string|max:255',
+            'about_chancellor_name' => 'nullable|string|max:255',
+            'about_chancellor_video_url' => 'nullable|url|max:255',
             
             // Facilities Section
             'facilities_heading' => 'nullable|string|max:255',
@@ -47,7 +49,8 @@ class HomepageController extends Controller
 
             // Department Section
             'department_title' => 'nullable|string|max:255',
-            'department_desc' => 'nullable|string',
+            'department_subtitle' => 'nullable|string|max:255',
+            'programs_title' => 'nullable|string|max:255',
             'department_programs_count' => 'nullable|string|max:255',
             'department_programs_text' => 'nullable|string|max:255',
             'department_button_1_text' => 'nullable|string|max:255',

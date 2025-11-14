@@ -22,7 +22,9 @@ return new class extends Migration
             $table->text('about_description')->nullable();
             $table->string('about_url')->nullable();
             $table->string('about_chancellor_img')->nullable();
-            $table->string('about_chancellor_message')->nullable();
+            $table->string('about_chancellor_title')->nullable();
+            $table->string('about_chancellor_name')->nullable();
+            $table->string('about_chancellor_video_url')->nullable();
             $table->json('highlights')->nullable();
             $table->json('buttons')->nullable();
             $table->json('logo_content')->nullable();
@@ -34,7 +36,8 @@ return new class extends Migration
 
             // Department Section
             $table->string('department_title')->nullable();
-            $table->string('department_desc')->nullable();
+            $table->string('department_subtitle')->nullable();
+            $table->string('programs_title')->nullable();
             $table->string('department_programs_count')->nullable();
             $table->string('department_programs_text')->nullable();
             $table->string('department_button_1_text')->nullable();

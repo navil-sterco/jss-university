@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use App\Models\Pages;
+use App\Models\Course;
 use App\Models\School;
 use App\Models\Happening;
+use App\Models\Department;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
@@ -244,10 +246,9 @@ class HappeningController extends Controller
         return redirect()->route('happening.index')->with('success', 'Happening updated successfully!');
     }
 
-
-/**
- * Remove the specified resource from storage.
- */
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Happening $happening)
     {
         if ($happening->image && file_exists(public_path($happening->image))) {
@@ -261,6 +262,11 @@ class HappeningController extends Controller
         if ($happening->pdf && file_exists(public_path($happening->pdf))) {
             @unlink(public_path($happening->pdf));
         }
+
+        $happening->schools()->detach();
+        $happening->pages()->detach();
+        $happening->departments()->detach();
+        $happening->courses()->detach();
 
         $happening->delete();
 
@@ -278,14 +284,24 @@ class HappeningController extends Controller
 
     public function mapping($id)
     {
-        $happening = Happening::with(['schools:id,name', 'pages:id,title'])->findOrFail($id);
+        $happening = Happening::with(['schools:id,name', 'pages:id,title', 'departments:id,name', 'courses:id,name'])->findOrFail($id);
         $schools = School::select('id', 'name')->get();
         $pages = Pages::select('id', 'title')->get();
+        $departments = Department::with('school:id,name')->get()->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'name' => $department->name,
+                'school' => $department->school ? $department->school->name : null,
+            ];
+        });
+        $courses = Course::select('id', 'name')->get();
 
         return Inertia::render('Happenings/Mapping', [
             'happening' => $happening,
             'schools' => $schools,
             'pages' => $pages,
+            'departments' => $departments,
+            'courses' => $courses,
         ]);
     }
 
@@ -301,14 +317,19 @@ class HappeningController extends Controller
             'school_ids.*' => 'exists:schools,id',
             'page_ids' => 'nullable|array',
             'page_ids.*' => 'exists:pages,id',
-            'show_on_home' =>'nullable',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
+            'course_ids' => 'nullable|array',
+            'course_ids.*' => 'exists:courses,id',
         ]);
 
         $happening->show_on_home = $request->show_on_home;
         $happening->save();
         $happening->schools()->sync($validated['school_ids'] ?? []);
         $happening->pages()->sync($validated['page_ids'] ?? []);
+        $happening->departments()->sync($validated['department_ids'] ?? []);
+        $happening->courses()->sync($validated['course_ids'] ?? []);
 
-        return redirect()->route('happening.mapping', $happening->id)->with('success', 'Happening mapped successfully!');
+        return redirect()->route('happening.index', $happening->id)->with('success', 'Happening mapped successfully!');
     }
 }

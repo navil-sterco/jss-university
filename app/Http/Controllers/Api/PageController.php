@@ -11,10 +11,10 @@ use App\Http\Controllers\Controller;
 
 class PageController extends Controller
 {
-    public function show($page_id)
+    public function show($slug)
     {
-        $page = Pages::findOrFail($page_id);
-        $sections = PageSection::where('page_id', $page_id)
+        $page = Pages::where('slug',$slug)->first();
+        $sections = PageSection::where('page_id', $page->id)
             ->orderBy('position')
             ->get()
             ->groupBy('group_key')

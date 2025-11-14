@@ -1,10 +1,11 @@
 import { useForm } from '@inertiajs/react';
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 
-const Create = () => {
+const Create = ({departments}) => {
 
     const fileInputRef = useRef(null);
     const now = new Date();
+    const [selectedType, setSelectedType] = useState("");
 
     function formatDateForInput(date) {
         const pad = (n) => n.toString().padStart(2, '0');
@@ -21,17 +22,33 @@ const Create = () => {
     const { data, setData, post, progress, errors, processing } = useForm({
         title: "",
         slug: "",
+        department_id: "",
         type: "",
         image: "",
         sub_title: "",
         target_blank: 0,
         publish_date: publishDate,
+        template_path: "",
     });
 
     const submit = (e) => {
         e.preventDefault(); 
         post(route("pages.store"));
     };
+
+    // Handle type selection
+    const handleTypeChange = (type) => {
+        setSelectedType(type);
+        setData("type", type);
+        // Clear department and image when type changes to non-special types
+        if (type !== "Laboratory" && type !== "Facility") {
+            setData("department_id", "");
+            setData("image", "");
+        }
+    };
+
+    // Check if should show special fields
+    const showSpecialFields = selectedType === "Laboratory" || selectedType === "Facility";
 
 return (
     <>
@@ -46,11 +63,12 @@ return (
                                 id="type"
                                 className="form-select"
                                 value={data.type}
-                                onChange={(e) => setData("type", e.target.value)}
+                                onChange={(e) => handleTypeChange(e.target.value)}
                             >
                                 <option value="">Select Type</option>
                                 <option value="Content-Page">Content Page</option>
                                 <option value="Laboratory">Laboratory</option>
+                                <option value="Facility">Facility</option>
                             </select>
                             <div className="form-text text-danger">{errors.type}</div>
                         </div>
@@ -93,18 +111,45 @@ return (
                             />
                             <div className="form-text text-danger">{errors.sub_title}</div>
                         </div>
-                        <div className="mb-3 col-md-6">
-                            <label htmlFor="image" className="form-label">Image</label>
-                            <input
-                                type="file"
-                                id="image"
-                                ref={fileInputRef}
-                                className="form-control"
-                                onChange={(e) => setData("image", e.target.files[0])}
-                                accept="image/png, image/jpeg, image/webp"
-                            />
-                            <div className="form-text text-danger">{errors.image}</div>
-                        </div>
+
+                        {/* Department - Only show for Laboratory/Facility */}
+                        {showSpecialFields && (
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Department <span className="text-danger">*</span></label>
+                                <select
+                                    className="form-control"
+                                    value={data.department_id}
+                                    onChange={(e) => setData("department_id", e.target.value)}
+                                >
+                                    <option value="">Select Department</option>
+                                    {departments.map((dept) => (
+                                        <option key={dept.id} value={dept.id}>
+                                            {dept.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="form-text text-danger">{errors.department_id}</div>
+                            </div>
+                        )}
+
+                        {showSpecialFields && (
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="image" className="form-label">Image</label>
+                                <input
+                                    type="file"
+                                    id="image"
+                                    ref={fileInputRef}
+                                    className="form-control"
+                                    onChange={(e) => setData("image", e.target.files[0])}
+                                    accept="image/png, image/jpeg, image/webp"
+                                />
+                                <div className="form-text">
+                                    Upload an image for {selectedType.toLowerCase()}
+                                </div>
+                                <div className="form-text text-danger">{errors.image}</div>
+                            </div>
+                        )}
+
                         <div className="mb-3 col-md-6">
                             <label htmlFor="template_path" className="form-label">Overwrite Url</label>
                             <input

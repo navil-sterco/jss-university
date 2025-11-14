@@ -3,7 +3,7 @@ import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-    // base: '/jss/build/',
+    base: '/jss/build/',
     plugins: [
         laravel({
             hotFile: '../hot',

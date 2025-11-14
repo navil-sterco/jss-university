@@ -17,6 +17,28 @@
       { "name": "icon", "label": "Icon", "type": "file" }
     ]
   },
+  "values": {
+    "label": "Values",
+    "fields": [
+      { "name": "title", "label": "Value Title", "type": "text", "placeholder": "Feature name" },
+      { "name": "text", "label": "Value Text", "type": "text", "placeholder": "Describe the feature" },
+      { "name": "icon", "label": "Value Icon", "type": "file" }
+    ]
+  },
+  "earlyGrowth": {
+    "label": "earlyGrowth",
+    "fields": [
+      { "name": "title", "label": "Value Title", "type": "select", "placeholder": "Feature name" },
+      { "name": "text", "label": "Value Text", "type": "text", "placeholder": "Describe the feature" },
+      { "name": "icon", "label": "Value Icon", "type": "file" }
+    ]
+  },
+  "emphasis": {
+    "label": "emphasis",
+    "fields": [
+      { "name": "title", "label": "Value Title", "type": "text", "placeholder": "Feature name" }
+    ]
+  },
   "testimonials": {
     "label": "Testimonials",
     "fields": [

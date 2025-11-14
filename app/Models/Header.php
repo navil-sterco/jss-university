@@ -7,16 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Header extends Model
 {
     protected $fillable = [
-        'title',
-        'url',
-        'type',
-        'reference_id',
-        'parent_id',
-        'display_order',
-        'is_active'
+        'title', 'url', 'type', 'reference_id', 'parent_id',
+        'section_title', 'section_subtitle', 'section_description',
+        'section_button_text', 'section_button_url', 'boxes',
+        'display_order', 'is_active'
     ];
 
     protected $casts = [
+        'boxes' => 'array',
         'is_active' => 'boolean',
     ];
 

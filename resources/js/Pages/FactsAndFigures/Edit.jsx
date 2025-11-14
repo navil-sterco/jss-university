@@ -1,19 +1,24 @@
-import { useForm } from '@inertiajs/react';
-import React from 'react';
+import { useForm, usePage } from '@inertiajs/react';
+import React, { useRef } from 'react';
 
 const Edit = ({ factsAndFigures }) => {
-    const { data, setData, put, errors, processing,progress } = useForm({
+    const { data, setData, post, errors, processing,progress } = useForm({
+        _method: "PUT",
         title: factsAndFigures.title || "",
         description: factsAndFigures.description || "",
         figure: factsAndFigures.figure || "",
         status: factsAndFigures.status || "",
         show_on_home: factsAndFigures.show_on_home || 0,
         display_order: factsAndFigures.display_order || "",
+        image: null,
     });
+
+    const appUrl = usePage().props.appUrl;
+    const fileInputRef = useRef(null);
     
     const submit = (e) => {
         e.preventDefault();
-        put(route("facts-and-figures.update", factsAndFigures.id));
+        post(route("facts-and-figures.update", factsAndFigures.id));
     };
 
     return (
@@ -91,6 +96,37 @@ const Edit = ({ factsAndFigures }) => {
                                     onChange={(e) => setData("display_order", e.target.value)}
                                 />
                                 <div className="form-text text-danger">{errors.display_order}</div>
+                            </div>
+                            {/* Image upload */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label" htmlFor="image">Image</label>
+                                <input
+                                    type="file"
+                                    id="image"
+                                    className="form-control"
+                                    ref={fileInputRef}
+                                    onChange={(e) => setData("image", e.target.files[0])}
+                                    accept="image/png, image/jpg, image/jpeg, image/webp"
+                                />
+                                {errors.image && <div className="form-text text-danger">{errors.image}</div>}
+                            </div>
+
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label" htmlFor="image">Current Image</label>
+                                {factsAndFigures.image && (
+                                    <div className="mb-2">
+                                        <img
+                                            src={`${appUrl}/${factsAndFigures.image}`}
+                                            alt="Current Facts And Figures"
+                                            style={{
+                                                width: "100px",
+                                                height: "60px",
+                                                objectFit: "cover",
+                                                borderRadius: "4px"
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
 

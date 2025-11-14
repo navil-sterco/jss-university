@@ -84,6 +84,33 @@ const Index = (props) => {
         router.get(route('course.section.create', id));
     };
 
+    const renderUsefulLinks = (links) => {
+        
+        if (!links || links.length === 0) return <span className="text-muted">—</span>;
+        
+        return (
+            <div className="space-y-2 mb-1">
+                {links.map((link, index) => (
+                    <div key={index} className="d-flex align-items-center p-2 bg-white rounded border mb-1">
+                        <i className="bx bx-link text-primary me-2"></i>
+                        <div className="flex-grow-1">
+                            <div className="fw-medium">{link.text || 'No text'}</div>
+                            <a 
+                                href={link.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary small text-truncate d-block"
+                                style={{ maxWidth: '200px' }}
+                            >
+                                {link.url}
+                            </a>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <>
             <h1 className="text-muted">Courses List</h1>
@@ -121,7 +148,7 @@ const Index = (props) => {
                         <thead>
                             <tr>
                                 <th>Department</th>
-                                <th>Program</th>
+                                <th>Degree</th>
                                 <th>Name</th>
                                 <th>Slug</th>
                                 <th>Academic Year</th>
@@ -134,7 +161,7 @@ const Index = (props) => {
                             {courses.data.map((course) => (
                                 <tr key={course.id}>
                                     <td className='description-cell'><i className="bx bx-book bx-sm me-3"></i>{course.department_name ?? '-'}</td>
-                                    <td className='description-cell'><i className="bx bx-book-content bx-sm me-3"></i>{course.program_name ?? '-'}</td>
+                                    <td className='description-cell'><i className="bx bxs-graduation bx-sm me-3"></i>{course.degree_name ?? '-'}</td>
                                     <td className='description-cell'><i className="bx bx-heading bx-sm me-3"></i>{course.name}</td>
                                     <td className='description-cell'><i className="bx bx-link bx-sm me-3"></i>{course.slug}</td>
                                     <td className='description-cell'><i className="bx bx-calendar bx-sm me-3"></i>{course.academic_year ?? '-'}</td>
@@ -315,21 +342,33 @@ const Index = (props) => {
                                                         <span>{selectedCourse.academic_year || <span className="text-muted">—</span>}</span>
                                                     </div>
                                                 </div>
-                                                <div className="col-12">
-                                                    <label className="form-label fw-semibold text-muted small">Apply Now Link</label>
-                                                    {selectedCourse.apply_now_link ? (
-                                                        <a 
-                                                            href={selectedCourse.apply_now_link} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer"
-                                                            className="d-flex align-items-center text-primary text-decoration-none"
-                                                        >
-                                                            <i className="bx bx-link-external me-2"></i>
-                                                            <span className="text-truncate">{selectedCourse.apply_now_link}</span>
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-muted">—</span>
-                                                    )}
+                                                <div className="mb-4">
+                                                    <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                        <i className="bx bx-link-alt me-2"></i>
+                                                        Links & Resources
+                                                    </h6>
+                                                    <div className="row g-3">
+                                                        <div className="col-12">
+                                                            <label className="form-label fw-semibold text-muted small">Apply Now Link</label>
+                                                            {selectedCourse.apply_now_link ? (
+                                                                <a 
+                                                                    href={selectedCourse.apply_now_link} 
+                                                                    target="_blank" 
+                                                                    rel="noopener noreferrer"
+                                                                    className="d-flex align-items-center text-primary text-decoration-none"
+                                                                >
+                                                                    <i className="bx bx-link-external me-2"></i>
+                                                                    <span className="text-truncate">{selectedCourse.apply_now_link}</span>
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-muted">—</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="col-12">
+                                                            <label className="form-label fw-semibold text-muted small">Useful Links</label>
+                                                            {renderUsefulLinks(selectedCourse.useful_links)}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

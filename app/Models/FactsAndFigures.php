@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Pages;
+use App\Models\Course;
 use App\Models\School;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -13,6 +15,7 @@ class FactsAndFigures extends Model
         'title',
         'description',
         'figure',
+        'image',
         'status',
         'show_on_home',
         'display_order',
@@ -26,6 +29,16 @@ class FactsAndFigures extends Model
     public function pages()
     {
         return $this->belongsToMany(Pages::class, 'facts_and_figures_page', 'facts_and_figures_id', 'page_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'facts_department', 'facts_id', 'department_id')->withTimestamps();
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'facts_courses', 'facts_id', 'course_id')->withTimestamps();
     }
 
     public function scopeFilter(Builder $query, $filters)

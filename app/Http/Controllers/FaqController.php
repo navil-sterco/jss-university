@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Faq;
 use Inertia\Inertia;
 use App\Models\Pages;
+use App\Models\Course;
 use App\Models\School;
+use App\Models\Department;
 use Illuminate\Http\Request;
 
 class FaqController extends Controller
@@ -97,6 +99,11 @@ class FaqController extends Controller
      */
     public function destroy(Faq $faq)
     {
+        $faq->schools()->detach();
+        $faq->pages()->detach();
+        $faq->departments()->detach();
+        $faq->courses()->detach();
+
         $faq->delete();
 
         return redirect()->route('faq.index')->with('success', 'Faq deleted successfully!');
@@ -113,14 +120,24 @@ class FaqController extends Controller
 
     public function mapping($id)
     {
-        $faq = Faq::with(['schools:id,name', 'pages:id,title'])->findOrFail($id);
+        $faq = Faq::with(['schools:id,name', 'pages:id,title', 'departments:id,name', 'courses:id,name'])->findOrFail($id);
         $schools = School::select('id', 'name')->get();
         $pages = Pages::select('id', 'title')->get();
+        $departments = Department::with('school:id,name')->get()->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'name' => $department->name,
+                'school' => $department->school ? $department->school->name : null,
+            ];
+        });
+        $courses = Course::select('id', 'name')->get();
 
         return Inertia::render('Faqs/Mapping', [
             'faq' => $faq,
             'schools' => $schools,
             'pages' => $pages,
+            'departments' => $departments,
+            'courses' => $courses,
         ]);
     }
 
@@ -133,11 +150,17 @@ class FaqController extends Controller
             'school_ids.*' => 'exists:schools,id',
             'page_ids' => 'nullable|array',
             'page_ids.*' => 'exists:pages,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
+            'course_ids' => 'nullable|array',
+            'course_ids.*' => 'exists:courses,id',
         ]);
 
         $faq->schools()->sync($validated['school_ids'] ?? []);
         $faq->pages()->sync($validated['page_ids'] ?? []);
+        $faq->departments()->sync($validated['department_ids'] ?? []);
+        $faq->courses()->sync($validated['course_ids'] ?? []);
 
-        return redirect()->route('faq.mapping', $faq->id)->with('success', 'Faq mapped successfully!');
+        return redirect()->route('faq.index', $faq->id)->with('success', 'Faq mapped successfully!');
     }
 }

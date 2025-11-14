@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Pages;
+use App\Models\Course;
 use App\Models\School;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -24,6 +26,16 @@ class Faq extends Model
     public function pages()
     {
         return $this->belongsToMany(Pages::class, 'faqs_page', 'faq_id', 'page_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'faqs_department', 'faq_id', 'department_id')->withTimestamps();
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'faqs_courses', 'faq_id', 'course_id')->withTimestamps();
     }
 
     public function scopeFilter(Builder $query, $filters)

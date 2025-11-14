@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Course;
+use App\Models\Degree;
 use App\Models\Program;
 use App\Models\Department;
 use Illuminate\Support\Str;
@@ -24,12 +25,13 @@ class CourseController extends Controller
             return [
                 'id' => $course->id,
                 'department_id' => $course->department_id,
-                'program_id' => $course->program_id,
+                'degree_id' => $course->degree_id,
                 'department_name' => $course->department ?  $course->department->name : null,
-                'program_name' => $course->program ?  $course->program->name : null,
+                'degree_name' => $course->degree ?  $course->degree->name : null,
                 'name' => $course->name,
                 'menu_name' => $course->menu_name,
                 'name_short' => $course->name_short,
+                'useful_links' => json_decode($course->useful_links, true) ?? [],
                 'slug' => $course->slug,
                 'course_duration' => $course->course_duration,
                 'annual_fees' => $course->annual_fees,
@@ -53,10 +55,10 @@ class CourseController extends Controller
     public function create()
     {
         $departments = Department::select('id','name')->get();
-        $programs = Program::select('id','name')->get();
+        $degree = Degree::select('id','name')->get();
 
         return Inertia::render('Courses/Create',[
-            'programs' => $programs,
+            'degree' => $degree,
             'departments' => $departments,
         ]);
     }
@@ -68,7 +70,7 @@ class CourseController extends Controller
     {
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
-            'program_id' => 'required|exists:programs,id',
+            'degree_id' => 'required|exists:degrees,id',
             'name' => 'required|string|max:255',
             'slug' => [
                 'nullable',
@@ -85,6 +87,9 @@ class CourseController extends Controller
             'annual_fees' => 'nullable|string|max:255',
             'academic_year' => 'nullable|string|max:255',
             'apply_now_link' => 'nullable|url|max:255',
+            'useful_links' => 'nullable|array',
+            'useful_links.*.text' => 'nullable|string|max:255',
+            'useful_links.*.url' => 'nullable|url|max:500',
         ]);
 
         $data = $request->all();
@@ -99,18 +104,22 @@ class CourseController extends Controller
             }
         }
 
+        if (isset($data['useful_links']) && is_array($data['useful_links'])) {
+            $filteredLinks = array_filter($data['useful_links'], function($link) {
+                return !empty(trim($link['text'] ?? '')) || !empty(trim($link['url'] ?? ''));
+            });
+            $data['useful_links'] = !empty($filteredLinks) ? json_encode(array_values($filteredLinks)) : null;
+        } else {
+            $data['useful_links'] = null;
+        }
+
+        $data = array_map(function($value) {
+            return $value === '' ? null : $value;
+        }, $data);
+
         Course::create($data);
 
         return redirect()->route('course.index')->with('success', 'Course created successfully!');
-    }
-
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Course $course)
-    {
-        //
     }
 
     /**
@@ -119,12 +128,35 @@ class CourseController extends Controller
     public function edit(Course $course)
     {
         $departments = Department::select('id','name')->get();
-        $programs = Program::select('id','name')->get();
+        $degree = Degree::select('id','name')->get();
+
+        $data = $course->only([
+            'id',
+            'department_id',
+            'degree_id',
+            'name',
+            'menu_name',
+            'name_short',
+            'slug',
+            'display_order',
+            'status',
+            'course_duration',
+            'annual_fees',
+            'academic_year',
+            'useful_links',
+            'apply_now_link',
+        ]);
+
+        if (isset($data['useful_links']) && is_string($data['useful_links'])) {
+            $data['useful_links'] = json_decode($data['useful_links'], true) ?? [];
+        } else {
+            $data['useful_links'] = [];
+        }
 
         return Inertia::render('Courses/Edit',[
             'departments' => $departments,
-            'programs' => $programs,
-            'course' => $course,
+            'degree' => $degree,
+            'course' => $data,
         ]);
     }
 
@@ -135,7 +167,7 @@ class CourseController extends Controller
     {
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
-            'program_id' => 'required|exists:programs,id',
+            'degree_id' => 'required|exists:degrees,id',
             'name' => 'required|string|max:255',
             'slug' => [
                 'nullable',
@@ -152,6 +184,9 @@ class CourseController extends Controller
             'annual_fees' => 'nullable|string|max:255',
             'academic_year' => 'nullable|string|max:255',
             'apply_now_link' => 'nullable|url|max:255',
+            'useful_links' => 'nullable|array',
+            'useful_links.*.text' => 'nullable|string|max:255',
+            'useful_links.*.url' => 'nullable|url|max:500',
         ]);
 
         $data = $request->all();
@@ -164,6 +199,19 @@ class CourseController extends Controller
                 return back()->withErrors(['slug' => 'The generated slug already exists. Please enter a unique slug.'])->withInput();
             }
         }
+
+        if (isset($data['useful_links']) && is_array($data['useful_links'])) {
+            $filteredLinks = array_filter($data['useful_links'], function($link) {
+                return !empty(trim($link['text'] ?? '')) || !empty(trim($link['url'] ?? ''));
+            });
+            $data['useful_links'] = !empty($filteredLinks) ? json_encode(array_values($filteredLinks)) : null;
+        } else {
+            $data['useful_links'] = null;
+        }
+
+        $data = array_map(function($value) {
+            return $value === '' ? null : $value;
+        }, $data);
 
         $course->update($data);
 

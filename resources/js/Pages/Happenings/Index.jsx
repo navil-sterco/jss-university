@@ -13,26 +13,22 @@ const Index = (props) => {
     const modalInstance = useRef(null);
     const [idDelete, setIdDelete] = useState(null);
 
-    // View modal
     const [selectedHappening, setSelectedHappening] = useState(null);
     const viewModalRef = useRef(null);
     const viewModalInstance = useRef(null);
 
-    // Image modal
     const [selectedImage, setSelectedImage] = useState(null);
     const imageModalRef = useRef(null);
     const imageModalInstance = useRef(null);
 
     const { get, processing } = useForm();
 
-    // Toast for flash messages
     useEffect(() => {
         if (flash.success) {
             toast.success(flash.success);
         }
     }, [flash.success]);
 
-    // Search debounce
     useEffect(() => {
         const delaySearch = _.debounce(() => {
             router.get("happening", { search: query }, { preserveState: true, replace: true });
@@ -42,7 +38,6 @@ const Index = (props) => {
         return () => delaySearch.cancel();
     }, [query]);
 
-    // Initialize modals
     useEffect(() => {
         if (modalRef.current) {
             modalInstance.current = new bootstrap.Modal(modalRef.current);
@@ -55,7 +50,6 @@ const Index = (props) => {
         }
     }, []);
 
-    // Delete modal
     const showDeleteModal = (id) => {
         setIdDelete(id);
         modalInstance.current.show();
@@ -70,7 +64,6 @@ const Index = (props) => {
         });
     };
 
-    // Toggle status
     const toggleStatus = (id) => {
         router.post(route("happening.toggleStatus", id), {}, {
             preserveScroll: true,
@@ -78,48 +71,39 @@ const Index = (props) => {
         });
     };
 
-    // Image preview modal
     const showImageModal = (imageUrl) => {
         setSelectedImage(imageUrl);
         imageModalInstance.current.show();
     };
 
-    // Show view sidebar modal
     const showViewModal = (happening) => {
         setSelectedHappening(happening);
         viewModalInstance.current.show();
     };
 
-    // Close view sidebar modal and remove backdrop
     const closeViewModal = () => {
         viewModalInstance.current.hide();
         setSelectedHappening(null);
         
-        // Remove modal backdrop manually
         const backdrops = document.querySelectorAll('.modal-backdrop');
         backdrops.forEach(backdrop => {
             backdrop.remove();
         });
         
-        // Remove modal-open class from body and reset styles
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
     };
 
-    // Handle edit navigation from modal
     const handleEditFromModal = (id) => {
         closeViewModal();
-        // Use setTimeout to ensure modal is fully closed before navigation
         setTimeout(() => {
             router.get(route("happening.edit", id));
         }, 150);
     };
 
-    // Handle mapping navigation from modal
     const handleMappingFromModal = (id) => {
         closeViewModal();
-        // Use setTimeout to ensure modal is fully closed before navigation
         setTimeout(() => {
             router.get(route("happening.mapping", id));
         }, 150);

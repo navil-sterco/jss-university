@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use App\Models\Type;
+use App\Models\Pages;
+use App\Models\Course;
+use App\Models\School;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -11,7 +15,9 @@ class Faculty extends Model
 {
     protected $fillable = [
         'type_id',
-        'name', 
+        'school_id',
+        'name',
+        'slug',
         'email',
         'profile',
         'image',
@@ -34,9 +40,34 @@ class Faculty extends Model
         'status' => 'boolean',
     ];
 
+    public function schools()
+    {
+        return $this->belongsToMany(School::class, 'faculties_school', 'faculty_id', 'school_id')->withTimestamps();
+    }
+
+    public function pages()
+    {
+        return $this->belongsToMany(Pages::class, 'faculties_page', 'faculty_id', 'page_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'faculties_department', 'faculty_id', 'department_id')->withTimestamps();
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'faculties_courses', 'faculty_id', 'course_id')->withTimestamps();
+    }
+
     public function type()
     {
         return $this->belongsTo(Type::class, 'type_id');
+    }
+
+    public function school()
+    {
+        return $this->belongsTo(School::class, 'school_id');
     }
 
     protected function formattedEducation(): Attribute

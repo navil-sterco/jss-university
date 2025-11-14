@@ -105,35 +105,68 @@ class HeaderController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:custom,school,department,page',
             'reference_id' => 'nullable|integer',
             'parent_id' => 'nullable|exists:headers,id',
             'url' => 'nullable|string|max:500',
-            'display_order' => 'required|integer',
-            'is_active' => 'boolean'
+            'section_title' => 'nullable|string|max:255',
+            'section_subtitle' => 'nullable|string|max:255',
+            'section_description' => 'nullable|string',
+            'section_button_text' => 'nullable|string|max:100',
+            'section_button_url' => 'nullable|string|max:500',
+            'boxes' => 'nullable|array|max:3',
+            'boxes.*.title' => 'required|string|max:255',
+            'boxes.*.url' => 'nullable|string|max:500',
+            'boxes.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'display_order' => 'nullable|integer',
+            'is_active' => 'boolean',
         ]);
 
-        Header::create([
-            'title' => $request->title,
-            'type' => $request->type,
-            'reference_id' => $request->reference_id,
-            'parent_id' => $request->parent_id,
-            'url' => $request->url,
-            'display_order' => $request->display_order,
-            'is_active' => $request->is_active ?? true,
+        if ($request->has('boxes')) {
+            foreach ($validated['boxes'] as $index => &$box) {
+                if ($request->hasFile("boxes.$index.image")) {
+                    $image = $request->file("boxes.$index.image");
+
+                    $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                    $image->move(public_path('assets/img/boxes/'), $imageName);
+                    $box['image'] = 'assets/img/boxes/' . $imageName;
+                } else {
+                    $box['image'] = null;
+                }
+            }
+            unset($box);
+        }
+
+        $header = Header::create([
+            'title' => $validated['title'],
+            'type' => $validated['type'],
+            'reference_id' => $validated['reference_id'] ?? null,
+            'parent_id' => $validated['parent_id'] ?? null,
+            'url' => $validated['url'] ?? null,
+            'section_title' => $validated['section_title'] ?? null,
+            'section_subtitle' => $validated['section_subtitle'] ?? null,
+            'section_description' => $validated['section_description'] ?? null,
+            'section_button_text' => $validated['section_button_text'] ?? null,
+            'section_button_url' => $validated['section_button_url'] ?? null,
+            'display_order' => $validated['display_order'] ?? 0,
+            'is_active' => $validated['is_active'] ?? true,
+            'boxes' => isset($validated['boxes']) ? json_encode($validated['boxes']) : null,
         ]);
 
-        return redirect()->route('headers.index')->with('success', 'Menu item created successfully!');
+        return redirect()
+            ->route('headers.index')
+            ->with('success', 'Menu item created successfully.');
     }
+
 
     public function edit(Header $header)
     {
-        $schools = School::select('id','name')->get();
-        $departments = Department::select('id','name')->get();
-        $pages = Pages::select('id','title')->get();
-        
+        $schools = School::select('id', 'name')->get();
+        $departments = Department::select('id', 'name')->get();
+        $pages = Pages::select('id', 'title')->get();
+
         $menuItems = Header::with('children')
             ->get()
             ->map(function ($item) {
@@ -155,7 +188,7 @@ class HeaderController extends Controller
                             'display_order' => $child->display_order,
                             'is_active' => $child->is_active,
                         ];
-                    })
+                    }),
                 ];
             });
 
@@ -167,39 +200,95 @@ class HeaderController extends Controller
                 'type' => $header->type,
                 'reference_id' => $header->reference_id,
                 'parent_id' => $header->parent_id,
+                'section_title' => $header->section_title,
+                'section_subtitle' => $header->section_subtitle,
+                'section_description' => $header->section_description,
+                'section_button_text' => $header->section_button_text,
+                'section_button_url' => $header->section_button_url,
                 'display_order' => $header->display_order,
                 'is_active' => $header->is_active,
+                'boxes' => $header->boxes ? $header->boxes : [],
             ],
             'schools' => $schools,
             'departments' => $departments,
             'pages' => $pages,
-            'menuItems' => $menuItems
+            'menuItems' => $menuItems,
         ]);
     }
 
     public function update(Request $request, Header $header)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:custom,school,department,page',
             'reference_id' => 'nullable|integer',
             'parent_id' => 'nullable|exists:headers,id',
             'url' => 'nullable|string|max:500',
-            'display_order' => 'required|integer',
-            'is_active' => 'boolean'
+            'section_title' => 'nullable|string|max:255',
+            'section_subtitle' => 'nullable|string|max:255',
+            'section_description' => 'nullable|string',
+            'section_button_text' => 'nullable|string|max:100',
+            'section_button_url' => 'nullable|string|max:500',
+            'boxes' => 'nullable|array|max:3',
+            'boxes.*.title' => 'nullable|string|max:255',
+            'boxes.*.url' => 'nullable|string|max:500',
+            'display_order' => 'nullable|integer',
+            'is_active' => 'boolean',
         ]);
+
+        $boxesData = [];
+
+        if ($request->has('boxes')) {
+            $oldBoxes = $header->boxes ? json_decode($header->boxes, true) : [];
+
+            foreach ($request->boxes as $index => $box) {
+                $boxData = [
+                    'title' => $box['title'] ?? '',
+                    'url' => $box['url'] ?? '',
+                ];
+
+                if ($request->hasFile("boxes.{$index}.image")) {
+                    $request->validate([
+                        "boxes.{$index}.image" => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+                    ]);
+
+                    $oldImage = $oldBoxes[$index]['image'] ?? null;
+                    if (!empty($oldImage) && file_exists(public_path($oldImage))) {
+                        unlink(public_path($oldImage));
+                    }
+
+                    $image = $request->file("boxes.{$index}.image");
+                    $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                    $image->move(public_path('assets/img/boxes/'), $imageName);
+
+                    $boxData['image'] = 'assets/img/boxes/' . $imageName;
+                } else {
+                    $boxData['image'] = $oldBoxes[$index]['image'] ?? null;
+                }
+
+                $boxesData[] = $boxData;
+            }
+        }
 
         $header->update([
-            'title' => $request->title,
-            'type' => $request->type,
-            'reference_id' => $request->reference_id,
-            'parent_id' => $request->parent_id,
-            'url' => $request->url,
-            'display_order' => $request->display_order,
-            'is_active' => $request->is_active ?? true,
+            'title' => $validated['title'],
+            'type' => $validated['type'],
+            'reference_id' => $validated['reference_id'] ?? null,
+            'parent_id' => $validated['parent_id'] ?? null,
+            'url' => $validated['url'] ?? null,
+            'section_title' => $validated['section_title'] ?? null,
+            'section_subtitle' => $validated['section_subtitle'] ?? null,
+            'section_description' => $validated['section_description'] ?? null,
+            'section_button_text' => $validated['section_button_text'] ?? null,
+            'section_button_url' => $validated['section_button_url'] ?? null,
+            'display_order' => $validated['display_order'] ?? 0,
+            'is_active' => $validated['is_active'] ?? true,
+            'boxes' => !empty($boxesData) ? json_encode($boxesData) : null,
         ]);
 
-        return redirect()->route('headers.index')->with('success', 'Menu item updated successfully!');
+        return redirect()
+            ->route('headers.index')
+            ->with('success', 'Menu item updated successfully!');
     }
 
     public function destroy(Header $header)
@@ -208,21 +297,48 @@ class HeaderController extends Controller
             $this->deleteWithChildren($header);
         });
 
-        return redirect()->route('headers.index')->with('success', 'Menu item deleted successfully!');
+        return redirect()
+            ->route('headers.index')
+            ->with('success', 'Menu item deleted successfully!');
     }
 
     private function deleteWithChildren(Header $header)
     {
-        $header->load('children.children');
-        
-        if ($header->children->isNotEmpty()) {
-            foreach ($header->children as $child) {
-                $this->deleteWithChildren($child);
+        foreach ($header->children as $child) {
+            $this->deleteWithChildren($child);
+        }
+
+        if (!empty($header->boxes)) {
+            // Check if boxes is already an array or needs decoding
+            $boxes = is_array($header->boxes) ? $header->boxes : json_decode($header->boxes, true);
+
+            if (is_array($boxes)) {
+                foreach ($boxes as $box) {
+                    if (!empty($box['image'])) {
+                        $imagePath = public_path($box['image']);
+                        if (file_exists($imagePath)) {
+                            @unlink($imagePath);
+                        }
+                    }
+                }
             }
         }
-        
+
         $header->delete();
     }
+
+    // private function deleteWithChildren(Header $header)
+    // {
+    //     $header->load('children.children');
+        
+    //     if ($header->children->isNotEmpty()) {
+    //         foreach ($header->children as $child) {
+    //             $this->deleteWithChildren($child);
+    //         }
+    //     }
+        
+    //     $header->delete();
+    // }
 
     public function updateOrder(Request $request)
     {

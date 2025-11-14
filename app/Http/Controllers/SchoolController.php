@@ -25,6 +25,8 @@ class SchoolController extends Controller
                 'short_description' => $school->short_description,
                 'image' => $school->image ? asset($school->image) : asset('assets/img/placeholder.png'),
                 'prospectus' => $school->prospectus ? asset($school->prospectus) : null,
+                'apply_now_link' => $school->apply_now_link,
+                'useful_links' => json_decode($school->useful_links, true) ?? [],
                 'display_order' => $school->display_order,
                 'academic_years' => $school->academic_years,
                 'mobile_contact' => $school->mobile_contact,
@@ -66,6 +68,10 @@ class SchoolController extends Controller
             'short_name' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:1000',
             'prospectus' => 'nullable|mimes:pdf|max:1000',
+            'apply_now_link' => 'nullable|url|max:500',
+            'useful_links' => 'nullable|array',
+            'useful_links.*.text' => 'nullable|string|max:255',
+            'useful_links.*.url' => 'nullable|url|max:500',
         ]);
 
         $data = $request->all();
@@ -97,6 +103,19 @@ class SchoolController extends Controller
                 $data[$field] = $path;
             }
         }
+
+        if (isset($data['useful_links']) && is_array($data['useful_links'])) {
+            $filteredLinks = array_filter($data['useful_links'], function($link) {
+                return !empty(trim($link['text'] ?? '')) || !empty(trim($link['url'] ?? ''));
+            });
+            $data['useful_links'] = !empty($filteredLinks) ? json_encode(array_values($filteredLinks)) : null;
+        } else {
+            $data['useful_links'] = null;
+        }
+
+        $data = array_map(function($value) {
+            return $value === '' ? null : $value;
+        }, $data);
 
         School::create($data);
 
@@ -131,7 +150,15 @@ class SchoolController extends Controller
             'image',
             'prospectus',
             'display_order',
+            'useful_links',
+            'apply_now_link',
         ]);
+
+        if (isset($data['useful_links']) && is_string($data['useful_links'])) {
+            $data['useful_links'] = json_decode($data['useful_links'], true) ?? [];
+        } else {
+            $data['useful_links'] = [];
+        }
 
         if ($data['image']) {
             $data['image'] = asset($data['image']);
@@ -173,6 +200,10 @@ class SchoolController extends Controller
             // removal flags
             'remove_image' => 'nullable|boolean',
             'remove_prospectus' => 'nullable|boolean',
+            'apply_now_link' => 'nullable|url|max:500',
+            'useful_links' => 'nullable|array',
+            'useful_links.*.text' => 'nullable|string|max:255',
+            'useful_links.*.url' => 'nullable|url|max:500',
         ]);
 
         if (empty($validated['slug'])) {
@@ -227,6 +258,20 @@ class SchoolController extends Controller
             }
             $validated['prospectus'] = null;
         }
+
+        
+        if (isset($validated['useful_links']) && is_array($validated['useful_links'])) {
+            $filteredLinks = array_filter($validated['useful_links'], function($link) {
+                return !empty(trim($link['text'] ?? '')) || !empty(trim($link['url'] ?? ''));
+            });
+            $validated['useful_links'] = !empty($filteredLinks) ? json_encode(array_values($filteredLinks)) : null;
+        } else {
+            $validated['useful_links'] = null;
+        }
+
+        $validated = array_map(function($value) {
+            return $value === '' ? null : $value;
+        }, $validated);
 
         $school->update($validated);
 

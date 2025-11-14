@@ -18,6 +18,12 @@ return new class extends Migration
             $table->enum('type', ['custom', 'school', 'department', 'page'])->default('custom');
             $table->unsignedBigInteger('reference_id')->nullable();
             $table->unsignedBigInteger('parent_id')->nullable();
+            $table->string('section_title')->nullable();
+            $table->string('section_subtitle')->nullable();
+            $table->string('section_description')->nullable();
+            $table->string('section_button_text')->nullable();
+            $table->string('section_button_url')->nullable();
+            $table->json('boxes')->nullable();
             $table->integer('display_order')->default(0);
             $table->boolean('is_active')->default(true);
             $table->foreign('parent_id')->references('id')->on('headers')->onDelete('cascade');

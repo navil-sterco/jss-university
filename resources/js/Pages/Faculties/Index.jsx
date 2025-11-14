@@ -154,6 +154,8 @@ const Index = (props) => {
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Slug</th>
+                                <th>School</th>
                                 <th>Type</th>
                                 <th>Email</th>
                                 <th>Image</th>
@@ -166,6 +168,8 @@ const Index = (props) => {
                             {faculty.data.map((facultyMember) => (
                                 <tr key={facultyMember.id}>
                                     <td><i className="bx bx-heading bx-sm me-3"></i>{facultyMember.name}</td>
+                                    <td><i className="bx bx-links bx-sm me-3"></i>{facultyMember.slug}</td>
+                                    <td><i className="bx bx-book bx-sm me-3"></i>{facultyMember.school}</td>
                                     <td><i className="bx bx-category bx-sm me-3"></i>{facultyMember.type}</td>
                                     <td><i className="bx bx-envelope bx-sm me-3"></i>{facultyMember.email}</td>
                                     <td>
@@ -199,13 +203,13 @@ const Index = (props) => {
                                     </td>
                                     <td>
                                         <div className="d-flex align-items-center gap-1">
-                                            {/* <Link
+                                            <Link
                                                 className="btn btn-sm btn-outline-primary p-1"
                                                 href={route("faculty.mapping", facultyMember.id)}
                                             >
                                                 <span className="tf-icons bx bx-right-arrow-circle bx-18px me-1"></span>
                                                 Mapping
-                                            </Link> */}
+                                            </Link>
 
                                             <div className="dropdown">
                                                 <button
@@ -371,15 +375,47 @@ const Index = (props) => {
                                                 <i className="bx bx-test-tube me-2"></i>
                                                 Research Areas
                                             </h6>
-                                            {selectedFaculty.research && selectedFaculty.research.length > 0 ? (
-                                                <div className="space-y-2">
+                                            {selectedFaculty.research && selectedFaculty.research.length > 0 && selectedFaculty.research.some(r => r.title) ? (
+                                                <div className="space-y-3">
                                                     {selectedFaculty.research.map((research, index) => (
-                                                        <div key={index} className="border rounded p-3 bg-light mb-1">
-                                                            <div className="d-flex align-items-start">
-                                                                <i className="bx bx-bulb text-warning me-2"></i>
-                                                                <span className="small">{research}</span>
+                                                        research.title && (
+                                                            <div key={index} className="border rounded p-3 bg-light">
+                                                                <div className="row align-items-center">
+                                                                    {/* Research Image */}
+                                                                    {research.image && (
+                                                                        <div className="col-auto">
+                                                                            <img 
+                                                                                src={research.image} 
+                                                                                alt={research.title}
+                                                                                className="rounded"
+                                                                                style={{ width: '60px', height: '60px', objectFit: 'cover' }}
+                                                                            />
+                                                                        </div>
+                                                                    )}
+                                                                    
+                                                                    {/* Research Content */}
+                                                                    <div className={research.image ? "col" : "col-12"}>
+                                                                        <div className="d-flex align-items-start">
+                                                                            <i className="bx bx-bulb text-warning me-2 mt-1"></i>
+                                                                            <div className="flex-grow-1">
+                                                                                <h6 className="mb-1 fw-semibold">{research.title}</h6>
+                                                                                {research.link && (
+                                                                                    <a 
+                                                                                        href={research.link} 
+                                                                                        target="_blank" 
+                                                                                        rel="noopener noreferrer"
+                                                                                        className="small text-primary text-decoration-none"
+                                                                                    >
+                                                                                        <i className="bx bx-link-external me-1"></i>
+                                                                                        View Research
+                                                                                    </a>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        )
                                                     ))}
                                                 </div>
                                             ) : (
@@ -389,7 +425,7 @@ const Index = (props) => {
                                                 </div>
                                             )}
                                         </div>
-
+                                        
                                         {/* Teaching */}
                                         <div className="mb-4">
                                             <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">

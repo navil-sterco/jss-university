@@ -1,11 +1,11 @@
 import { useForm } from "@inertiajs/react";
 import React from "react";
 
-const Edit = ({ course, departments, programs }) => {
+const Edit = ({ course, departments, degree }) => {
     const { data, setData, post, processing, errors, progress } = useForm({
         _method: "PUT",
         department_id: course.department_id || "",
-        program_id: course.program_id || "",
+        degree_id: course.degree_id || "",
         name: course.name || "",
         menu_name: course.menu_name || "",
         name_short: course.name_short || "",
@@ -16,11 +16,34 @@ const Edit = ({ course, departments, programs }) => {
         annual_fees: course.annual_fees || "",
         academic_year: course.academic_year || "",
         apply_now_link: course.apply_now_link || "",
+        useful_links: course.useful_links || [],
     });
 
     const submit = (e) => {
         e.preventDefault();
         post(route("course.update", course.id));
+    };
+
+        // Add a new useful link
+    const addUsefulLink = () => {
+        setData("useful_links", [
+            ...data.useful_links,
+            { text: "", url: "" }
+        ]);
+    };
+
+    // Remove a useful link
+    const removeUsefulLink = (index) => {
+        const updatedLinks = data.useful_links.filter((_, i) => i !== index);
+        setData("useful_links", updatedLinks);
+    };
+
+    // Update a useful link
+    const updateUsefulLink = (index, field, value) => {
+        const updatedLinks = data.useful_links.map((link, i) => 
+            i === index ? { ...link, [field]: value } : link
+        );
+        setData("useful_links", updatedLinks);
     };
 
     return (
@@ -46,22 +69,22 @@ const Edit = ({ course, departments, programs }) => {
                                 <div className="form-text text-danger">{errors.department_id}</div>
                             </div>
 
-                            {/* Programs */}
+                            {/* Degree */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Programs <span className="text-danger">*</span></label>
+                                <label className="form-label">Degree <span className="text-danger">*</span></label>
                                 <select
                                     className="form-control"
-                                    value={data.program_id}
-                                    onChange={(e) => setData("program_id", e.target.value)}
+                                    value={data.degree_id}
+                                    onChange={(e) => setData("degree_id", e.target.value)}
                                 >
-                                    <option value="">Select Programs</option>
-                                    {programs.map((prog) => (
-                                        <option key={prog.id} value={prog.id}>
-                                            {prog.name}
+                                    <option value="">Select Degree</option>
+                                    {degree.map((deg) => (
+                                        <option key={deg.id} value={deg.id}>
+                                            {deg.name}
                                         </option>
                                     ))}
                                 </select>
-                                <div className="form-text text-danger">{errors.program_id}</div>
+                                <div className="form-text text-danger">{errors.degree_id}</div>
                             </div>
 
                             {/* Course Name */}
@@ -139,7 +162,7 @@ const Edit = ({ course, departments, programs }) => {
                             </div>
 
                             {/* Course Duration */}
-                            <div className="mb-3 col-md-4">
+                            <div className="mb-3 col-md-3">
                                 <label className="form-label">Course Duration</label>
                                 <input
                                     type="text"
@@ -151,7 +174,7 @@ const Edit = ({ course, departments, programs }) => {
                             </div>
 
                             {/* Annual Fees */}
-                            <div className="mb-3 col-md-4">
+                            <div className="mb-3 col-md-3">
                                 <label className="form-label">Annual Fees</label>
                                 <input
                                     type="text"
@@ -163,7 +186,7 @@ const Edit = ({ course, departments, programs }) => {
                             </div>
 
                             {/* Academic Year */}
-                            <div className="mb-3 col-md-4">
+                            <div className="mb-3 col-md-6">
                                 <label className="form-label">Academic Year</label>
                                 <input
                                     type="text"
@@ -184,6 +207,63 @@ const Edit = ({ course, departments, programs }) => {
                                     onChange={(e) => setData("apply_now_link", e.target.value)}
                                 />
                                 <div className="form-text text-danger">{errors.apply_now_link}</div>
+                            </div>
+
+                            <div className="col-12">
+                                <div className="card">
+                                    <div className="card-header d-flex justify-content-between align-items-center">
+                                        <h5 className="mb-0">Useful Links</h5>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-primary"
+                                            onClick={addUsefulLink}
+                                        >
+                                            <i className="bx bx-plus"></i> Add Link
+                                        </button>
+                                    </div>
+                                    <div className="card-body">
+                                        {data.useful_links.length === 0 ? (
+                                            <div className="text-center py-3 text-muted">
+                                                No useful links added yet. Click "Add Link" to add one.
+                                            </div>
+                                        ) : (
+                                            data.useful_links.map((link, index) => (
+                                                <div key={index} className="row mb-3 border-bottom pb-3">
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">Link Text</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            placeholder="e.g., Course Curriculum"
+                                                            value={link.text}
+                                                            onChange={(e) => updateUsefulLink(index, "text", e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div className="col-md-5">
+                                                        <label className="form-label">Link URL</label>
+                                                        <input
+                                                            type="url"
+                                                            className="form-control"
+                                                            placeholder="https://example.com/curriculum"
+                                                            value={link.url}
+                                                            onChange={(e) => updateUsefulLink(index, "url", e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div className="col-md-1 d-flex align-items-end mb-1 mt-1">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-danger"
+                                                            onClick={() => removeUsefulLink(index)}
+                                                        >
+                                                            <i className="bx bx-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                        <div className="form-text text-danger">{errors.useful_links}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

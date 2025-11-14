@@ -15,7 +15,7 @@ class SchoolController extends Controller
     {
         $today = Carbon::today();
         $school = School::where('slug',$slug)->first();
-        $id = $school->id;
+
 
         if (!$school) {
             return response()->json([
@@ -23,9 +23,10 @@ class SchoolController extends Controller
                 'message' => 'School not found',
             ], 404);
         }
+        $id = $school->id;
 
         $sections = [
-            'banners' => $school->banners->take(5)->map(fn($item) => [
+            'banners' => $school->banners->where('status', 1)->take(5)->map(fn($item) => [
                 'id' => $item->id,
                 'title' => $item->heading,
                 'desc' => $item->subheading,
@@ -121,7 +122,7 @@ class SchoolController extends Controller
                     'course' => $item->course,
                     'batch' => $item->batch,
                     'slug' => $item->slug,
-                    'alt_text' => $item->alt_text,
+                    'alt_text' => $item->title,
                     'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
                     'video_url' => $item->video_url,
                     'short_description' => $item->short_description,

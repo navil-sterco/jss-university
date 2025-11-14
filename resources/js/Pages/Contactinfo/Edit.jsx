@@ -45,7 +45,6 @@ const Edit = ({ contacts }) => {
                                     value={data.title}
                                     onChange={(e) => setData("title", e.target.value)}
                                     placeholder="Enter title (e.g., Company Name)"
-                                    required
                                 />
                                 <div className="form-text text-danger">{errors.title}</div>
                             </div>
@@ -59,7 +58,6 @@ const Edit = ({ contacts }) => {
                                     value={data.address}
                                     onChange={(e) => setData("address", e.target.value)}
                                     placeholder="Enter full address"
-                                    required
                                 />
                                 <div className="form-text text-danger">{errors.address}</div>
                             </div>
@@ -73,7 +71,6 @@ const Edit = ({ contacts }) => {
                                     value={data.email}
                                     onChange={(e) => setData("email", e.target.value)}
                                     placeholder="Enter Email"
-                                    required
                                 />
                                 <div className="form-text text-danger">{errors.email}</div>
                             </div>

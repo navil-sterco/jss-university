@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('department_id')->constrained('departments')->cascadeOnDelete();
-            $table->foreignId('program_id')->constrained('programs')->cascadeOnDelete();
+            $table->foreignId('degree_id')->constrained('degrees')->cascadeOnDelete();
             $table->string('name');
             $table->string('menu_name')->nullable();
             $table->string('name_short')->nullable();
             $table->string('slug')->unique();
+            $table->json('useful_links')->nullable();
             $table->integer('display_order')->default(100);
             $table->boolean('status')->default(1);
 
@@ -57,8 +58,6 @@ return new class extends Migration
             $table->string('fee_structure_pdf')->nullable();
             $table->string('fee_structure_image')->nullable();
 
-            // Career
-            $table->json('career_opportunities')->nullable();
             $table->timestamps();
         });
     }

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Pages;
+use App\Models\Course;
 use App\Models\School;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -29,6 +31,16 @@ class Banner extends Model
     public function pages()
     {
         return $this->belongsToMany(Pages::class, 'banner_page', 'banner_id', 'page_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'banners_department', 'banner_id', 'department_id')->withTimestamps();
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'banners_courses', 'banner_id', 'course_id')->withTimestamps();
     }
 
     public function scopeFilter(Builder $query, $filters)

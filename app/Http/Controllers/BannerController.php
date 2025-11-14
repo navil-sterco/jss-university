@@ -5,36 +5,74 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Pages;
 use App\Models\Banner;
+use App\Models\Course;
 use App\Models\School;
+use App\Models\Department;
 use Illuminate\Http\Request;
 
 class BannerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $banners = Banner::filter(['search' => $search])->orderBy('display_order', 'asc')->paginate(10)->withQueryString()->through(function ($banner) {
-            return [
-                'id' => $banner->id,
-                'heading' => $banner->heading,
-                'subheading' => $banner->subheading,
-                'link' => asset($banner->link),
-                'linked_text' => $banner->linked_text,
-                'image' => $banner->image ? asset($banner->image) : asset('assets/img/placeholder.png'),
-                'mobile_image' => $banner->mobile_image ? asset($banner->mobile_image) : asset('assets/img/placeholder.png'),
-                'status' => $banner->status,
-                'show_on_home' => $banner->show_on_home,
-                'display_order' => $banner->display_order,
-            ];
-        });
+        $banners = Banner::with(['schools', 'pages', 'departments', 'courses'])
+            ->filter(['search' => $search])
+            ->orderBy('display_order', 'asc')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(function ($banner) {
+                // Determine what the banner is mapped to
+                $mappedTo = $this->getBannerMapping($banner);
+                
+                return [
+                    'id' => $banner->id,
+                    'heading' => $banner->heading,
+                    'subheading' => $banner->subheading,
+                    'link' => asset($banner->link),
+                    'linked_text' => $banner->linked_text,
+                    'image' => $banner->image ? asset($banner->image) : asset('assets/img/placeholder.png'),
+                    'mobile_image' => $banner->mobile_image ? asset($banner->mobile_image) : asset('assets/img/placeholder.png'),
+                    'status' => $banner->status,
+                    'show_on_home' => $banner->show_on_home,
+                    'display_order' => $banner->display_order,
+                    'banner_shown_on' => $mappedTo,
+                ];
+            });
 
         return Inertia::render('Banners/Index', [
             'banners' => $banners,
             'searchTerm' => $search ?? '',
         ]);
+    }
+
+    private function getBannerMapping($banner)
+    {
+        // Check schools first
+        if ($banner->schools->isNotEmpty()) {
+            $school = $banner->schools->first();
+            return "school-{$school->name}";
+        }
+        
+        // Check pages
+        if ($banner->pages->isNotEmpty()) {
+            $page = $banner->pages->first();
+            return "page-{$page->title}";
+        }
+        
+        // Check departments
+        if ($banner->departments->isNotEmpty()) {
+            $department = $banner->departments->first();
+            return "department-{$department->name}";
+        }
+        
+        // Check courses
+        if ($banner->courses->isNotEmpty()) {
+            $course = $banner->courses->first();
+            return "course-{$course->name}";
+        }
+        
+        // If nothing is mapped
+        return "Not Mapped";
     }
 
     /**
@@ -165,6 +203,8 @@ class BannerController extends Controller
 
         $banner->schools()->detach();
         $banner->pages()->detach();
+        $banner->departments()->detach();
+        $banner->courses()->detach();
 
         $banner->delete();
 
@@ -182,14 +222,24 @@ class BannerController extends Controller
 
     public function mapping($id)
     {
-        $banner = Banner::with(['schools:id,name', 'pages:id,title'])->findOrFail($id);
+        $banner = Banner::with(['schools:id,name', 'pages:id,title', 'departments:id,name', 'courses:id,name'])->findOrFail($id);
         $schools = School::select('id', 'name')->get();
         $pages = Pages::select('id', 'title')->get();
+        $departments = Department::with('school:id,name')->get()->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'name' => $department->name,
+                'school' => $department->school ? $department->school->name : null,
+            ];
+        });
+        $courses = Course::select('id', 'name')->get();
 
         return Inertia::render('Banners/Mapping', [
             'banner' => $banner,
             'schools' => $schools,
             'pages' => $pages,
+            'departments' => $departments,
+            'courses' => $courses,
         ]);
     }
 
@@ -198,18 +248,36 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
 
         $validated = $request->validate([
-            'school_ids' => 'nullable|array',
-            'school_ids.*' => 'exists:schools,id',
-            'page_ids' => 'nullable|array',
-            'page_ids.*' => 'exists:pages,id',
-            'show_on_home' =>'nullable',
+            'selected_id' => 'nullable|integer',
+            'selected_type' => 'nullable|string|in:school,page,department,course',
+            'show_on_home' => 'boolean',
         ]);
 
-        $banner->show_on_home = $request->show_on_home;
+        $banner->show_on_home = $request->show_on_home ?? false;
         $banner->save();
-        $banner->schools()->sync($validated['school_ids'] ?? []);
-        $banner->pages()->sync($validated['page_ids'] ?? []);
 
-        return redirect()->route('banner.mapping', $banner->id)->with('success', 'Banner mapped successfully!');
+        $banner->schools()->detach();
+        $banner->pages()->detach();
+        $banner->departments()->detach();
+        $banner->courses()->detach();
+
+        if ($validated['selected_id'] && $validated['selected_type']) {
+            switch ($validated['selected_type']) {
+                case 'school':
+                    $banner->schools()->attach($validated['selected_id']);
+                    break;
+                case 'page':
+                    $banner->pages()->attach($validated['selected_id']);
+                    break;
+                case 'department':
+                    $banner->departments()->attach($validated['selected_id']);
+                    break;
+                case 'course':
+                    $banner->courses()->attach($validated['selected_id']);
+                    break;
+            }
+        }
+
+        return redirect()->route('banners.index')->with('success', 'Banner mapped successfully!');
     }
 }

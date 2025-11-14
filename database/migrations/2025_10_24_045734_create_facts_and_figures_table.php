@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string("title");
             $table->text("description")->nullable();
             $table->string("figure")->nullable();
+            $table->string("image")->nullable();
             $table->boolean("status")->default(true);
             $table->boolean("show_on_home")->default(false);
             $table->integer("display_order")->default(100);

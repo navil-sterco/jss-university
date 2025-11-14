@@ -13,6 +13,8 @@ const Create = () => {
         display_order: 100,
         academic_years: "",
         mobile_contact: "",
+        apply_now_link: "",
+        useful_links: [],
         virtual_tour: "",
         virtual_display_order: 0,
     });
@@ -25,6 +27,28 @@ const Create = () => {
     const submit = (e) => {
         e.preventDefault();
         post(route("schools.store"));
+    };
+
+    // Add a new useful link
+    const addUsefulLink = () => {
+        setData("useful_links", [
+            ...data.useful_links,
+            { text: "", url: "" }
+        ]);
+    };
+
+    // Remove a useful link
+    const removeUsefulLink = (index) => {
+        const updatedLinks = data.useful_links.filter((_, i) => i !== index);
+        setData("useful_links", updatedLinks);
+    };
+
+    // Update a useful link
+    const updateUsefulLink = (index, field, value) => {
+        const updatedLinks = data.useful_links.map((link, i) => 
+            i === index ? { ...link, [field]: value } : link
+        );
+        setData("useful_links", updatedLinks);
     };
 
     return (
@@ -170,6 +194,76 @@ const Create = () => {
                                     value={data.display_order}
                                     onChange={(e) => setData("display_order", e.target.value)}
                                 />
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Apply Now Link</label>
+                                <input
+                                    className="form-control"
+                                    type="url"
+                                    placeholder="https://example.com/apply"
+                                    value={data.apply_now_link}
+                                    onChange={(e) => setData("apply_now_link", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.apply_now_link}</div>
+                            </div>
+
+                            <div className="col-12">
+                                <div className="card">
+                                    <div className="card-header d-flex justify-content-between align-items-center">
+                                        <h5 className="mb-0">Useful Links</h5>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-primary"
+                                            onClick={addUsefulLink}
+                                        >
+                                            <i className="bx bx-plus"></i> Add Link
+                                        </button>
+                                    </div>
+                                    <div className="card-body">
+                                        {data.useful_links.length === 0 ? (
+                                            <div className="text-center py-3 text-muted">
+                                                No useful links added yet. Click "Add Link" to add one.
+                                            </div>
+                                        ) : (
+                                            data.useful_links.map((link, index) => (
+                                                <div key={index} className="row mb-3 border-bottom pb-3">
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">Link Text</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            placeholder="e.g., Course Curriculum"
+                                                            value={link.text}
+                                                            onChange={(e) => updateUsefulLink(index, "text", e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div className="col-md-5">
+                                                        <label className="form-label">Link URL</label>
+                                                        <input
+                                                            type="url"
+                                                            className="form-control"
+                                                            placeholder="https://example.com/curriculum"
+                                                            value={link.url}
+                                                            onChange={(e) => updateUsefulLink(index, "url", e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div className="col-md-1 d-flex align-items-end mb-1 mt-1">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-danger"
+                                                            onClick={() => removeUsefulLink(index)}
+                                                        >
+                                                            Remove 
+                                                            <i className="bx bx-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                        <div className="form-text text-danger">{errors.useful_links}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

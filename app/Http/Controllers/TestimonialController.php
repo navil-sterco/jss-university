@@ -4,16 +4,15 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Pages;
+use App\Models\Course;
 use App\Models\School;
+use App\Models\Department;
 use App\Models\Testimonial;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class TestimonialController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -46,17 +45,11 @@ class TestimonialController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return Inertia::render('Testimonials/Create'); 
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -109,18 +102,6 @@ class TestimonialController extends Controller
         return redirect()->route('testimonial.index')->with('success', 'Testimonial created successfully!');
     }
 
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Testimonial $testimonial)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Testimonial $testimonial)
     {
         return Inertia::render('Testimonials/Edit',[
@@ -128,9 +109,6 @@ class TestimonialController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Testimonial $testimonial)
     {
         $validated = $request->validate([
@@ -194,9 +172,6 @@ class TestimonialController extends Controller
 
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Testimonial $testimonial)
     {
         if ($testimonial->image && file_exists(public_path($testimonial->image))) {
@@ -205,6 +180,8 @@ class TestimonialController extends Controller
         
         $testimonial->schools()->detach();
         $testimonial->pages()->detach();
+        $testimonial->departments()->detach();
+        $testimonial->courses()->detach();
         
         $testimonial->delete();
 
@@ -222,14 +199,24 @@ class TestimonialController extends Controller
 
     public function mapping($id)
     {
-        $testimonial = Testimonial::with(['schools:id,name', 'pages:id,title'])->findOrFail($id);
+        $testimonial = Testimonial::with(['schools:id,name', 'pages:id,title', 'departments:id,name', 'courses:id,name'])->findOrFail($id);
         $schools = School::select('id', 'name')->get();
         $pages = Pages::select('id', 'title')->get();
+        $departments = Department::with('school:id,name')->get()->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'name' => $department->name,
+                'school' => $department->school ? $department->school->name : null,
+            ];
+        });
+        $courses = Course::select('id', 'name')->get();
 
         return Inertia::render('Testimonials/Mapping', [
             'testimonial' => $testimonial,
             'schools' => $schools,
             'pages' => $pages,
+            'departments' => $departments,
+            'courses' => $courses,
         ]);
     }
 
@@ -242,14 +229,19 @@ class TestimonialController extends Controller
             'school_ids.*' => 'exists:schools,id',
             'page_ids' => 'nullable|array',
             'page_ids.*' => 'exists:pages,id',
-            'show_on_home' =>'nullable',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
+            'course_ids' => 'nullable|array',
+            'course_ids.*' => 'exists:courses,id',
         ]);
 
         $testimonial->show_on_home = $request->show_on_home;
         $testimonial->save();
         $testimonial->schools()->sync($validated['school_ids'] ?? []);
         $testimonial->pages()->sync($validated['page_ids'] ?? []);
+        $testimonial->departments()->sync($validated['department_ids'] ?? []);
+        $testimonial->courses()->sync($validated['course_ids'] ?? []);
 
-        return redirect()->route('testimonial.mapping', $testimonial->id)->with('success', 'Testimonial mapped successfully!');
+        return redirect()->route('testimonial.index', $testimonial->id)->with('success', 'Testimonial mapped successfully!');
     }
 }

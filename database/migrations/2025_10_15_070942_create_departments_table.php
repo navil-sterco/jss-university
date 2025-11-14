@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('menu_name')->nullable();
             $table->string('name_short')->nullable();
+            $table->string('academic_year')->nullable();
+            $table->string('apply_now_link')->nullable();
+            $table->string('brochure')->nullable();
+            $table->json('useful_links')->nullable();
             $table->string('slug')->nullable()->unique();
             $table->integer('display_order')->default(100);
             $table->boolean('status')->default(1);
@@ -33,6 +37,7 @@ return new class extends Migration
             $table->integer('tab_display_order')->default(100);
 
             // Tab 2: Dean/HOD Message
+            $table->string('hod_title')->nullable();
             $table->string('hod_name')->nullable();
             $table->string('hod_designation')->nullable();
             $table->json('hod_messages')->nullable(); // Array stored as JSON
@@ -40,6 +45,7 @@ return new class extends Migration
 
             // Tab 3: Courses
             $table->string('courses_title')->nullable();
+            $table->string('courses_subtitle')->nullable();
             $table->string('courses_image')->nullable();
 
             // Tab 4: Faculty
@@ -49,6 +55,8 @@ return new class extends Migration
             // Tab 5: Laboratories
             $table->string('lab_title')->nullable();
             $table->string('lab_subtitle')->nullable();
+            $table->string('lab_description')->nullable();
+            $table->string('lab_url')->nullable();
 
             // Tab 6: Happening
             $table->string('happening_title')->nullable();

@@ -286,6 +286,8 @@ class GalleryController extends Controller
             unlink(public_path($gallery->pdf));
         }
 
+        $gallery->happenings()->detach();
+
         $gallery->delete();
 
         return redirect()->route('galleries.index')->with('success', 'Gallery item deleted successfully!');
