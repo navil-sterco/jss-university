@@ -21,6 +21,7 @@ class Department extends Model
         'name',
         'department_id',
         'menu_name',
+        'school_id',
         'name_short',
         'academic_year',
         'apply_now_link',

@@ -4,6 +4,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use App\Http\Controllers\FaqController;
+use App\Http\Controllers\TabController;
 use App\Http\Controllers\TypeController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\BannerController;
@@ -24,10 +25,12 @@ use App\Http\Controllers\RecruiterController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\LeadershipController;
 use App\Http\Controllers\MainHeaderController;
+use App\Http\Controllers\SeoSettingController;
 use App\Http\Controllers\ContactFormController;
 use App\Http\Controllers\ContactInfoController;
 use App\Http\Controllers\PageSectionController;
 use App\Http\Controllers\TestimonialController;
+use App\Http\Controllers\MobileHeaderController;
 use App\Http\Controllers\SchoolHeaderController;
 use App\Http\Controllers\FactsAndFiguresController;
 
@@ -64,6 +67,8 @@ Route::middleware('auth', 'is_admin')->group(function () {
         Route::get('/{page}/destroy', [PagesController::class, 'destroy'])->name('pages.destroy');
         Route::post('/{page}/duplicate', [PagesController::class, 'duplicate'])->name('pages.duplicate');
         Route::post('/{id}/toggle-status', [PagesController::class, 'toggleStatus'])->name('pages.toggleStatus');
+        Route::get('/{page}/mapping', [PagesController::class, 'mapping'])->name('pages.mapping');
+        Route::post('{id}/mapping', [PagesController::class, 'attachMapping'])->name('pages.mapping.attach');
     });
 
     //pages sections
@@ -228,6 +233,14 @@ Route::middleware('auth', 'is_admin')->group(function () {
         Route::post('/{schoolHeader}/toggle-status', [SchoolHeaderController::class, 'toggleStatus'])->name('school-header.toggle-status');
     });
 
+    //Mobile Header
+    Route::resource('mobile-headers', MobileHeaderController::class)->except(['destroy']);
+    Route::prefix('mobile-headers')->group(function () {
+        Route::get('/{mobileHeader}/destroy', [MobileHeaderController::class, 'destroy'])->name('mobile-headers.destroy');
+        Route::post('/update-order', [MobileHeaderController::class, 'updateOrder'])->name('mobile-headers.update-order');
+        Route::post('/{mobileHeader}/toggle-status', [MobileHeaderController::class, 'toggleStatus'])->name('mobile-headers.toggle-status');
+    });
+
     //Footer
     Route::get('/footer',[FooterController::class, 'index'])->name('footer.index');
     Route::put('/footer/update',[FooterController::class, 'update'])->name('footer.update');
@@ -245,6 +258,18 @@ Route::middleware('auth', 'is_admin')->group(function () {
     //Admission
     Route::get('/admission',[AdmissionController::class, 'edit'])->name('admission.edit');
     Route::put('/admission',[AdmissionController::class, 'update'])->name('admission.update');
+
+    //Tabs
+    Route::resource('tab', TabController::class)->except(['destroy']);
+    Route::prefix('tab')->group(function () {
+        Route::get('/{tab}/destroy', [TabController::class, 'destroy'])->name('tab.destroy');
+    });
+
+    //Seo
+    Route::resource('seo', SeoSettingController::class)->except(['destroy']);
+    Route::prefix('seo')->group(function () {
+        Route::get('/{seo}/destroy', [SeoSettingController::class, 'destroy'])->name('seo.destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

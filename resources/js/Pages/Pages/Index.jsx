@@ -181,6 +181,13 @@ const Index = (props) => {
                                     <td>
                                         <div className="d-flex align-items-center">
                                             <Link
+                                                className="btn btn-sm btn-outline-primary p-1"
+                                                href={route("pages.mapping", page.id)}
+                                            >
+                                                <span className="tf-icons bx bx-right-arrow-circle bx-18px me-1"></span>
+                                                Mapping
+                                            </Link>
+                                            <Link
                                                 href={route('sections.index', page.id)}
                                                 method="get"
                                                 as="button"

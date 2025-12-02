@@ -11,22 +11,46 @@ import {
   ChevronUp,
   GripVertical,
   X,
-  Quote,
   TextQuote,
-  Wallpaper,
   Images,
-  CircleArrowRight,
-  Blocks,
   HandCoins,
+  LayoutList,
+  Captions,
+  SlidersHorizontal,
+  Telescope,
+  Lock,
+  Unlock,
+  Boxes,
+  LayoutTemplate,
+  Shield,
+  Percent,
+  Heading,
+  Sliders,
+  TestTube2,
+  Bolt,
+  InspectionPanel,
+  Dam,
+  Library,
 } from "lucide-react";
 
 const componentIcons = {
-  testimonials: <Quote size={20} />,
+  topBanner: <Images size={20} />,
+  logoDesc: <LayoutList size={20} />,
+  figureDesc: <Captions size={20} />,
+  slider: <SlidersHorizontal size={20} />,
   values: <HandCoins size={20} />,
-  pricing: <Wallpaper size={20} />,
-  hero: <Images size={20} />,
-  features: <Blocks size={20} />,
-  cta: <CircleArrowRight size={20} />,
+  visionMission: <Telescope size={20} />,
+  qualityPolicy: <Shield size={20} />,
+  titleBanner: <LayoutTemplate size={20} />,
+  boxes: <Boxes size={20} />,
+  percentSub: <Percent size={20} />,
+  heading: <Heading size={20} />,
+  dataSlider: <Sliders size={20} />,
+  researchSection: <TestTube2 size={20} />,
+  objectives: <Bolt size={20} />,
+  sideSection: <InspectionPanel size={20} />,
+  featuresSection: <Dam size={20} />,
+  librarySection: <Library size={20} />,
 };
 
 const PageBuilder = () => {
@@ -40,6 +64,7 @@ const PageBuilder = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+  const [dragEnabled, setDragEnabled] = useState(false);
 
   const modalRef = useRef(null);
   const editModalRef = useRef(null);
@@ -66,7 +91,7 @@ const PageBuilder = () => {
           ...item,
           item_uuid: item.item_uuid || generateUUID(),
           id: item.id,
-          position: item.position || itemIndex + 1, // Add item position
+          position: item.position || itemIndex + 1,
         })),
         isCollapsed: true,
       }));
@@ -95,10 +120,9 @@ const PageBuilder = () => {
     const updated = [...sections];
     const newItem = { 
       item_uuid: generateUUID(),
-      position: updated[sectionIndex].items.length + 1 // Set item position
+      position: updated[sectionIndex].items.length + 1
     };
     
-    // Initialize empty values for all fields
     const sectionType = updated[sectionIndex].section_name;
     if (SECTION_TEMPLATES[sectionType]) {
       SECTION_TEMPLATES[sectionType].fields.forEach(field => {
@@ -153,7 +177,6 @@ const PageBuilder = () => {
           const updated = [...sections];
           updated[sectionIndex].items = updated[sectionIndex].items.filter((_, i) => i !== itemIndex);
           
-          // Update item positions after deletion
           const itemsWithUpdatedPositions = updated[sectionIndex].items.map((item, index) => ({
             ...item,
             position: index + 1
@@ -171,7 +194,6 @@ const PageBuilder = () => {
       const updated = [...sections];
       updated[sectionIndex].items = updated[sectionIndex].items.filter((_, i) => i !== itemIndex);
       
-      // Update item positions after deletion
       const itemsWithUpdatedPositions = updated[sectionIndex].items.map((item, index) => ({
         ...item,
         position: index + 1
@@ -196,16 +218,28 @@ const PageBuilder = () => {
   };
 
   const handleSectionDragStart = (e, index) => {
+    if (!dragEnabled) {
+      e.preventDefault();
+      return;
+    }
     setDraggedSection(index);
     e.dataTransfer.effectAllowed = "move";
   };
 
   const handleSectionDragOver = (e) => {
+    if (!dragEnabled) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
   const handleSectionDrop = (e, dropIndex) => {
+    if (!dragEnabled) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     if (draggedSection === null) return;
 
@@ -224,11 +258,19 @@ const PageBuilder = () => {
   };
 
   const handleItemDragStart = (e, sectionIndex, itemIndex) => {
+    if (!dragEnabled) {
+      e.preventDefault();
+      return;
+    }
     setDraggedItem({ sectionIndex, itemIndex });
     e.dataTransfer.effectAllowed = "move";
   };
 
   const handleItemDrop = (e, sectionIndex, dropIndex) => {
+    if (!dragEnabled) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     if (!draggedItem || draggedItem.sectionIndex !== sectionIndex) return;
 
@@ -237,7 +279,6 @@ const PageBuilder = () => {
     const [removed] = items.splice(draggedItem.itemIndex, 1);
     items.splice(dropIndex, 0, removed);
     
-    // Update item positions after reordering
     const itemsWithUpdatedPositions = items.map((item, index) => ({
       ...item,
       position: index + 1
@@ -249,6 +290,11 @@ const PageBuilder = () => {
     toast.success("Item reordered");
   };
 
+  const toggleDragEnabled = () => {
+    setDragEnabled(!dragEnabled);
+    toast.info(`Drag & Drop ${!dragEnabled ? 'enabled' : 'disabled'}`);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSaving(true);
@@ -256,16 +302,13 @@ const PageBuilder = () => {
     const formData = new FormData();
     formData.append('page_id', page.id);
 
-    // Prepare sections data with positions
     sections.forEach((section, sIndex) => {
       if (section.group_key) {
-        // Existing section
         formData.append(`existing[${sIndex}][group_key]`, section.group_key);
         formData.append(`existing[${sIndex}][section_name]`, section.section_name);
         formData.append(`existing[${sIndex}][position]`, section.position);
         
         section.items.forEach((item, iIndex) => {
-          // Send ALL items with their positions and IDs
           Object.entries(item).forEach(([key, value]) => {
             if (value instanceof File) {
               formData.append(`existing[${sIndex}][items][${iIndex}][${key}]`, value);
@@ -274,16 +317,13 @@ const PageBuilder = () => {
             }
           });
           
-          // Always send item position
           formData.append(`existing[${sIndex}][items][${iIndex}][position]`, item.position);
           
-          // Send item ID if it exists (for existing items)
           if (item.id) {
             formData.append(`existing[${sIndex}][items][${iIndex}][id]`, item.id);
           }
         });
       } else {
-        // New section
         formData.append(`sections[${sIndex}][section_uuid]`, section.section_uuid);
         formData.append(`sections[${sIndex}][section_name]`, section.section_name);
         formData.append(`sections[${sIndex}][position]`, section.position);
@@ -296,7 +336,6 @@ const PageBuilder = () => {
               formData.append(`sections[${sIndex}][items][${iIndex}][${key}]`, value);
             }
           });
-          // Add item position for all items in new sections
           formData.append(`sections[${sIndex}][items][${iIndex}][position]`, item.position);
         });
       }
@@ -350,10 +389,23 @@ const PageBuilder = () => {
         pauseOnHover
       />
 
-      <h1 className="text-muted">Page Builder</h1>
-      <p className="text-muted fs-5">
-        Page: {page?.title}
-      </p>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 className="text-muted mb-1">Page Builder</h1>
+          <p className="text-muted mb-0">
+            Page: {page?.title}
+          </p>
+        </div>
+        <button
+          type="button"
+          className={`btn ${dragEnabled ? 'btn-warning' : 'btn-secondary'}`}
+          onClick={toggleDragEnabled}
+          title={dragEnabled ? 'Disable Drag & Drop' : 'Enable Drag & Drop'}
+        >
+          {dragEnabled ? <Lock className="m-1" size={16} /> : <Unlock className="m-1" size={16} />}
+          {dragEnabled ? ' Disable Drag' : ' Enable Drag'}
+        </button>
+      </div>
 
       {/* Delete Confirmation Modal */}
       <div className="modal fade" ref={modalRef} tabIndex={-1}>
@@ -383,9 +435,10 @@ const PageBuilder = () => {
       <form onSubmit={handleSubmit}>
         <div className="card p-4 mb-4">
           <div className="d-flex align-items-center gap-2 mb-4">
-            <GripVertical size={18} className="text-muted" />
-            <span className="text-muted fw-medium">
+            <GripVertical size={18} className={`${dragEnabled ? 'text-muted' : 'text-muted opacity-25'}`} />
+            <span className={`fw-medium ${dragEnabled ? 'text-muted' : 'text-muted opacity-50'}`}>
               Dynamic Zone ({sections.length} {sections.length === 1 ? "section" : "sections"})
+              {!dragEnabled && <span className="badge bg-secondary ms-2">Drag Disabled</span>}
             </span>
           </div>
 
@@ -393,8 +446,10 @@ const PageBuilder = () => {
             {sections.map((section, sIndex) => (
               <div
                 key={section.section_uuid}
-                className={`section-card ${draggedSection === sIndex ? "dragging" : ""}`}
-                draggable
+                className={`section-card ${draggedSection === sIndex ? "dragging" : ""} ${
+                  !dragEnabled ? "drag-disabled" : ""
+                }`}
+                draggable={dragEnabled}
                 onDragStart={(e) => handleSectionDragStart(e, sIndex)}
                 onDragOver={handleSectionDragOver}
                 onDrop={(e) => handleSectionDrop(e, sIndex)}
@@ -402,7 +457,10 @@ const PageBuilder = () => {
                 <div className="section-header px-4 py-3">
                   <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center gap-3">
-                      <GripVertical size={20} className="drag-handle text-muted" />
+                      <GripVertical 
+                        size={20} 
+                        className={`drag-handle ${dragEnabled ? 'text-muted' : 'text-muted opacity-25'}`} 
+                      />
                       <button
                         type="button"
                         className="btn btn-link p-0 text-decoration-none"
@@ -452,15 +510,18 @@ const PageBuilder = () => {
                               key={item.item_uuid}
                               className={`item-card p-3 ${
                                 draggedItem?.sectionIndex === sIndex && draggedItem?.itemIndex === iIndex ? "dragging" : ""
-                              }`}
-                              draggable
+                              } ${!dragEnabled ? "drag-disabled" : ""}`}
+                              draggable={dragEnabled}
                               onDragStart={(e) => handleItemDragStart(e, sIndex, iIndex)}
                               onDragOver={handleSectionDragOver}
                               onDrop={(e) => handleItemDrop(e, sIndex, iIndex)}
                             >
                               <div className="d-flex align-items-center justify-content-between mb-3">
                                 <div className="d-flex align-items-center gap-2">
-                                  <GripVertical size={16} className="drag-handle text-muted" />
+                                  <GripVertical 
+                                    size={16} 
+                                    className={`drag-handle ${dragEnabled ? 'text-muted' : 'text-muted opacity-25'}`} 
+                                  />
                                   <div className="d-flex align-items-center gap-2">
                                     {componentIcons[section.section_name] || <TextQuote size={18} />}
                                     <span className="small fw-medium">
@@ -492,7 +553,7 @@ const PageBuilder = () => {
                                         )}
                                         <input
                                           type="file"
-                                          className="form-control "
+                                          className="form-control"
                                           accept="image/*"
                                           onChange={(e) => {
                                             const file = e.target.files?.[0];
@@ -565,7 +626,7 @@ const PageBuilder = () => {
                           onClick={() => addNewSection(key)}
                         >
                           <div className="mb-2">
-                            {componentIcons[key] || <TextQuote size={32} />}
+                            {componentIcons[key] || <TextQuote size={20} />}
                           </div>
                           <div className="small fw-medium">{val.label}</div>
                         </button>
@@ -612,6 +673,15 @@ const PageBuilder = () => {
           </button>
         </div>
       </form>
+
+      <style jsx>{`
+        .drag-disabled {
+          cursor: not-allowed !important;
+        }
+        .drag-disabled .drag-handle {
+          cursor: not-allowed !important;
+        }
+      `}</style>
     </>
   );
 };

@@ -281,7 +281,7 @@ const Index = () => {
         };
 
         return (
-            <span aria-label={type} className={`badge cursor-pointer ${typeColors[type] || 'btn-outline-secondary'}`}>
+            <span aria-label={type} className={`badge ${typeColors[type] || 'btn-outline-secondary'}`}>
                 {type}
             </span>
         );
@@ -320,7 +320,7 @@ const Index = () => {
                                     Order: {currentIndex + 1}
                                 </small>
                                 <span
-                                    className={`badge cursor-pointer ${
+                                    className={`badge ${
                                         item.is_active ? "bg-label-success" : "bg-label-danger"
                                     }`}
                                 >

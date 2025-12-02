@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Course;
 use App\Models\ContactForm;
 use App\Models\ContactInfo;
 use Illuminate\Http\Request;
@@ -15,6 +16,15 @@ class ContactUsController extends Controller
         return response()->json([
             'status' => true,
             'data' => $contactInfo,
+        ]);
+    }
+
+    public function coursesList()
+    {
+        $courses = Course::select('id','name')->get();
+        return response()->json([
+            'status' => true,
+            'data' => $courses,
         ]);
     }
 

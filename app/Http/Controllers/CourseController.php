@@ -88,7 +88,7 @@ class CourseController extends Controller
             'useful_links.*.text' => 'nullable|string|max:255',
             'useful_links.*.url' => 'nullable|url|max:500',
             // New file validation rules
-            'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'eligibility_marks' => 'nullable|string|max:255',
             'eligibility_desc' => 'nullable|string',
             'program_structure' => 'nullable|file|mimes:pdf|max:10240',
@@ -214,12 +214,8 @@ class CourseController extends Controller
             'useful_links' => 'nullable|array',
             'useful_links.*.text' => 'nullable|string|max:255',
             'useful_links.*.url' => 'nullable|url|max:500',
-            // New file validation rules
-            'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'eligibility_marks' => 'nullable|string|max:255',
             'eligibility_desc' => 'nullable|string',
-            'program_structure' => 'nullable|file|mimes:pdf|max:10240',
-            'scholarship' => 'nullable|file|mimes:pdf|max:10240',
             'remove_banner' => 'nullable|boolean',
             'remove_program_structure' => 'nullable|boolean',
             'remove_scholarship' => 'nullable|boolean',
@@ -227,7 +223,7 @@ class CourseController extends Controller
 
         $data = $request->all();
 
-        // Handle banner image upload/removal
+        // Handle banner upload/removal
         if ($request->has('remove_banner') && $request->remove_banner) {
             // Remove existing banner
             if ($course->banner && file_exists(public_path($course->banner))) {
@@ -235,6 +231,9 @@ class CourseController extends Controller
             }
             $data['banner'] = null;
         } elseif ($request->hasFile('banner')) {
+            $request->validate([
+                'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            ]);
             // Remove existing banner if new one is uploaded
             if ($course->banner && file_exists(public_path($course->banner))) {
                 unlink(public_path($course->banner));
@@ -244,6 +243,9 @@ class CourseController extends Controller
             $bannerName = time() . '_' . uniqid() . '.' . $banner->getClientOriginalExtension();
             $banner->move(public_path('assets/img/courses/banners/'), $bannerName);
             $data['banner'] = 'assets/img/courses/banners/' . $bannerName;
+        } else {
+            // Preserve existing banner if not being updated
+            $data['banner'] = $course->banner;
         }
 
         // Handle program structure PDF upload/removal
@@ -254,6 +256,9 @@ class CourseController extends Controller
             }
             $data['program_structure'] = null;
         } elseif ($request->hasFile('program_structure')) {
+            $request->validate([
+                'program_structure' => 'nullable|file|mimes:pdf|max:10240',
+            ]);
             // Remove existing program structure if new one is uploaded
             if ($course->program_structure && file_exists(public_path($course->program_structure))) {
                 unlink(public_path($course->program_structure));
@@ -263,6 +268,9 @@ class CourseController extends Controller
             $programStructureName = time() . '_' . uniqid() . '_program.' . $programStructure->getClientOriginalExtension();
             $programStructure->move(public_path('assets/files/courses/program-structure/'), $programStructureName);
             $data['program_structure'] = 'assets/files/courses/program-structure/' . $programStructureName;
+        } else {
+            // Preserve existing program structure if not being updated
+            $data['program_structure'] = $course->program_structure;
         }
 
         // Handle scholarship PDF upload/removal
@@ -273,6 +281,9 @@ class CourseController extends Controller
             }
             $data['scholarship'] = null;
         } elseif ($request->hasFile('scholarship')) {
+            $request->validate([
+                'scholarship' => 'nullable|file|mimes:pdf|max:10240',
+            ]);
             // Remove existing scholarship if new one is uploaded
             if ($course->scholarship && file_exists(public_path($course->scholarship))) {
                 unlink(public_path($course->scholarship));
@@ -282,6 +293,9 @@ class CourseController extends Controller
             $scholarshipName = time() . '_' . uniqid() . '_scholarship.' . $scholarship->getClientOriginalExtension();
             $scholarship->move(public_path('assets/files/courses/scholarship/'), $scholarshipName);
             $data['scholarship'] = 'assets/files/courses/scholarship/' . $scholarshipName;
+        } else {
+            // Preserve existing scholarship if not being updated
+            $data['scholarship'] = $course->scholarship;
         }
 
         if (empty($data['slug'])) {
@@ -299,7 +313,7 @@ class CourseController extends Controller
             });
             $data['useful_links'] = !empty($filteredLinks) ? json_encode(array_values($filteredLinks)) : null;
         } else {
-            $data['useful_links'] = null;
+            $data['useful_links'] = $course->useful_links; // Preserve existing useful_links
         }
 
         $data = array_map(function($value) {

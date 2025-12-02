@@ -1,53 +1,182 @@
 {
-  "hero": {
-    "label": "Hero",
+  "topBanner": {
+    "label": "Banner Top",
     "fields": [
       { "name": "title", "label": "Title", "type": "text", "placeholder": "Enter title" },
-      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Enter subtitle" },
-      { "name": "file", "label": "Background Image", "type": "file" },
-      { "name": "cta_text", "label": "CTA Text", "type": "text", "placeholder": "Get Started" },
-      { "name": "no btn", "label": "btn Text", "type": "text", "placeholder": "btn Started" }
+      { "name": "description", "label": "Description", "type": "text", "placeholder": "Enter description" },
+      { "name": "file", "label": "Image", "type": "file" }
     ]
   },
-  "features": {
-    "label": "Features",
+  "logoDesc": {
+    "label": "Logo & Desc",
     "fields": [
-      { "name": "title", "label": "Feature Title", "type": "text", "placeholder": "Feature name" },
       { "name": "description", "label": "Description", "type": "text", "placeholder": "Describe the feature" },
-      { "name": "icon", "label": "Icon", "type": "file" }
+      { "name": "file", "label": "Image", "type": "file" }
+    ]
+  },
+  "figureDesc": {
+    "label": "Fact & Figure",
+    "fields": [
+      { "name": "figure", "label": "Figure", "type": "text", "placeholder": "#37" },
+      { "name": "facts", "label": "Facts", "type": "text", "placeholder": "Describe the facts" },
+      { "name": "file", "label": "Image", "type": "file" }
+    ]
+  },
+  "slider": {
+    "label": "Slider",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subitle", "type": "text", "placeholder": "SubTitle" },
+      { "name": "bottomTitle", "label": "Bottom Title", "type": "text", "placeholder": "Bottom Title" },
+      { "name": "bottomSubTitle", "label": "Bottom Subitle", "type": "text", "placeholder": "Bottom Subitle" },
+      { "name": "file", "label": "Image", "type": "file" }
     ]
   },
   "values": {
-    "label": "Values",
+    "label": "Value",
     "fields": [
-      { "name": "title", "label": "Value Title", "type": "text", "placeholder": "Feature name" },
-      { "name": "text", "label": "Value Text", "type": "text", "placeholder": "Describe the feature" },
-      { "name": "icon", "label": "Value Icon", "type": "file" }
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "description", "label": "Description", "type": "text", "placeholder": "Description" },
+      { "name": "file", "label": "Icon", "type": "file" }
     ]
   },
-  "testimonials": {
-    "label": "Testimonials",
+  "visionMission": {
+    "label": "Vision & Mission",
     "fields": [
-      { "name": "author", "label": "Author", "type": "text", "placeholder": "Author name" },
-      { "name": "role", "label": "Role", "type": "text", "placeholder": "Job title" },
-      { "name": "content", "label": "Testimonial", "type": "text", "placeholder": "What they said" },
-      { "name": "photo", "label": "Avatar", "type": "file" }
+      { "name": "file", "label": "Image", "type": "file" },
+      { "name": "visionTitle", "label": "Vision Title", "type": "text", "placeholder": "Vision Title" },
+      { "name": "visionDesc", "label": "Vision Description", "type": "text", "placeholder": "Vision Description" },
+      { "name": "visionPoint1", "label": "Vision Point 1", "type": "text", "placeholder": "Vision point 1" },
+      { "name": "visionPoint2", "label": "Vision Point 2", "type": "text", "placeholder": "Vision point 2" },
+      { "name": "visionPoint3", "label": "Vision Point 3", "type": "text", "placeholder": "Vision point 3" },
+      { "name": "visionPoint4", "label": "Vision Point 4", "type": "text", "placeholder": "Vision point 4" },
+      { "name": "missionTitle", "label": "Mission Title", "type": "text", "placeholder": "Mission Title" },
+      { "name": "missionDesc", "label": "Mission Description", "type": "text", "placeholder": "Mission Description" },
+      { "name": "missionSubtitle", "label": "Mission Subtitle", "type": "text", "placeholder": "Mission Subtitle" },
+      { "name": "missionPoint1", "label": "Mission Point 1", "type": "text", "placeholder": "Mission point 1" },
+      { "name": "missionPoint2", "label": "Mission Point 2", "type": "text", "placeholder": "Mission point 2" },
+      { "name": "missionPoint3", "label": "Mission Point 3", "type": "text", "placeholder": "Mission point 3" },
+      { "name": "missionPoint4", "label": "Mission Point 4", "type": "text", "placeholder": "Mission point 4" }
     ]
   },
-  "pricing": {
-    "label": "Pricing",
+  "qualityPolicy": {
+    "label": "Quality Policy",
     "fields": [
-      { "name": "plan_name", "label": "Plan Name", "type": "text", "placeholder": "Basic" },
-      { "name": "price", "label": "Price", "type": "text", "placeholder": "$99" },
-      { "name": "features", "label": "Features", "type": "text", "placeholder": "Feature list" }
+      { "name": "file", "label": "Image", "type": "file" },
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "description", "label": "Description", "type": "text", "placeholder": "Description" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
+      { "name": "point1", "label": "Point 1", "type": "text", "placeholder": "Point 1" },
+      { "name": "point2", "label": "Point 2", "type": "text", "placeholder": "Point 2" },
+      { "name": "point3", "label": "Point 3", "type": "text", "placeholder": "Point 3" },
+      { "name": "point4", "label": "Point 4", "type": "text", "placeholder": "Point 4" }
     ]
   },
-  "cta": {
-    "label": "Call to Action",
+  "titleBanner": {
+    "label": "Title & Banner",
     "fields": [
-      { "name": "title", "label": "Title", "type": "text", "placeholder": "Ready to get started?" },
-      { "name": "button_text", "label": "Button Text", "type": "text", "placeholder": "Sign Up Now" },
-      { "name": "button_url", "label": "Button URL", "type": "text", "placeholder": "/signup" }
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
+      { "name": "file", "label": "Image", "type": "file" }
+    ]
+  },
+  "boxes": {
+    "label": "Boxes",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
+      { "name": "icon", "label": "Icon", "type": "file" },
+      { "name": "photo", "label": "Image", "type": "file" }
+    ]
+  },
+  "percentSub": {
+    "label": "Percent & Subtitle",
+    "fields": [
+      { "name": "percent", "label": "Percent", "type": "text", "placeholder": "85%" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" }
+    ]
+  },
+  "heading": {
+    "label": "Heading",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" }
+    ]
+  },
+  "dataSlider": {
+    "label": "Data Slider",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "header", "label": "Header", "type": "text", "placeholder": "Header" },
+      { "name": "description", "label": "Description", "type": "text", "placeholder": "Description" },
+      { "name": "link", "label": "Link", "type": "text", "placeholder": "Link" },
+      { "name": "file", "label": "Image", "type": "file" }
+    ]
+  },
+  "researchSection": {
+    "label": "Research Section",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
+      { "name": "description", "label": "Description", "type": "text", "placeholder": "Description" },
+      { "name": "photo", "label": "Image", "type": "file" },
+      { "name": "icon", "label": "Second Image", "type": "file" },
+      { "name": "percent", "label": "Percent", "type": "text", "placeholder": "85%" },
+      { "name": "quote", "label": "Quote", "type": "text", "placeholder": "Quote" }
+    ]
+  },
+  "objectives": {
+    "label": "Objectives",
+    "fields": [
+      { "name": "points", "label": "Points", "type": "text", "placeholder": "Points" }
+    ]
+  },
+  "librarySection": {
+    "label": "Library Section",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Library" },
+      { "name": "description", "label": "Description", "type": "textarea", "placeholder": "Library description"},
+      { "name": "quote_text", "label": "Quote Text", "type": "text", "placeholder": "Quote" },
+      { "name": "quote_author", "label": "Quote Author", "type": "text", "placeholder": "Author" },
+      { "name": "timings_title", "label": "Timings Title", "type": "text", "placeholder": "Library Timings" },
+      { "name": "link", "label": "Link", "type": "text", "placeholder": "Link" },
+      { "name": "schedule_1", "label": "Schedule 1 Days", "type": "text" },
+      { "name": "schedule_2", "label": "Schedule 2 Days", "type": "text" },
+      { "name": "schedule_3", "label": "Schedule 3 Days", "type": "text" },
+      { "name": "schedule_4", "label": "Schedule 4 Days", "type": "text" },
+      { "name": "icon", "label": "Top Image", "type": "file" },
+      { "name": "photo", "label": "Bottom Image", "type": "file" },
+      { "name": "file", "label": "Side Image", "type": "file" },
+      { "name": "stats_number", "label": "Stats Number", "type": "text", "placeholder": "500K+" },
+      { "name": "stats_description", "label": "Stats Description", "type": "text", "placeholder": "books and print resources across all academic disciplines"}
+    ]
+  },
+  "sideSection": {
+    "label": "Side Section",
+    "fields": [
+      { "name": "file", "label": "Image", "type": "file" },
+      { "name": "Title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "Subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
+      { "name": "Desc", "label": "Description", "type": "text", "placeholder": "Description" },
+      { "name": "point_title", "label": "Point Title", "type": "text", "placeholder": "Point Title" },
+      { "name": "Point1", "label": "Point 1", "type": "text", "placeholder": "point 1" },
+      { "name": "Point2", "label": "Point 2", "type": "text", "placeholder": "point 2" },
+      { "name": "Point3", "label": "Point 3", "type": "text", "placeholder": "point 3" },
+      { "name": "Point4", "label": "Point 4", "type": "text", "placeholder": "point 4" }
+    ]
+  },
+  "featuresSection": {
+    "label": "Features Section",
+    "fields": [
+      { "name": "file", "label": "Image", "type": "file" },
+      { "name": "photo", "label": "Second Image", "type": "file" },
+      { "name": "Title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "Subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
+      { "name": "Desc", "label": "Description", "type": "text", "placeholder": "Description" },
+      { "name": "additional", "label": "Additional Desc", "type": "text", "placeholder": "Additional Desc" },
+      { "name": "link", "label": "Link", "type": "text", "placeholder": "Link" },
+      { "name": "number", "label": "Number", "type": "text", "placeholder": "85+" },
+      { "name": "quote", "label": "Quote", "type": "text", "placeholder": "Quote" }
     ]
   }
 }

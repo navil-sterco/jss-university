@@ -19,7 +19,7 @@ class DegreeController extends Controller
             return [
                 'id' => $item->id,
                 'name' => $item->name,
-                'program_name' => $item->programs[0]->name,
+                'program_name' => $item->programs[0]->name ?? '',
                 'short_name' => $item->short_name,
             ];
         });

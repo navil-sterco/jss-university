@@ -34,6 +34,11 @@
                         "text": "Pages",
                         "available": true,
                         "link": "pages.index"
+                    },
+                    {
+                        "text": "Tabs",
+                        "available": true,
+                        "link": "tab.index"
                     }
                 ]
             }
@@ -154,6 +159,12 @@
                 "link": "school-header.index"
             },
             {
+                "text": "Mobile Header",
+                "icon": "bx bx-layout",
+                "available": true,
+                "link": "mobile-headers.index"
+            },
+            {
                 "text": "Admission",
                 "icon": "bx bx-notepad",
                 "available": true,
@@ -194,6 +205,17 @@
                         "link": "profile.edit"
                     }
                 ]
+            }
+        ]
+    },
+    {
+        "header": "Seo",
+        "items": [
+            {
+                "text": "Seo Setting",
+                "icon": "bx bx-search-alt",
+                "available": true,
+                "link": "seo.index"
             }
         ]
     }

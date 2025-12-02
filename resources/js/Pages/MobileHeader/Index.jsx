@@ -50,7 +50,7 @@ const Index = () => {
 
     const handleConfirmDelete = () => {
         if (idDelete) {
-            get(route('school-header.destroy', idDelete), {
+            get(route('mobile-headers.destroy', idDelete), {
                 preserveScroll: true,
                 onSuccess: () => {
                     const updatedItems = removeItemById(items, idDelete);
@@ -224,7 +224,7 @@ const Index = () => {
 
         const itemsToSave = flattenItems(items);
 
-        router.post(route('school-header.update-order'), {
+        router.post(route('mobile-headers.update-order'), {
             items: itemsToSave
         }, {
             preserveScroll: true,
@@ -248,7 +248,7 @@ const Index = () => {
     };
 
     const toggleStatus = (id) => {
-        router.post(route('school-header.toggle-status', id), {}, {
+        router.post(route('mobile-headers.toggle-status', id), {}, {
             preserveScroll: true,
             onSuccess: () => {
                 const updateItemStatus = (items) => {
@@ -370,7 +370,7 @@ const Index = () => {
                                 </button>
                             </div>
                             <Link
-                                href={route('school-header.edit', item.id)}
+                                href={route('mobile-headers.edit', item.id)}
                                 className="btn btn-sm btn-outline-primary"
                                 title="Edit"
                             >
@@ -469,7 +469,7 @@ const Index = () => {
                             </button>
                         </>
                     )}
-                    <Link href={route('school-header.create')} className="btn btn-primary">
+                    <Link href={route('mobile-headers.create')} className="btn btn-primary">
                         <Plus className="icon me-2" />
                         Add Menu
                     </Link>
@@ -487,7 +487,7 @@ const Index = () => {
                             <ListTree className="icon-lg text-muted mb-3" style={{ width: '48px', height: '48px' }} />
                             <h4 className="h5 h-md-4">No menu items found</h4>
                             <p className="text-muted small">Get started by creating your first menu item.</p>
-                            <Link href={route('school-header.create')} className="btn btn-primary btn-sm">
+                            <Link href={route('mobile-headers.create')} className="btn btn-primary btn-sm">
                                 <Plus className="icon me-2" style={{ width: '16px', height: '16px' }} />
                                 Create Menu Item
                             </Link>

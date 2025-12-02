@@ -5,7 +5,7 @@ const Footer = () => {
               <div className="mb-2 mb-md-0">
                 ©
                   {(new Date().getFullYear())}
-                , Navil
+                , JSS University
               </div>
             </div>
           </footer>

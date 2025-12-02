@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Tab;
 use Inertia\Inertia;
 use App\Models\Pages;
 use App\Models\Banner;
@@ -243,5 +244,31 @@ class PagesController extends Controller
             \Log::error('Page duplication failed: ' . $e->getMessage());
             return redirect()->route('pages.index')->with('error', 'Failed to duplicate page sections Please try again.');
         }
+    }
+
+    public function mapping($id)
+    {
+        $page = Pages::with(['tabs:id,title'])->findOrFail($id);
+        $tabs = Tab::select('id', 'title')->get();
+
+        return Inertia::render('Pages/Mapping', [
+            'page' => $page,
+            'tabs' => $tabs,
+        ]);
+    }
+
+    public function attachMapping(Request $request, $id)
+    {
+        $page = Pages::findOrFail($id);
+
+        $validated = $request->validate([
+            'tab_id' => 'nullable|exists:tabs,id',
+        ]);
+
+        $tabIds = $validated['tab_id'] ? [$validated['tab_id']] : [];
+
+        $page->tabs()->sync($tabIds);
+
+        return redirect()->route('pages.index')->with('success', 'Tab mapping updated successfully!');
     }
 }

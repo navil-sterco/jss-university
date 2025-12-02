@@ -142,9 +142,6 @@ class LeadershipController extends Controller
             'description' => 'nullable|array',
             'description.*' => 'nullable|string',
             'biography' => 'nullable|string',
-            'banner_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'video' => 'nullable|file|mimes:mp4,avi,mov|max:10240',
             'message' => 'nullable|array',
             'message.*' => 'nullable|string',
             'status' => 'nullable|boolean',
@@ -169,6 +166,10 @@ class LeadershipController extends Controller
         $validated['message'] = array_filter($validated['message'] ?? []);
 
         if ($request->hasFile('banner_image')) {
+            $request->validate([
+                'banner_image' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
+
             if ($leadership->banner_image && file_exists(public_path($leadership->banner_image))) {
                 unlink(public_path($leadership->banner_image));
             }
@@ -180,6 +181,10 @@ class LeadershipController extends Controller
         }
 
         if ($request->hasFile('image')) {
+             $request->validate([
+                'image' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
+            
             if ($leadership->image && file_exists(public_path($leadership->image))) {
                 unlink(public_path($leadership->image));
             }
@@ -191,6 +196,10 @@ class LeadershipController extends Controller
         }
 
         if ($request->hasFile('video')) {
+             $request->validate([
+                'video' => 'file|mimes:mp4,avi,mov|max:10240',
+            ]);
+            
             if ($leadership->video && file_exists(public_path($leadership->video))) {
                 unlink(public_path($leadership->video));
             }

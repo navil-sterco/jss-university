@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Banner;
 use App\Models\Happening;
 use App\Models\Recruiter;
+use App\Models\Department;
 use App\Models\Testimonial;
 use App\Models\FactsAndFigures;
 use Illuminate\Database\Eloquent\Model;
@@ -62,6 +63,11 @@ class School extends Model
     public function factsAndFigures()
     {
         return $this->belongsToMany(FactsAndFigures::class, 'facts_and_figures_school', 'school_id', 'facts_and_figures_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->hasMany(Department::class);
     }
 
     public function scopeFilter(Builder $query, $filters)

@@ -6,15 +6,15 @@ use Inertia\Inertia;
 use App\Models\Pages;
 use App\Models\School;
 use App\Models\Department;
-use App\Models\SchoolHeader;
+use App\Models\MobileHeader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class SchoolHeaderController extends Controller
+class MobileHeaderController extends Controller
 {
     public function index()
     {
-        $menuItems = SchoolHeader::with(['children' => function($query) {
+        $menuItems = MobileHeader::with(['children' => function($query) {
                 $query->orderBy('display_order')->with(['children' => function($q) {
                     $q->orderBy('display_order');
                 }]);
@@ -59,7 +59,7 @@ class SchoolHeaderController extends Controller
                 ];
             });
 
-        return Inertia::render('SchoolHeader/Index', [
+        return Inertia::render('MobileHeader/Index', [
             'menuItems' => $menuItems
         ]);
     }
@@ -70,7 +70,7 @@ class SchoolHeaderController extends Controller
         $departments = Department::select('id','name')->get();
         $pages = Pages::select('id','title')->get();
         
-        $menuItems = SchoolHeader::with('children')
+        $menuItems = MobileHeader::with('children')
             ->get()
             ->map(function ($item) {
                 return [
@@ -95,7 +95,7 @@ class SchoolHeaderController extends Controller
                 ];
             });
 
-        return Inertia::render('SchoolHeader/Create', [
+        return Inertia::render('MobileHeader/Create', [
             'schools' => $schools,
             'departments' => $departments,
             'pages' => $pages,
@@ -109,65 +109,36 @@ class SchoolHeaderController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|in:custom,school,department,page',
             'reference_id' => 'nullable|integer',
-            'parent_id' => 'nullable|exists:school_headers,id',
+            'parent_id' => 'nullable|exists:mobile_headers,id',
             'url' => 'nullable|string|max:500',
-            'section_title' => 'nullable|string|max:255',
-            'section_subtitle' => 'nullable|string|max:255',
-            'section_description' => 'nullable|string',
-            'section_button_text' => 'nullable|string|max:100',
-            'section_button_url' => 'nullable|string|max:500',
-            'boxes' => 'nullable|array|max:3',
-            'boxes.*.title' => 'required|string|max:255',
-            'boxes.*.url' => 'nullable|string|max:500',
-            'boxes.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
 
-        if ($request->has('boxes')) {
-            foreach ($validated['boxes'] as $index => &$box) {
-                if ($request->hasFile("boxes.$index.image")) {
-                    $image = $request->file("boxes.$index.image");
-
-                    $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                    $image->move(public_path('assets/img/boxes/'), $imageName);
-                    $box['image'] = 'assets/img/boxes/' . $imageName;
-                } else {
-                    $box['image'] = null;
-                }
-            }
-            unset($box);
-        }
-
-        $schoolHeader = SchoolHeader::create([
+        $mobileHeader = MobileHeader::create([
             'title' => $validated['title'],
             'type' => $validated['type'],
             'reference_id' => $validated['reference_id'] ?? null,
             'parent_id' => $validated['parent_id'] ?? null,
             'url' => $validated['url'] ?? null,
-            'section_title' => $validated['section_title'] ?? null,
-            'section_subtitle' => $validated['section_subtitle'] ?? null,
-            'section_description' => $validated['section_description'] ?? null,
-            'section_button_text' => $validated['section_button_text'] ?? null,
-            'section_button_url' => $validated['section_button_url'] ?? null,
             'display_order' => $validated['display_order'] ?? 0,
             'is_active' => $validated['is_active'] ?? true,
             'boxes' => isset($validated['boxes']) ? json_encode($validated['boxes']) : null,
         ]);
 
         return redirect()
-            ->route('school-header.index')
+            ->route('mobile-headers.index')
             ->with('success', 'Menu item created successfully.');
     }
 
 
-    public function edit(SchoolHeader $schoolHeader)
+    public function edit(MobileHeader $mobileHeader)
     {
         $schools = School::select('id', 'name')->get();
         $departments = Department::select('id', 'name')->get();
         $pages = Pages::select('id', 'title')->get();
 
-        $menuItems = SchoolHeader::with('children')
+        $menuItems = MobileHeader::with('children')
             ->get()
             ->map(function ($item) {
                 return [
@@ -192,22 +163,16 @@ class SchoolHeaderController extends Controller
                 ];
             });
 
-        return Inertia::render('SchoolHeader/Edit', [
+        return Inertia::render('MobileHeader/Edit', [
             'header' => [
-                'id' => $schoolHeader->id,
-                'title' => $schoolHeader->title,
-                'url' => $schoolHeader->url,
-                'type' => $schoolHeader->type,
-                'reference_id' => $schoolHeader->reference_id,
-                'parent_id' => $schoolHeader->parent_id,
-                'section_title' => $schoolHeader->section_title,
-                'section_subtitle' => $schoolHeader->section_subtitle,
-                'section_description' => $schoolHeader->section_description,
-                'section_button_text' => $schoolHeader->section_button_text,
-                'section_button_url' => $schoolHeader->section_button_url,
-                'display_order' => $schoolHeader->display_order,
-                'is_active' => $schoolHeader->is_active,
-                'boxes' => $schoolHeader->boxes ? $schoolHeader->boxes : [],
+                'id' => $mobileHeader->id,
+                'title' => $mobileHeader->title,
+                'url' => $mobileHeader->url,
+                'type' => $mobileHeader->type,
+                'reference_id' => $mobileHeader->reference_id,
+                'parent_id' => $mobileHeader->parent_id,
+                'display_order' => $mobileHeader->display_order,
+                'is_active' => $mobileHeader->is_active,
             ],
             'schools' => $schools,
             'departments' => $departments,
@@ -216,137 +181,75 @@ class SchoolHeaderController extends Controller
         ]);
     }
 
-    public function update(Request $request, SchoolHeader $schoolHeader)
+    public function update(Request $request, MobileHeader $mobileHeader)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:custom,school,department,page',
             'reference_id' => 'nullable|integer',
-            'parent_id' => 'nullable|exists:school_headers,id',
+            'parent_id' => 'nullable|exists:mobile_headers,id',
             'url' => 'nullable|string|max:500',
-            'section_title' => 'nullable|string|max:255',
-            'section_subtitle' => 'nullable|string|max:255',
-            'section_description' => 'nullable|string',
-            'section_button_text' => 'nullable|string|max:100',
-            'section_button_url' => 'nullable|string|max:500',
-            'boxes' => 'nullable|array|max:3',
-            'boxes.*.title' => 'nullable|string|max:255',
-            'boxes.*.url' => 'nullable|string|max:500',
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
 
         $boxesData = [];
 
-        if ($request->has('boxes')) {
-            $oldBoxes = $schoolHeader->boxes ? json_decode($schoolHeader->boxes, true) : [];
-
-            foreach ($request->boxes as $index => $box) {
-                $boxData = [
-                    'title' => $box['title'] ?? '',
-                    'url' => $box['url'] ?? '',
-                ];
-
-                if ($request->hasFile("boxes.{$index}.image")) {
-                    $request->validate([
-                        "boxes.{$index}.image" => 'image|mimes:jpg,jpeg,png,webp|max:2048',
-                    ]);
-
-                    $oldImage = $oldBoxes[$index]['image'] ?? null;
-                    if (!empty($oldImage) && file_exists(public_path($oldImage))) {
-                        unlink(public_path($oldImage));
-                    }
-
-                    $image = $request->file("boxes.{$index}.image");
-                    $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                    $image->move(public_path('assets/img/boxes/'), $imageName);
-
-                    $boxData['image'] = 'assets/img/boxes/' . $imageName;
-                } else {
-                    $boxData['image'] = $oldBoxes[$index]['image'] ?? null;
-                }
-
-                $boxesData[] = $boxData;
-            }
-        }
-
-        $schoolHeader->update([
+        $mobileHeader->update([
             'title' => $validated['title'],
             'type' => $validated['type'],
             'reference_id' => $validated['reference_id'] ?? null,
             'parent_id' => $validated['parent_id'] ?? null,
             'url' => $validated['url'] ?? null,
-            'section_title' => $validated['section_title'] ?? null,
-            'section_subtitle' => $validated['section_subtitle'] ?? null,
-            'section_description' => $validated['section_description'] ?? null,
-            'section_button_text' => $validated['section_button_text'] ?? null,
-            'section_button_url' => $validated['section_button_url'] ?? null,
             'display_order' => $validated['display_order'] ?? 0,
             'is_active' => $validated['is_active'] ?? true,
-            'boxes' => !empty($boxesData) ? json_encode($boxesData) : null,
         ]);
 
         return redirect()
-            ->route('school-header.index')
+            ->route('mobile-headers.index')
             ->with('success', 'Menu item updated successfully!');
     }
 
-    public function destroy(SchoolHeader $schoolHeader)
+    public function destroy(MobileHeader $mobileHeader)
     {
-        DB::transaction(function () use ($schoolHeader) {
-            $this->deleteWithChildren($schoolHeader);
+        DB::transaction(function () use ($mobileHeader) {
+            $this->deleteWithChildren($mobileHeader);
         });
 
         return redirect()
-            ->route('school-header.index')
+            ->route('mobile-headers.index')
             ->with('success', 'Menu item deleted successfully!');
     }
 
-    private function deleteWithChildren(SchoolHeader $schoolHeader)
+    private function deleteWithChildren(MobileHeader $mobileHeader)
     {
-        foreach ($schoolHeader->children as $child) {
+        foreach ($mobileHeader->children as $child) {
             $this->deleteWithChildren($child);
         }
 
-        if (!empty($schoolHeader->boxes)) {
-            // Check if boxes is already an array or needs decoding
-            $boxes = is_array($schoolHeader->boxes) ? $schoolHeader->boxes : json_decode($schoolHeader->boxes, true);
-
-            if (is_array($boxes)) {
-                foreach ($boxes as $box) {
-                    if (!empty($box['image'])) {
-                        $imagePath = public_path($box['image']);
-                        if (file_exists($imagePath)) {
-                            @unlink($imagePath);
-                        }
-                    }
-                }
-            }
-        }
-
-        $schoolHeader->delete();
+        $mobileHeader->delete();
     }
 
     public function updateOrder(Request $request)
     {
         $request->validate([
             'items' => 'required|array',
-            'items.*.id' => 'required|exists:headers,id',
+            'items.*.id' => 'required|exists:mobile_headers,id',
             'items.*.display_order' => 'required|integer',
-            'items.*.parent_id' => 'nullable|exists:headers,id'
+            'items.*.parent_id' => 'nullable|exists:mobile_headers,id'
         ]);
 
         try {
             DB::transaction(function () use ($request) {
                 foreach ($request->items as $itemData) {
-                    SchoolHeader::where('id', $itemData['id'])->update([
+                    MobileHeader::where('id', $itemData['id'])->update([
                         'display_order' => $itemData['display_order'],
                         'parent_id' => $itemData['parent_id']
                     ]);
                 }
             });
 
-            return redirect()->route('school-header.index')->with('success', 'Menu item updated successfully!');
+            return redirect()->route('mobile-headers.index')->with('success', 'Menu item updated successfully!');
 
         } catch (\Exception $e) {
             return response()->json([
@@ -358,10 +261,10 @@ class SchoolHeaderController extends Controller
 
     public function toggleStatus($id)
     {
-        $schoolHeader = SchoolHeader::findOrFail($id);
-        $schoolHeader->is_active = !$schoolHeader->is_active;
-        $schoolHeader->save();
+        $mobileHeader = MobileHeader::findOrFail($id);
+        $mobileHeader->is_active = !$mobileHeader->is_active;
+        $mobileHeader->save();
 
-        return redirect()->route('school-header.index')->with('success', 'Header Status Updated!');
+        return redirect()->route('mobile-headers.index')->with('success', 'Header Status Updated!');
     }
 }

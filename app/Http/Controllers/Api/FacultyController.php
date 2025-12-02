@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Type;
 use App\Models\Faculty;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -115,4 +116,13 @@ class FacultyController extends Controller
         ]);
     }
 
+    public function types()
+    {
+        $types = Type::select('id','name')->where('element','faculty')->get();
+
+        return response()->json([
+            'status' => true,
+            'types' => $types,
+        ]);
+    }
 }

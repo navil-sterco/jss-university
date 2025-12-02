@@ -14,30 +14,41 @@ class HappeningController extends Controller
     public function happenings(Request $request)
     {
         try {
+            $validated = $request->validate([
+                'month' => 'nullable|integer|min:1|max:12',
+                'school' => 'nullable|integer|exists:schools,id',
+                'page' => 'nullable|integer|min:1'
+            ]);
             $today = Carbon::today();
 
-            $upcomingQuery = Happening::where('status', 1)
+            $upcomingQuery = Happening::with('schools:id,name')->where('status', 1)
                 ->whereDate('event_date_from', '>=', $today);
 
-            $otherQuery = Happening::where('status', 1)
+            $otherQuery = Happening::with('schools:id,name')->where('status', 1)
                 ->whereDate('event_date_from', '<', $today);
 
             if ($request->filled('month')) {
-                $upcomingQuery->whereMonth('event_date_from', $request->month);
-                $otherQuery->whereMonth('event_date_from', $request->month);
+                $upcomingQuery->whereMonth('event_date_from', $validated['month']);
+                $otherQuery->whereMonth('event_date_from', $validated['month']);
             }
 
             if ($request->filled('school')) {
-                $upcomingQuery->where('school_id', $request->school);
-                $otherQuery->where('school_id', $request->school);
+                $upcomingQuery->whereHas('schools', function ($q) use ($validated) {
+                    $q->where('school_id', $validated['school']);
+                });
+
+                $otherQuery->whereHas('schools', function ($q) use ($validated) {
+                    $q->where('school_id', $validated['school']);
+                });
             }
 
             $upcomingEvents = $upcomingQuery->orderBy('display_order', 'asc')
-                ->get(['id', 'title', 'event_type', 'banner_images', 'short_description', 'event_date_from']);
+                ->get(['id', 'title', 'event_type', 'slug', 'banner_images', 'short_description', 'event_date_from']);
 
             $upcomingEventsFormatted = $upcomingEvents->map(fn($event) => [
                 'id' => $event->id,
                 'title' => $event->title,
+                'slug' => $event->slug,
                 'event_type' => $event->event_type,
                 'banner_image' => $event->banner_images ? asset($event->banner_images) : null,
                 'desc' => $event->short_description,
@@ -49,6 +60,7 @@ class HappeningController extends Controller
             $firstEventFormatted = $firstEvent ? [
                 'id' => $firstEvent->id,
                 'title' => $firstEvent->title,
+                'slug' => $firstEvent->slug,
                 'event_type' => $firstEvent->event_type,
                 'banner_image' => $firstEvent->banner_images ? asset($firstEvent->banner_images) : null,
                 'desc' => $firstEvent->short_description,
@@ -61,11 +73,12 @@ class HappeningController extends Controller
             $otherEventsQuery = $otherQuery->where('id', '!=', optional($firstEvent)->id)
                 ->orderBy('display_order', 'asc');
 
-            $otherEventsPaginated = $otherEventsQuery->paginate($perPage, ['id', 'title', 'event_type', 'banner_images', 'short_description', 'event_date_from'], 'page', $page);
+            $otherEventsPaginated = $otherEventsQuery->paginate($perPage, ['id', 'title', 'event_type', 'slug', 'banner_images', 'short_description', 'event_date_from'], 'page', $page);
 
             $otherEventsFormatted = $otherEventsPaginated->getCollection()->map(fn($event) => [
                 'id' => $event->id,
                 'title' => $event->title,
+                'slug' => $event->slug,
                 'event_type' => $event->event_type,
                 'banner_image' => $event->banner_images ? asset($event->banner_images) : null,
                 'desc' => $event->short_description,
@@ -294,128 +307,103 @@ class HappeningController extends Controller
 
     public function gallery(Request $request)
     {
-        try {
-            $today = Carbon::today();
+        $today = now()->format('Y-m-d');
+        $filter = $request->query('filter'); // image | video | both
+        $perPage = 8;
+        $page = $request->get('page', 1);
 
-            $upcomingQuery = Happening::where('status', 1)->where('event_type','Gallery')
-                ->whereDate('event_date_from', '>=', $today);
+        $query = Gallery::where('type', 'gallery');
 
-            $otherQuery = Happening::where('status', 1)->where('event_type','Gallery')
-                ->whereDate('event_date_from', '<', $today);
-
-            if ($request->filled('month')) {
-                $upcomingQuery->whereMonth('event_date_from', $request->month);
-                $otherQuery->whereMonth('event_date_from', $request->month);
-            }
-
-            if ($request->filled('school')) {
-                $upcomingQuery->where('school_id', $request->school);
-                $otherQuery->where('school_id', $request->school);
-            }
-
-            $upcomingEvents = $upcomingQuery->orderBy('display_order', 'asc')
-                ->get(['id', 'title', 'event_type', 'banner_images', 'short_description', 'event_date_from']);
-
-            $upcomingEventsFormatted = $upcomingEvents->map(fn($event) => [
-                'id' => $event->id,
-                'title' => $event->title,
-                'banner_image' => $event->banner_images ? asset($event->banner_images) : null,
-                'event_type' => $event->event_type,
-                'event_date_from' => $event->event_date_from,
-            ]);
-
-            $firstEvent = $otherQuery->orderBy('display_order', 'asc')->first();
-
-            $firstEventFormatted = $firstEvent ? [
-                'id' => $firstEvent->id,
-                'title' => $firstEvent->title,
-                'date' => $firstEvent->event_date_from ? Carbon::parse($firstEvent->event_date_from)->format('F d, Y') : null,
-                'stats' => [
-                    'photos' => rand(20, 60), // Assuming you'll replace with actual counts
-                    'videos' => rand(5, 20),  // Assuming you'll replace with actual counts
-                ],
-                'thumbnail' => $firstEvent->banner_images ? asset($firstEvent->banner_images) : null,
-                'media' => $this->getGalleryMedia($firstEvent), // Helper function to get media
-            ] : null;
-
-            $perPage = 8;
-            $page = $request->get('page', 1);
-
-            $otherEventsQuery = $otherQuery->where('id', '!=', optional($firstEvent)->id)
-                ->orderBy('display_order', 'asc');
-
-            $otherEventsPaginated = $otherEventsQuery->paginate($perPage, ['id', 'title', 'event_type', 'banner_images', 'short_description', 'event_date_from'], 'page', $page);
-
-            $otherEventsFormatted = $otherEventsPaginated->getCollection()->map(fn($event) => [
-                'id' => $event->id,
-                'title' => $event->title,
-                'date' => $event->event_date_from ? Carbon::parse($event->event_date_from)->format('F d, Y') : null,
-                'stats' => [
-                    'photos' => rand(20, 60), // Assuming you'll replace with actual counts
-                    'videos' => rand(5, 20),  // Assuming you'll replace with actual counts
-                ],
-                'thumbnail' => $event->banner_images ? asset($event->banner_images) : null,
-                'media' => $this->getGalleryMedia($event), // Helper function to get media
-            ]);
-
-            $otherEventsPaginated->setCollection($otherEventsFormatted);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'upcoming_events' => $upcomingEventsFormatted,
-                    'first_event' => $firstEventFormatted,
-                    'other_events' => $otherEventsPaginated->items(),
-                    'pagination' => [
-                        'current_page' => $otherEventsPaginated->currentPage(),
-                        'last_page' => $otherEventsPaginated->lastPage(),
-                        'per_page' => $otherEventsPaginated->perPage(),
-                        'total' => $otherEventsPaginated->total(),
-                        'next_page_url' => $otherEventsPaginated->nextPageUrl(),
-                        'prev_page_url' => $otherEventsPaginated->previousPageUrl(),
-                    ],
-                ],
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch gallery',
-                'error' => $e->getMessage(),
-            ], 500);
+        // DB level filter
+        if ($filter === 'video') {
+            $query->whereJsonLength('videos', '>', 0);
+        } elseif ($filter === 'image') {
+            $query->whereJsonLength('images', '>', 0);
         }
-    }
 
-    private function getGalleryMedia($event)
-    {
+        // Helper to merge images + videos
+        $formatMedia = function ($item) use ($filter) {
+            $media = collect();
 
-        $media = [];
-        
-        if ($event->banner_images) {
-            $media[] = [
-                'type' => 'image',
-                'url' => asset($event->banner_images),
-                'alt' => $event->title . ' Image 1',
+            if ($filter !== 'video' && is_array($item->images)) {
+                foreach ($item->images as $i => $img) {
+                    $media->push([
+                        'type' => 'image',
+                        'url' => asset($img),
+                        'alt' => 'Gallery Image ' . ($i + 1),
+                    ]);
+                }
+            }
+
+            if ($filter !== 'image' && is_array($item->videos)) {
+                foreach ($item->videos as $i => $vid) {
+                    $media->push([
+                        'type' => 'video',
+                        'url' => asset($vid),
+                        'alt' => 'Gallery Video ' . ($i + 1),
+                    ]);
+                }
+            }
+
+            return $media->values();
+        };
+
+        //-------------------------------------------------------
+        // ✅ UPCOMING EVENTS  (NO PAGINATION)
+        //-------------------------------------------------------
+        $upcomingEvents = (clone $query)
+            ->whereDate('event_date', '>=', $today)
+            ->orderBy('event_date', 'asc')
+            ->get()
+            ->map(function ($item) {
+
+                return [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'banner_image' => isset($item->images[0]) ? asset($item->images[0]) : null,
+                    'event_type' => "Event",
+                    'event_date_from' => $item->event_date,
+                ];
+            });
+
+        //-------------------------------------------------------
+        // ✅ PAST EVENTS  (PAGINATED)
+        //-------------------------------------------------------
+        $pastPaginated = (clone $query)
+            ->whereDate('event_date', '<', $today)
+            ->orderBy('event_date', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $galleryData = $pastPaginated->getCollection()->map(function ($item) use ($formatMedia) {
+
+            $media = $formatMedia($item);
+
+            return [
+                'id' => $item->id,
+                'title' => $item->title,
+                'date' => $item->event_date,
+                'stats' => [
+                    'photos' => is_array($item->images) ? count($item->images) : 0,
+                    'videos' => is_array($item->videos) ? count($item->videos) : 0,
+                ],
+                'thumbnail' => $media->first()['url'] ?? asset('assets/img/placeholder.png'),
+                'media' => $media
             ];
-        }
-        
-        for ($i = 2; $i <= 4; $i++) {
-            if (rand(0, 1)) {
-                $media[] = [
-                    'type' => 'image',
-                    'url' => '/images/home-page/gallary-popup-dummy-banner.png',
-                    'alt' => $event->title . ' Image ' . $i,
-                ];
-            } else {
-                $media[] = [
-                    'type' => 'video',
-                    'url' => 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-                    'alt' => $event->title . ' Video ' . ($i - 1),
-                ];
-            }
-        }
-        
-        return $media;
+        });
+
+        //-------------------------------------------------------
+        // FINAL RESPONSE (Pagination Outside)
+        //-------------------------------------------------------
+        return response()->json([
+            'upcoming_events' => $upcomingEvents,
+            'gallery_data' => $galleryData,
+            'pagination' => [
+                'current_page' => $pastPaginated->currentPage(),
+                'last_page' => $pastPaginated->lastPage(),
+                'per_page' => $pastPaginated->perPage(),
+                'total' => $pastPaginated->total(),
+            ]
+        ]);
     }
 
     public function mediaCoverage()

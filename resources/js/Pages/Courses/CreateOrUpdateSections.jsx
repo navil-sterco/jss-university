@@ -18,10 +18,6 @@ const CreateOrUpdateSections = ({ course }) => {
         eligibility_criteria_desc: course.eligibility_criteria_desc || "",
         eligibility_criteria_notices: course.eligibility_criteria_notices || [""],
 
-        // Program Info
-        program_structure: course.program_structure || "",
-        scholarship: course.scholarship || "",
-
         // Program Outcomes
         peos: course.peos || [""],
         pos: course.pos || [""],
@@ -98,26 +94,6 @@ const CreateOrUpdateSections = ({ course }) => {
                     label: "Important Notices",
                     type: "array",
                     placeholder: "Add important notice"
-                }
-            ]
-        },
-        {
-            id: "programInfo",
-            label: "Program Information",
-            icon: "🎓",
-            description: "Program structure and scholarship information",
-            fields: [
-                {
-                    name: "program_structure",
-                    label: "Program Structure",
-                    type: "textarea",
-                    placeholder: "Describe program structure"
-                },
-                {
-                    name: "scholarship",
-                    label: "Scholarship Information",
-                    type: "textarea",
-                    placeholder: "Scholarship details"
                 }
             ]
         },

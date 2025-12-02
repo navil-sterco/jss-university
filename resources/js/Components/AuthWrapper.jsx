@@ -13,6 +13,11 @@ export const AuthWrapper = ({ children }) => {
                                 <Link aria-label='Go to Home Page' to="/" className="app-brand-link gap-2">
                                     <span
                                         className="app-brand-logo demo"
+                                        style={{
+                                            backgroundColor: '#cccccc',
+                                            padding: '8px',
+                                            borderRadius: '6px',
+                                        }}
                                         >
                                         <img
                                             src={appLogo}

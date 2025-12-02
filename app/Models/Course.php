@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Degree;
 use App\Models\Program;
 use App\Models\Department;
+use App\Models\Testimonial;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -72,6 +73,11 @@ class Course extends Model
     public function degree()
     {
         return $this->belongsTo(Degree::class);
+    }
+
+    public function testimonials()
+    {
+        return $this->belongsToMany(Testimonial::class, 'testimonials_courses', 'course_id', 'testimonial_id')->withTimestamps();
     }
 
     public function scopeFilter(Builder $query, $filters)

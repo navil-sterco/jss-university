@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Tab;
 use App\Models\Pages;
 use App\Models\Banner;
 use App\Models\Happening;
@@ -47,6 +48,11 @@ class Pages extends Model
     public function happenings()
     {
         return $this->belongsToMany(Happening::class, 'happening_page', 'page_id', 'happening_id')->withTimestamps();
+    }
+
+    public function tabs()
+    {
+        return $this->belongsToMany(Tab::class, 'tab_pages', 'page_id', 'tab_id')->withTimestamps();
     }
 
     public function scopeFilter(Builder $query, $filters)

@@ -46,10 +46,9 @@ const Sidebar = () => {
                             <MenuItem key={index} {...item} />
                         ))}
                     </React.Fragment>
-                    
-                    
                 ))}
             </ul>
+            <div className='mb-2'></div>
         </aside>
     );
 };
