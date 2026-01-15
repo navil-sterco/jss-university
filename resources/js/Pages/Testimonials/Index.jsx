@@ -185,11 +185,11 @@ const Index = (props) => {
                                     <td><i className="bx bx-category bx-sm me-3"></i>{testimonial.display_order}</td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${testimonial.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${testimonial.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(testimonial.id)}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            {testimonial.status ? "Active" : "Inactive"}
+                                            {testimonial.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>
@@ -423,14 +423,14 @@ const Index = (props) => {
                                             <div className="space-y-3">
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Status</span>
-                                                    <span className={`badge ${selectedTestimonial.status ? "bg-success" : "bg-danger"}`}>
-                                                        {selectedTestimonial.status ? "Active" : "Inactive"}
+                                                    <span className={`badge ${selectedTestimonial.status == 1 ? "bg-success" : "bg-danger"}`}>
+                                                        {selectedTestimonial.status == 1 ? "Active" : "Inactive"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Show on Home</span>
-                                                    <span className={`badge ${selectedTestimonial.show_on_home ? "bg-primary" : "bg-secondary"}`}>
-                                                        {selectedTestimonial.show_on_home ? "Yes" : "No"}
+                                                    <span className={`badge ${selectedTestimonial.show_on_home == 1 ? "bg-primary" : "bg-secondary"}`}>
+                                                        {selectedTestimonial.show_on_home == 1 ? "Yes" : "No"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">

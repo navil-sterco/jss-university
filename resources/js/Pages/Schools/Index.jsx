@@ -187,10 +187,10 @@ const Index = (props) => {
                                     </td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${school.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${school.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(school.id)}
                                         >
-                                            {school.status ? "Active" : "Inactive"}
+                                            {school.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td><i className="bx bx-category bx-sm me-3"></i>{school.display_order ?? "-"}</td>
@@ -486,8 +486,8 @@ const Index = (props) => {
                                             <div className="space-y-3">
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Status</span>
-                                                    <span className={`badge ${selectedSchool.status ? "bg-success" : "bg-danger"}`}>
-                                                        {selectedSchool.status ? "Active" : "Inactive"}
+                                                    <span className={`badge ${selectedSchool.status == 1 ? "bg-success" : "bg-danger"}`}>
+                                                        {selectedSchool.status == 1 ? "Active" : "Inactive"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">

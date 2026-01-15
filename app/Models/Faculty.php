@@ -27,6 +27,7 @@ class Faculty extends Model
         'teaching',
         'award',
         'social_engagement',
+        'sections',
         'status',
         'display_order',
     ];
@@ -37,6 +38,7 @@ class Faculty extends Model
         'teaching' => 'array',
         'award' => 'array',
         'social_engagement' => 'array',
+        'sections' => 'array',
         'status' => 'boolean',
     ];
 

@@ -73,6 +73,7 @@ const Index = (props) => {
         });
     };
 
+
     return (
         <>
             <h1 className="text-muted">Recruiters List</h1>
@@ -148,18 +149,18 @@ const Index = (props) => {
                                     <td><i className="bx bx-category bx-sm me-3"></i>{item.display_order}</td>
                                     <td>
                                         <span
-                                            className={`badge ${item.show_on_home ? "bg-label-warning" : "bg-label-secondary"}`}
+                                            className={`badge ${item.show_on_home == 1 ? "bg-label-warning" : "bg-label-secondary"}`}
                                         >
-                                            {item.show_on_home ? "Yes" : "No"}
+                                            {item.show_on_home == 1 ? "Yes" : "No"}
                                         </span>
                                     </td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${item.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${item.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(item.id)}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            {item.status ? "Active" : "Inactive"}
+                                            {item.show_on_home == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>

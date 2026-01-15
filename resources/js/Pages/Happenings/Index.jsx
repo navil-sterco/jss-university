@@ -194,11 +194,11 @@ const Index = (props) => {
                                     <td>
                                         <span
                                             className={`badge cursor-pointer ${
-                                                happening.status ? "bg-label-success" : "bg-label-danger"
+                                                happening.status == 1 ? "bg-label-success" : "bg-label-danger"
                                             }`}
                                             onClick={() => toggleStatus(happening.id)}
                                         >
-                                            {happening.status ? "Active" : "Inactive"}
+                                            {happening.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>
@@ -438,14 +438,14 @@ const Index = (props) => {
                                             <div className="space-y-3">
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Status</span>
-                                                    <span className={`badge ${selectedHappening.status ? "bg-success" : "bg-danger"}`}>
-                                                        {selectedHappening.status ? "Active" : "Inactive"}
+                                                    <span className={`badge ${selectedHappening.status == 1 ? "bg-success" : "bg-danger"}`}>
+                                                        {selectedHappening.status == 1 ? "Active" : "Inactive"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Show on Home</span>
-                                                    <span className={`badge ${selectedHappening.show_on_home ? "bg-primary" : "bg-secondary"}`}>
-                                                        {selectedHappening.show_on_home ? "Yes" : "No"}
+                                                    <span className={`badge ${selectedHappening.show_on_home == 1 ? "bg-primary" : "bg-secondary"}`}>
+                                                        {selectedHappening.show_on_home == 1 ? "Yes" : "No"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">

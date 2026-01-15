@@ -6,8 +6,34 @@ const CreateOrUpdateSections = ({ course }) => {
     const [activeSections, setActiveSections] = useState([]);
     const appUrl = usePage().props.appUrl;
     
-    // Simplified flat data structure
-    const { data, setData, post, processing, errors } = useForm({
+    // Helper function to safely parse JSON or return default
+    const safeParse = (value, defaultValue = [{ title: "", description: "" }]) => {
+        if (!value) return defaultValue;
+        if (Array.isArray(value)) return value;
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) && parsed.length > 0 ? parsed : defaultValue;
+        } catch (error) {
+            console.error("Failed to parse JSON:", error);
+            return defaultValue;
+        }
+    };
+
+    // Helper function for simple arrays
+    const safeParseSimpleArray = (value) => {
+        if (!value) return [""];
+        if (Array.isArray(value)) return value;
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [""];
+        } catch (error) {
+            console.error("Failed to parse JSON:", error);
+            return [""];
+        }
+    };
+
+    // Initialize data structure
+    const initialData = {
         // Overview
         overview_title: course.overview_title || "",
         overview_desc: course.overview_desc || "",
@@ -16,16 +42,16 @@ const CreateOrUpdateSections = ({ course }) => {
         // Eligibility
         eligibility_criteria: course.eligibility_criteria || "",
         eligibility_criteria_desc: course.eligibility_criteria_desc || "",
-        eligibility_criteria_notices: course.eligibility_criteria_notices || [""],
+        eligibility_criteria_notices: safeParseSimpleArray(course.eligibility_criteria_notices),
 
         // Program Outcomes
-        peos: course.peos || [""],
-        pos: course.pos || [""],
-        pso: course.pso || [""],
+        peos: safeParse(course.peos),
+        pos: safeParse(course.pos),
+        pso: safeParse(course.pso),
 
         // Curriculum
         curriculum_title: course.curriculum_title || "",
-        curriculum_desc: course.curriculum_desc || [""],
+        curriculum_desc: safeParseSimpleArray(course.curriculum_desc),
         curriculum_image: null,
         curriculum_pdf: null,
 
@@ -41,7 +67,9 @@ const CreateOrUpdateSections = ({ course }) => {
         career_subtitle: course.career_subtitle || "",
         career_desc: course.career_desc || "",
         career_image: null,
-    });
+    };
+
+    const { data, setData, post, processing, errors } = useForm(initialData);
 
     // Section configuration
     const sectionConfig = [
@@ -58,16 +86,16 @@ const CreateOrUpdateSections = ({ course }) => {
                     placeholder: "Title"
                 },
                 {
-                    name: "overview_image",
-                    label: "Overview Image",
-                    type: "file",
-                    accept: "image/*"
-                },
-                {
                     name: "overview_desc",
                     label: "Description",
                     type: "textarea",
                     placeholder: "Desc"
+                },
+                {
+                    name: "overview_image",
+                    label: "Overview Image",
+                    type: "file",
+                    accept: "image/*"
                 }
             ]
         },
@@ -92,7 +120,7 @@ const CreateOrUpdateSections = ({ course }) => {
                 {
                     name: "eligibility_criteria_notices",
                     label: "Important Notices",
-                    type: "array",
+                    type: "simple-array",
                     placeholder: "Add important notice"
                 }
             ]
@@ -106,20 +134,29 @@ const CreateOrUpdateSections = ({ course }) => {
                 {
                     name: "peos",
                     label: "Program Educational Objectives (PEOs)",
-                    type: "array",
-                    placeholder: "Add PEO"
+                    type: "object-array",
+                    fields: [
+                        { name: "title", label: "Title", placeholder: "Enter PEO title" },
+                        { name: "description", label: "Description", placeholder: "Enter PEO description" }
+                    ]
                 },
                 {
                     name: "pos",
                     label: "Program Outcomes (POs)",
-                    type: "array",
-                    placeholder: "Add program outcome"
+                    type: "object-array",
+                    fields: [
+                        { name: "title", label: "Title", placeholder: "Enter PO title" },
+                        { name: "description", label: "Description", placeholder: "Enter PO description" }
+                    ]
                 },
                 {
                     name: "pso",
                     label: "Program Specific Outcomes (PSOs)",
-                    type: "array",
-                    placeholder: "Add program specific outcome"
+                    type: "object-array",
+                    fields: [
+                        { name: "title", label: "Title", placeholder: "Enter PSO title" },
+                        { name: "description", label: "Description", placeholder: "Enter PSO description" }
+                    ]
                 }
             ]
         },
@@ -138,7 +175,7 @@ const CreateOrUpdateSections = ({ course }) => {
                 {
                     name: "curriculum_desc",
                     label: "Curriculum Description",
-                    type: "array",
+                    type: "simple-array",
                     placeholder: "Add curriculum point"
                 },
                 {
@@ -230,7 +267,14 @@ const CreateOrUpdateSections = ({ course }) => {
         sectionConfig.forEach(section => {
             const hasData = section.fields.some(field => {
                 const value = data[field.name];
-                if (Array.isArray(value)) return value.some(item => item && item !== "");
+                if (field.type === 'object-array') {
+                    return Array.isArray(value) && value.some(item => 
+                        item && (item.title || item.description)
+                    );
+                }
+                if (field.type === 'simple-array') {
+                    return Array.isArray(value) && value.some(item => item && item !== "");
+                }
                 if (value === null || value === undefined) return false;
                 return value !== "";
             });
@@ -244,7 +288,47 @@ const CreateOrUpdateSections = ({ course }) => {
 
     const submit = (e) => {
         e.preventDefault();
+        
+        // Convert arrays to JSON strings before sending
+        const formData = new FormData();
+        
+        // Add all data to FormData
+        Object.keys(data).forEach(key => {
+            const value = data[key];
+            
+            if (['peos', 'pos', 'pso'].includes(key)) {
+                // Convert object arrays to JSON
+                if (Array.isArray(value) && value.length > 0) {
+                    // Filter out empty objects
+                    const filtered = value.filter(item => 
+                        item && (item.title || item.description)
+                    );
+                    if (filtered.length > 0) {
+                        formData.append(key, JSON.stringify(filtered));
+                    }
+                }
+            } else if (['eligibility_criteria_notices', 'curriculum_desc'].includes(key)) {
+                // Convert simple arrays to JSON
+                if (Array.isArray(value) && value.length > 0) {
+                    const filtered = value.filter(item => item && item !== "");
+                    if (filtered.length > 0) {
+                        formData.append(key, JSON.stringify(filtered));
+                    }
+                }
+            } else if (value instanceof File) {
+                // Handle files
+                if (value) {
+                    formData.append(key, value);
+                }
+            } else if (value !== null && value !== undefined) {
+                // Handle regular values
+                formData.append(key, value);
+            }
+        });
+
+        // Submit the form
         post(route("course.section.update", course.id), {
+            data: formData,
             forceFormData: true,
             preserveScroll: true,
         });
@@ -275,8 +359,10 @@ const CreateOrUpdateSections = ({ course }) => {
         const section = sectionConfig.find(s => s.id === sectionId);
         if (section) {
             section.fields.forEach(field => {
-                if (field.type === 'array') {
+                if (field.type === 'simple-array') {
                     setData(field.name, [""]);
+                } else if (field.type === 'object-array') {
+                    setData(field.name, [{ title: "", description: "" }]);
                 } else if (field.type === 'file') {
                     setData(field.name, null);
                 } else {
@@ -286,30 +372,61 @@ const CreateOrUpdateSections = ({ course }) => {
         }
     };
 
-    // Field handlers - SIMPLIFIED
+    // Field handlers
     const handleFieldChange = (fieldName, value) => {
         setData(fieldName, value);
     };
 
-    const handleArrayChange = (fieldName, index, value) => {
-        const currentArray = [...data[fieldName]];
+    const handleSimpleArrayChange = (fieldName, index, value) => {
+        const currentArray = [...(data[fieldName] || [])];
         currentArray[index] = value;
         setData(fieldName, currentArray);
     };
 
-    const addArrayItem = (fieldName) => {
-        const currentArray = [...data[fieldName]];
+    const addSimpleArrayItem = (fieldName) => {
+        const currentArray = [...(data[fieldName] || [])];
         setData(fieldName, [...currentArray, ""]);
     };
 
-    const removeArrayItem = (fieldName, index) => {
-        const currentArray = [...data[fieldName]];
+    const removeSimpleArrayItem = (fieldName, index) => {
+        const currentArray = [...(data[fieldName] || [])];
         if (currentArray.length > 1) {
             setData(fieldName, currentArray.filter((_, i) => i !== index));
+        } else {
+            // If only one item left, just clear it
+            setData(fieldName, [""]);
         }
     };
 
-    // Render field based on type - SIMPLIFIED
+    // Object array handlers for PEOS, POS, PSO
+    const handleObjectArrayChange = (fieldName, index, subFieldName, value) => {
+        const currentArray = [...(data[fieldName] || [])];
+        if (!currentArray[index]) {
+            currentArray[index] = { title: "", description: "" };
+        }
+        currentArray[index] = {
+            ...currentArray[index],
+            [subFieldName]: value
+        };
+        setData(fieldName, currentArray);
+    };
+
+    const addObjectArrayItem = (fieldName, template = { title: "", description: "" }) => {
+        const currentArray = [...(data[fieldName] || [])];
+        setData(fieldName, [...currentArray, { ...template }]);
+    };
+
+    const removeObjectArrayItem = (fieldName, index) => {
+        const currentArray = [...(data[fieldName] || [])];
+        if (currentArray.length > 1) {
+            setData(fieldName, currentArray.filter((_, i) => i !== index));
+        } else {
+            // If only one item left, reset to empty object
+            setData(fieldName, [{ title: "", description: "" }]);
+        }
+    };
+
+    // Render field based on type
     const renderField = (field) => {
         const value = data[field.name];
         const fieldError = errors[field.name];
@@ -347,25 +464,27 @@ const CreateOrUpdateSections = ({ course }) => {
                     </div>
                 );
 
-            case 'array':
+            case 'simple-array':
+                const simpleArrayValue = Array.isArray(value) ? value : [""];
+                
                 return (
                     <div className="mb-3" key={field.name}>
                         <label className="form-label">{field.label}</label>
-                        {value.map((item, index) => (
+                        {simpleArrayValue.map((item, index) => (
                             <div key={index} className="d-flex gap-2 mb-2">
                                 <input
                                     type="text"
                                     className={`form-control ${fieldError ? 'is-invalid' : ''}`}
                                     placeholder={`${field.placeholder} ${index + 1}`}
                                     value={item}
-                                    onChange={(e) => handleArrayChange(field.name, index, e.target.value)}
+                                    onChange={(e) => handleSimpleArrayChange(field.name, index, e.target.value)}
                                     disabled={processing}
                                 />
-                                {value.length > 1 && (
+                                {simpleArrayValue.length > 1 && (
                                     <button
                                         type="button"
                                         className="btn btn-outline-danger"
-                                        onClick={() => removeArrayItem(field.name, index)}
+                                        onClick={() => removeSimpleArrayItem(field.name, index)}
                                         disabled={processing}
                                     >
                                         ×
@@ -377,10 +496,95 @@ const CreateOrUpdateSections = ({ course }) => {
                         <button
                             type="button"
                             className="btn btn-outline-secondary btn-sm"
-                            onClick={() => addArrayItem(field.name)}
+                            onClick={() => addSimpleArrayItem(field.name)}
                             disabled={processing}
                         >
                             + Add {field.label}
+                        </button>
+                    </div>
+                );
+
+            case 'object-array':
+                const objectArrayValue = Array.isArray(value) ? value : [{ title: "", description: "" }];
+                
+                return (
+                    <div className="mb-4" key={field.name}>
+                        <label className="form-label">{field.label}</label>
+                        
+                        {objectArrayValue.map((item, index) => (
+                            <div key={index} className="card mb-3 border">
+                                <div className="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                                    <small className="text-muted">Item {index + 1}</small>
+                                    {objectArrayValue.length > 1 && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger"
+                                            onClick={() => removeObjectArrayItem(field.name, index)}
+                                            disabled={processing}
+                                        >
+                                            × Remove
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="card-body">
+                                    <div className="row g-3">
+                                        {field.fields.map((subField) => (
+                                            <div 
+                                                className={subField.name === 'description' ? 'col-12' : 'col-md-6'} 
+                                                key={`${field.name}-${index}-${subField.name}`}
+                                            >
+                                                {subField.name === 'description' ? (
+                                                    <div className="mb-2">
+                                                        <label className="form-label small">{subField.label}</label>
+                                                        <textarea
+                                                            className={`form-control ${errors[`${field.name}.${index}.${subField.name}`] ? 'is-invalid' : ''}`}
+                                                            placeholder={subField.placeholder}
+                                                            value={item[subField.name] || ''}
+                                                            onChange={(e) => handleObjectArrayChange(field.name, index, subField.name, e.target.value)}
+                                                            rows="3"
+                                                            disabled={processing}
+                                                        />
+                                                        {errors[`${field.name}.${index}.${subField.name}`] && (
+                                                            <div className="invalid-feedback">
+                                                                {errors[`${field.name}.${index}.${subField.name}`]}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="mb-2">
+                                                        <label className="form-label small">{subField.label}</label>
+                                                        <input
+                                                            type="text"
+                                                            className={`form-control ${errors[`${field.name}.${index}.${subField.name}`] ? 'is-invalid' : ''}`}
+                                                            placeholder={subField.placeholder}
+                                                            value={item[subField.name] || ''}
+                                                            onChange={(e) => handleObjectArrayChange(field.name, index, subField.name, e.target.value)}
+                                                            disabled={processing}
+                                                        />
+                                                        {errors[`${field.name}.${index}.${subField.name}`] && (
+                                                            <div className="invalid-feedback">
+                                                                {errors[`${field.name}.${index}.${subField.name}`]}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        
+                        {fieldError && <div className="invalid-feedback d-block mb-2">{fieldError}</div>}
+                        
+                        <button
+                            type="button"
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => addObjectArrayItem(field.name)}
+                            disabled={processing}
+                        >
+                            <i className="bx bx-plus me-1"></i>
+                            Add New {field.label}
                         </button>
                     </div>
                 );
@@ -400,19 +604,32 @@ const CreateOrUpdateSections = ({ course }) => {
                         
                         {/* Show current file if exists in course data */}
                         {course[field.name] && typeof course[field.name] === 'string' && (
-                            <div className="mb-3 col-md-3">
-                                <label className="form-label" htmlFor="image">Current Image</label>
-                                <div className="mb-2">
-                                    <img
-                                        src={`${appUrl}/${course[field.name]}`}
-                                        alt="Current Banner"
-                                        style={{
-                                            width: "100px",
-                                            height: "60px",
-                                            objectFit: "cover",
-                                            borderRadius: "4px"
-                                        }}
-                                    />
+                            <div className="mt-2">
+                                <label className="form-label small">Current File:</label>
+                                <div className="d-flex align-items-center">
+                                    <div className="me-3">
+                                        {field.accept === 'image/*' ? (
+                                            <img
+                                                src={`${appUrl}/${course[field.name]}`}
+                                                alt="Current"
+                                                style={{
+                                                    width: "80px",
+                                                    height: "60px",
+                                                    objectFit: "cover",
+                                                    borderRadius: "4px"
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="border p-2 rounded bg-light">
+                                                <i className="bx bx-file"></i>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-grow-1">
+                                        <small className="text-muted d-block">
+                                            Current file: {course[field.name].split('/').pop()}
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -515,17 +732,21 @@ const CreateOrUpdateSections = ({ course }) => {
                                 </div>
                                 <div className="card-body">
                                     <div className="row">
-                                        {section.fields.map(field => 
-                                            (field.type === 'array' || field.type === 'file' || field.type === 'textarea') ? (
-                                                <div className="col-12" key={field.name}>
-                                                    {renderField(field)}
-                                                </div>
-                                            ) : (
-                                                <div className="col-md-6" key={field.name}>
-                                                    {renderField(field)}
-                                                </div>
-                                            )
-                                        )}
+                                        {section.fields.map(field => (
+                                            <div 
+                                                className={
+                                                    field.type === 'object-array' || 
+                                                    field.type === 'simple-array' || 
+                                                    field.type === 'textarea' || 
+                                                    field.type === 'file' 
+                                                    ? "col-12" 
+                                                    : "col-md-6"
+                                                } 
+                                                key={field.name}
+                                            >
+                                                {renderField(field)}
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -533,7 +754,7 @@ const CreateOrUpdateSections = ({ course }) => {
                     })}
                 </div>
 
-                {/* ALWAYS SHOW SUBMIT BUTTON - Even when no sections are active */}
+                {/* Submit Button */}
                 <div className="mt-4 p-4 bg-light rounded border">
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
@@ -561,7 +782,6 @@ const CreateOrUpdateSections = ({ course }) => {
                         </div>
                     </div>
                     
-                    {/* Show message when no sections are active */}
                     {activeSections.length === 0 && (
                         <div className="mt-3 alert alert-warning">
                             <i className="bx bx-alarm-exclamation bx-sm me-3"></i>

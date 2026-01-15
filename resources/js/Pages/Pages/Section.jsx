@@ -31,6 +31,7 @@ import {
   InspectionPanel,
   Dam,
   Library,
+  Megaphone,
 } from "lucide-react";
 
 const componentIcons = {
@@ -51,6 +52,7 @@ const componentIcons = {
   sideSection: <InspectionPanel size={20} />,
   featuresSection: <Dam size={20} />,
   librarySection: <Library size={20} />,
+  comingSoon: <Megaphone size={20} />,
 };
 
 const PageBuilder = () => {

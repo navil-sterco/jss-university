@@ -168,10 +168,10 @@ const Index = (props) => {
                                     <td><i className="bx bx-category bx-sm me-3"></i>{course.display_order ?? '-'}</td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${course.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${course.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(course.id)}
                                             >
-                                            {course.status ? "Active" : "Inactive"}
+                                            {course.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>
@@ -296,6 +296,24 @@ const Index = (props) => {
                                             </div>
                                         )}
 
+                                        {/* Course Image */}
+                                        {selectedCourse.image && (
+                                            <div className="mb-4">
+                                                <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                    <i className="bx bx-image-alt me-2"></i>
+                                                    Course Image
+                                                </h6>
+                                                <div className="text-center">
+                                                    <img 
+                                                        src={selectedCourse.image} 
+                                                        alt="Course image" 
+                                                        className="img-fluid rounded shadow-sm"
+                                                        style={{ maxHeight: '150px', objectFit: 'cover' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Basic Information */}
                                         <div className="mb-4">
                                             <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
@@ -380,7 +398,7 @@ const Index = (props) => {
                                                 <div className="col-12">
                                                     <label className="form-label fw-semibold text-muted small">Eligibility Description</label>
                                                     <div className="bg-light p-3 rounded border">
-                                                        {selectedCourse.eligibility_desc ? (
+                                                        {selectedCourse.eligibility_desc != null ? (
                                                             <p className="mb-0 text-dark">{selectedCourse.eligibility_desc}</p>
                                                         ) : (
                                                             <span className="text-muted">—</span>
@@ -399,7 +417,7 @@ const Index = (props) => {
                                             <div className="row g-3">
                                                 <div className="col-12">
                                                     <label className="form-label fw-semibold text-muted small">Apply Now Link</label>
-                                                    {selectedCourse.apply_now_link ? (
+                                                    {selectedCourse.apply_now_link != null ? (
                                                         <a 
                                                             href={selectedCourse.apply_now_link} 
                                                             target="_blank" 
@@ -430,7 +448,7 @@ const Index = (props) => {
                                                 {/* Program Structure PDF */}
                                                 <div className="col-12">
                                                     <label className="form-label fw-semibold text-muted small">Program Structure</label>
-                                                    {selectedCourse.program_structure ? (
+                                                    {selectedCourse.program_structure != null ? (
                                                         <a 
                                                             href={selectedCourse.program_structure} 
                                                             target="_blank" 
@@ -449,7 +467,7 @@ const Index = (props) => {
                                                 {/* Scholarship PDF */}
                                                 <div className="col-12">
                                                     <label className="form-label fw-semibold text-muted small">Scholarship Details</label>
-                                                    {selectedCourse.scholarship ? (
+                                                    {selectedCourse.scholarship != null ? (
                                                         <a 
                                                             href={selectedCourse.scholarship} 
                                                             target="_blank" 
@@ -479,8 +497,8 @@ const Index = (props) => {
                                             <div className="space-y-3">
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Status</span>
-                                                    <span className={`badge ${selectedCourse.status ? "bg-success" : "bg-danger"}`}>
-                                                        {selectedCourse.status ? "Active" : "Inactive"}
+                                                    <span className={`badge ${selectedCourse.status == 1 ? "bg-success" : "bg-danger"}`}>
+                                                        {selectedCourse.status == 1 ? "Active" : "Inactive"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
@@ -533,20 +551,26 @@ const Index = (props) => {
                                             <div className="space-y-2">
                                                 <div className="d-flex justify-content-between align-items-center p-2 bg-white rounded border">
                                                     <span className="small">Banner Image</span>
-                                                    <span className={`badge ${selectedCourse.banner ? "bg-success" : "bg-secondary"}`}>
-                                                        {selectedCourse.banner ? "Uploaded" : "Not Set"}
+                                                    <span className={`badge ${selectedCourse.banner != null ? "bg-success" : "bg-secondary"}`}>
+                                                        {selectedCourse.banner != null ? "Uploaded" : "Not Set"}
+                                                    </span>
+                                                </div>
+                                                <div className="d-flex justify-content-between align-items-center p-2 bg-white rounded border">
+                                                    <span className="small">Course Image</span>
+                                                    <span className={`badge ${selectedCourse.image != null ? "bg-success" : "bg-secondary"}`}>
+                                                        {selectedCourse.image != null ? "Uploaded" : "Not Set"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-2 bg-white rounded border">
                                                     <span className="small">Program Structure</span>
-                                                    <span className={`badge ${selectedCourse.program_structure ? "bg-success" : "bg-secondary"}`}>
-                                                        {selectedCourse.program_structure ? "Uploaded" : "Not Set"}
+                                                    <span className={`badge ${selectedCourse.program_structure != null ? "bg-success" : "bg-secondary"}`}>
+                                                        {selectedCourse.program_structure != null ? "Uploaded" : "Not Set"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-2 bg-white rounded border">
                                                     <span className="small">Scholarship</span>
-                                                    <span className={`badge ${selectedCourse.scholarship ? "bg-success" : "bg-secondary"}`}>
-                                                        {selectedCourse.scholarship ? "Uploaded" : "Not Set"}
+                                                    <span className={`badge ${selectedCourse.scholarship != null ? "bg-success" : "bg-secondary"}`}>
+                                                        {selectedCourse.scholarship != null ? "Uploaded" : "Not Set"}
                                                     </span>
                                                 </div>
                                             </div>

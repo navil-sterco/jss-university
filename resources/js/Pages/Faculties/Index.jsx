@@ -115,6 +115,66 @@ const Index = (props) => {
         }, 150);
     };
 
+    const parseJsonArrayField = (fieldData) => {
+        if (!fieldData) return [];
+        
+        try {
+            if (Array.isArray(fieldData)) {
+                return fieldData.filter(item => item && item.trim() !== '');
+            }
+            
+            if (typeof fieldData === 'string') {
+                const parsed = JSON.parse(fieldData);
+                if (Array.isArray(parsed)) {
+                    return parsed.filter(item => item && item.trim() !== '');
+                }
+                return parsed && parsed.trim() !== '' ? [parsed] : [];
+            }
+            
+            return [];
+        } catch (error) {
+            // If it's a simple string (not JSON), use it as a single item
+            return fieldData && fieldData.trim() !== '' ? [fieldData] : [];
+        }
+    };
+
+    const parseResearchField = (researchData) => {
+        if (!researchData) return [];
+        
+        try {
+            if (Array.isArray(researchData)) {
+                return researchData.filter(r => r && r.title && r.title.trim() !== '');
+            }
+            
+            if (typeof researchData === 'string') {
+                const parsed = JSON.parse(researchData);
+                if (Array.isArray(parsed)) {
+                    return parsed.filter(r => r && r.title && r.title.trim() !== '');
+                }
+                return [];
+            }
+            
+            return [];
+        } catch (error) {
+            return [];
+        }
+    };
+
+    const parseSectionsField = (sectionsData) => {
+        if (!sectionsData) return [];
+        
+        try {
+            if (typeof sectionsData === 'string') {
+                return JSON.parse(sectionsData);
+            } else if (Array.isArray(sectionsData)) {
+                return sectionsData;
+            }
+        } catch (error) {
+            console.error('Error parsing sections data:', error);
+        }
+        return [];
+    };
+
     return (
         <>
             <h1 className="text-muted">Faculty & Staff List</h1>
@@ -194,11 +254,11 @@ const Index = (props) => {
                                     <td>
                                         <span
                                             className={`badge cursor-pointer ${
-                                                facultyMember.status ? "bg-label-success" : "bg-label-danger"
+                                                facultyMember.status == 1 ? "bg-label-success" : "bg-label-danger"
                                             }`}
                                             onClick={() => toggleStatus(facultyMember.id)}
                                         >
-                                            {facultyMember.status ? "Active" : "Inactive"}
+                                            {facultyMember.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>
@@ -316,7 +376,7 @@ const Index = (props) => {
                                                     <label className="form-label fw-semibold text-muted small">Email</label>
                                                     <div className="d-flex align-items-center">
                                                         <i className="bx bx-envelope text-muted me-2"></i>
-                                                        <span className={selectedFaculty.email ? "text-dark" : "text-muted"}>
+                                                        <span className={selectedFaculty.email != null ? "text-dark" : "text-muted"}>
                                                             {selectedFaculty.email || "—"}
                                                         </span>
                                                     </div>
@@ -327,7 +387,7 @@ const Index = (props) => {
                                                 </div>
                                                 <div className="col-12">
                                                     <label className="form-label fw-semibold text-muted small">LinkedIn</label>
-                                                    {selectedFaculty.linkedin_url ? (
+                                                    {selectedFaculty.linkedin_url != null ? (
                                                         <a 
                                                             href={selectedFaculty.linkedin_url} 
                                                             target="_blank" 
@@ -350,23 +410,26 @@ const Index = (props) => {
                                                 <i className="bx bx-graduation-cap me-2"></i>
                                                 Education
                                             </h6>
-                                            {selectedFaculty.education && selectedFaculty.education.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {selectedFaculty.education.map((edu, index) => (
-                                                        <div key={index} className="border rounded p-3 bg-light mb-1">
-                                                            <div className="d-flex align-items-start">
-                                                                <i className="bx bx-check-circle text-success me-2"></i>
-                                                                <span className="small">{edu}</span>
+                                            {(() => {
+                                                const educationArray = parseJsonArrayField(selectedFaculty.education);
+                                                return educationArray.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {educationArray.map((edu, index) => (
+                                                            <div key={index} className="border rounded p-3 bg-light mb-1">
+                                                                <div className="d-flex align-items-start">
+                                                                    <i className="bx bx-check-circle text-success me-2"></i>
+                                                                    <span className="small">{edu}</span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-3 border rounded bg-light">
-                                                    <i className="bx bx-book-open text-muted mb-2" style={{ fontSize: "2rem" }}></i>
-                                                    <p className="text-muted small mb-0">No education information</p>
-                                                </div>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-3 border rounded bg-light">
+                                                        <i className="bx bx-book-open text-muted mb-2" style={{ fontSize: "2rem" }}></i>
+                                                        <p className="text-muted small mb-0">No education information</p>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
 
                                         {/* Research */}
@@ -375,13 +438,14 @@ const Index = (props) => {
                                                 <i className="bx bx-test-tube me-2"></i>
                                                 Research Areas
                                             </h6>
-                                            {selectedFaculty.research && selectedFaculty.research.length > 0 && selectedFaculty.research.some(r => r.title) ? (
-                                                <div className="space-y-3">
-                                                    {selectedFaculty.research.map((research, index) => (
-                                                        research.title && (
+                                            {(() => {
+                                                const researchArray = parseResearchField(selectedFaculty.research);
+                                                
+                                                return researchArray.length > 0 ? (
+                                                    <div className="space-y-3">
+                                                        {researchArray.map((research, index) => (
                                                             <div key={index} className="border rounded p-3 bg-light">
                                                                 <div className="row align-items-center">
-                                                                    {/* Research Image */}
                                                                     {research.image && (
                                                                         <div className="col-auto">
                                                                             <img 
@@ -393,8 +457,7 @@ const Index = (props) => {
                                                                         </div>
                                                                     )}
                                                                     
-                                                                    {/* Research Content */}
-                                                                    <div className={research.image ? "col" : "col-12"}>
+                                                                    <div className={research.image != null ? "col" : "col-12"}>
                                                                         <div className="d-flex align-items-start">
                                                                             <i className="bx bx-bulb text-warning me-2 mt-1"></i>
                                                                             <div className="flex-grow-1">
@@ -415,15 +478,58 @@ const Index = (props) => {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        )
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-3 border rounded bg-light">
-                                                    <i className="bx bx-microscope text-muted mb-2" style={{ fontSize: "2rem" }}></i>
-                                                    <p className="text-muted small mb-0">No research information</p>
-                                                </div>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-3 border rounded bg-light">
+                                                        <i className="bx bx-microscope text-muted mb-2" style={{ fontSize: "2rem" }}></i>
+                                                        <p className="text-muted small mb-0">No research information</p>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                        
+                                        {/* NEW: Sections */}
+                                        <div className="mb-4">
+                                            <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
+                                                <i className="bx bx-list-ul me-2"></i>
+                                                Additional Sections
+                                            </h6>
+                                            {(() => {
+                                                const sectionsArray = parseSectionsField(selectedFaculty.sections);
+                                                
+                                                return sectionsArray.length > 0 ? (
+                                                    <div className="space-y-4">
+                                                        {sectionsArray.map((section, sectionIndex) => (
+                                                            <div key={sectionIndex} className="border rounded p-3 bg-light">
+                                                                <div className="d-flex align-items-start mb-2">
+                                                                    <i className="bx bx-category text-primary me-2 mb-1"></i>
+                                                                    <div className="flex-grow-1">
+                                                                        <h6 className="mb-1 fw-semibold">{section.title}</h6>
+                                                                        
+                                                                        {/* Points */}
+                                                                        {section.points && section.points.length > 0 && (
+                                                                            <div className="mt-2 ps-3">
+                                                                                {section.points.map((point, pointIndex) => (
+                                                                                    <div key={pointIndex} className="d-flex align-items-start mb-1">
+                                                                                        <i className="bx bx-chevron-right text-muted me-2" style={{ fontSize: '0.75rem' }}></i>
+                                                                                        <span className="small">{point}</span>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-3 border rounded bg-light">
+                                                        <i className="bx bx-layout text-muted mb-2" style={{ fontSize: "2rem" }}></i>
+                                                        <p className="text-muted small mb-0">No additional sections</p>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                         
                                         {/* Teaching */}
@@ -432,23 +538,26 @@ const Index = (props) => {
                                                 <i className="bx bx-chalkboard me-2"></i>
                                                 Teaching Experience
                                             </h6>
-                                            {selectedFaculty.teaching && selectedFaculty.teaching.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {selectedFaculty.teaching.map((teaching, index) => (
-                                                        <div key={index} className="border rounded p-3 bg-light mb-1">
-                                                            <div className="d-flex align-items-start">
-                                                                <i className="bx bx-book-reader text-info me-2"></i>
-                                                                <span className="small">{teaching}</span>
+                                            {(() => {
+                                                const teachingArray = parseJsonArrayField(selectedFaculty.teaching);
+                                                return teachingArray.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {teachingArray.map((teaching, index) => (
+                                                            <div key={index} className="border rounded p-3 bg-light mb-1">
+                                                                <div className="d-flex align-items-start">
+                                                                    <i className="bx bx-book-reader text-info me-2"></i>
+                                                                    <span className="small">{teaching}</span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-3 border rounded bg-light">
-                                                    <i className="bx bx-book text-muted mb-2" style={{ fontSize: "2rem" }}></i>
-                                                    <p className="text-muted small mb-0">No teaching information</p>
-                                                </div>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-3 border rounded bg-light">
+                                                        <i className="bx bx-book text-muted mb-2" style={{ fontSize: "2rem" }}></i>
+                                                        <p className="text-muted small mb-0">No teaching information</p>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
 
@@ -492,23 +601,26 @@ const Index = (props) => {
                                                 <i className="bx bx-award me-2"></i>
                                                 Awards & Honors
                                             </h6>
-                                            {selectedFaculty.award && selectedFaculty.award.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {selectedFaculty.award.map((award, index) => (
-                                                        <div key={index} className="border rounded p-2 bg-white mb-1">
-                                                            <div className="d-flex align-items-start">
-                                                                <i className="bx bx-trophy text-warning me-2"></i>
-                                                                <span className="small">{award}</span>
+                                            {(() => {
+                                                const awardsArray = parseJsonArrayField(selectedFaculty.award);
+                                                return awardsArray.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {awardsArray.map((award, index) => (
+                                                            <div key={index} className="border rounded p-2 bg-white mb-1">
+                                                                <div className="d-flex align-items-start">
+                                                                    <i className="bx bx-trophy text-warning me-2"></i>
+                                                                    <span className="small">{award}</span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-3 border rounded bg-white">
-                                                    <i className="bx bx-medal text-muted mb-2"></i>
-                                                    <p className="text-muted small mb-0">No awards</p>
-                                                </div>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-3 border rounded bg-white">
+                                                        <i className="bx bx-medal text-muted mb-2"></i>
+                                                        <p className="text-muted small mb-0">No awards</p>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
 
                                         {/* Social Engagement */}
@@ -517,23 +629,26 @@ const Index = (props) => {
                                                 <i className="bx bx-group me-2"></i>
                                                 Social Engagement
                                             </h6>
-                                            {selectedFaculty.social_engagement && selectedFaculty.social_engagement.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {selectedFaculty.social_engagement.map((engagement, index) => (
-                                                        <div key={index} className="border rounded p-2 bg-white mb-1">
-                                                            <div className="d-flex align-items-start">
-                                                                <i className="bx bx-heart text-danger me-2"></i>
-                                                                <span className="small">{engagement}</span>
+                                            {(() => {
+                                                const engagementArray = parseJsonArrayField(selectedFaculty.social_engagement);
+                                                return engagementArray.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {engagementArray.map((engagement, index) => (
+                                                            <div key={index} className="border rounded p-2 bg-white mb-1">
+                                                                <div className="d-flex align-items-start">
+                                                                    <i className="bx bx-heart text-danger me-2"></i>
+                                                                    <span className="small">{engagement}</span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-3 border rounded bg-white">
-                                                    <i className="bx bx-world text-muted mb-2"></i>
-                                                    <p className="text-muted small mb-0">No social engagement</p>
-                                                </div>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-3 border rounded bg-white">
+                                                        <i className="bx bx-world text-muted mb-2"></i>
+                                                        <p className="text-muted small mb-0">No social engagement</p>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
 
                                         {/* Status & Quick Actions */}
@@ -545,8 +660,8 @@ const Index = (props) => {
                                             <div className="space-y-3">
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Status</span>
-                                                    <span className={`badge ${selectedFaculty.status ? "bg-success" : "bg-danger"}`}>
-                                                        {selectedFaculty.status ? "Active" : "Inactive"}
+                                                    <span className={`badge ${selectedFaculty.status == 1 ? "bg-success" : "bg-danger"}`}>
+                                                        {selectedFaculty.status == 1 ? "Active" : "Inactive"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">

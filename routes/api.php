@@ -1,9 +1,7 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PageController;
-use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\FooterController;
 use App\Http\Controllers\Api\HeaderController;
@@ -11,7 +9,7 @@ use App\Http\Controllers\Api\SchoolController;
 use App\Http\Controllers\Api\FacultyController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\HomepageController;
-use App\Http\Controllers\Api\RegisterController;
+use App\Http\Controllers\Api\HamburgerController;
 use App\Http\Controllers\Api\AdmissionController;
 use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\HappeningController;
@@ -20,16 +18,9 @@ use App\Http\Controllers\Api\LeadershipController;
 use App\Http\Controllers\Api\SeoSettingController;
 use App\Http\Controllers\Api\MobileHeaderController;
 use App\Http\Controllers\Api\SchoolHeaderController;
-use App\Http\Controllers\Api\PasswordResetLinkController;
-
-Route::prefix('auth')->group(function() {
-    Route::post('/register', [RegisterController::class, 'store']);
-    Route::post('/login', [LoginController::class, 'login']);
-    Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
-    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
-});
 
 Route::get('/header', [HeaderController::class, 'header']);
+Route::get('/hamburger', [HamburgerController::class, 'hamburger']);
 Route::get('/school-header', [SchoolHeaderController::class, 'header']);
 Route::get('/mobile-header', [MobileHeaderController::class, 'header']);
 Route::get('/admission', [AdmissionController::class, 'index']);

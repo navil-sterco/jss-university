@@ -44,6 +44,7 @@ class Course extends Model
         'course_total_fees',
         'career_opportunities',
         'banner',
+        'image',
         'eligibility_marks',
         'eligibility_desc',
         'overview_title',

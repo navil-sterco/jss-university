@@ -177,17 +177,17 @@ const Index = (props) => {
                                     <td><i className="bx bx-category bx-sm me-3"></i>{banner.display_order}</td>
                                     <td>
                                         <span
-                                            className={`badge ${banner.show_on_home ? "bg-label-warning" : "bg-label-secondary"}`}
+                                            className={`badge ${banner.show_on_home == 1 ? "bg-label-warning" : "bg-label-secondary"}`}
                                         >
-                                            {banner.show_on_home ? "Yes" : "No"}
+                                            {banner.show_on_home == 1 ? "Yes" : "No"}
                                         </span>
                                     </td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${banner.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${banner.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(banner.id)}
                                         >
-                                            {banner.status ? "Active" : "Inactive"}
+                                            {banner.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>

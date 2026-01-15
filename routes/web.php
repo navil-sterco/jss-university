@@ -20,6 +20,7 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HamburgerController;
 use App\Http\Controllers\HappeningController;
 use App\Http\Controllers\RecruiterController;
 use App\Http\Controllers\DepartmentController;
@@ -239,6 +240,14 @@ Route::middleware('auth', 'is_admin')->group(function () {
         Route::get('/{mobileHeader}/destroy', [MobileHeaderController::class, 'destroy'])->name('mobile-headers.destroy');
         Route::post('/update-order', [MobileHeaderController::class, 'updateOrder'])->name('mobile-headers.update-order');
         Route::post('/{mobileHeader}/toggle-status', [MobileHeaderController::class, 'toggleStatus'])->name('mobile-headers.toggle-status');
+    });
+
+    //Hamburger Header
+    Route::resource('hamburger', HamburgerController::class)->except(['destroy']);
+    Route::prefix('hamburger')->group(function () {
+        Route::get('/{hamburger}/destroy', [HamburgerController::class, 'destroy'])->name('hamburger.destroy');
+        Route::post('/update-order', [HamburgerController::class, 'updateOrder'])->name('hamburger.update-order');
+        Route::post('/{id}/toggle-status', [HamburgerController::class, 'toggleStatus'])->name('hamburger.toggle-status');
     });
 
     //Footer

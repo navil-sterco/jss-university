@@ -18,13 +18,14 @@ const Edit = ({ course, departments, degree }) => {
         academic_year: course.academic_year || "",
         apply_now_link: course.apply_now_link || "",
         useful_links: course.useful_links || [],
-        // New fields
         banner: null,
+        image: null,
         eligibility_marks: course.eligibility_marks || "",
         eligibility_desc: course.eligibility_desc || "",
         program_structure: null,
         scholarship: null,
         remove_banner: false,
+        remove_image: false,
         remove_program_structure: false,
         remove_scholarship: false,
     });
@@ -61,6 +62,8 @@ const Edit = ({ course, departments, degree }) => {
     // Handle file input changes
     const handleFileChange = (field, file) => {
         setData(field, file);
+        // Reset removal flag if new file is selected
+        setData(`remove_${field}`, false);
     };
 
     // Handle file removal
@@ -234,7 +237,7 @@ const Edit = ({ course, departments, degree }) => {
 
                             {/* Banner Image */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Banner Image</label>                        
+                                <label className="form-label">Banner Image <span className="text-muted">(For course detail page)</span></label>                        
                                 <input
                                     type="file"
                                     className="form-control"
@@ -246,6 +249,64 @@ const Edit = ({ course, departments, degree }) => {
                                 </div>
                                 <div className="form-text text-danger">{errors.banner}</div>
                             </div>
+
+                            {/* Current Banner Preview */}
+                            {course.banner && !data.remove_banner && (
+                                <div className="mb-3 col-md-6">
+                                    <label className="form-label">Current Banner</label>
+                                    <div className="border rounded p-2">
+                                        <img 
+                                            src={`${appUrl}/${course.banner}`} 
+                                            alt="Current banner" 
+                                            className="img-fluid rounded mb-2"
+                                            style={{ maxHeight: '150px' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger w-100"
+                                            onClick={() => handleRemoveFile('banner')}
+                                        >
+                                            <i className="bx bx-trash"></i> Remove Banner
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Featured Image */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Image <span className="text-muted">(For course listing)</span></label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange("image", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload a new image (Recommended: 400x300px)
+                                </div>
+                                <div className="form-text text-danger">{errors.image}</div>
+                            </div>
+
+                            {course.image && !data.remove_image && (
+                                <div className="mb-3 col-md-6">
+                                    <label className="form-label">Current Course Image</label>
+                                    <div className="border rounded p-2">
+                                        <img 
+                                            src={`${appUrl}/${course.image}`} 
+                                            alt="Current course image" 
+                                            className="img-fluid rounded mb-2"
+                                            style={{ maxHeight: '150px', objectFit: 'cover' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger w-100"
+                                            onClick={() => handleRemoveFile('image')}
+                                        >
+                                            <i className="bx bx-trash"></i> Remove Course Image
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Eligibility Marks */}
                             <div className="mb-3 col-md-6">
@@ -259,26 +320,6 @@ const Edit = ({ course, departments, degree }) => {
                                 />
                                 <div className="form-text text-danger">{errors.eligibility_marks}</div>
                             </div>
-
-                            {/* Current Banner Preview */}
-                            {course.banner && !data.remove_banner && (
-                                <div className="mb-2">
-                                    <p className="text-muted mb-1">Current Banner:</p>
-                                    <img 
-                                        src={`${appUrl}/${course.banner}`} 
-                                        alt="Current banner" 
-                                        className="img-thumbnail"
-                                        style={{ maxHeight: '150px' }}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="btn btn-sm btn-outline-danger mt-1"
-                                        onClick={() => handleRemoveFile('banner')}
-                                    >
-                                        Remove Current Banner
-                                    </button>
-                                </div>
-                            )}
 
                             {/* Eligibility Description */}
                             <div className="mb-3 col-12">
@@ -294,7 +335,7 @@ const Edit = ({ course, departments, degree }) => {
                             </div>
 
                             {/* Program Structure PDF */}
-                            <div className="mb-3 col-md-12">
+                            <div className="mb-3 col-md-6">
                                 <label className="form-label">Program Structure (PDF)</label>                                
                                 <input
                                     type="file"
@@ -306,10 +347,35 @@ const Edit = ({ course, departments, degree }) => {
                                     Upload new program structure document in PDF format
                                 </div>
                                 <div className="form-text text-danger">{errors.program_structure}</div>
+                                
+                                {/* Current Program Structure Preview */}
+                                {course.program_structure && !data.remove_program_structure && (
+                                    <div className="mt-2">
+                                        <p className="text-muted mb-1">Current File:</p>
+                                        <div className="d-flex align-items-center">
+                                            <a 
+                                                href={`${appUrl}/${course.program_structure}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-decoration-none"
+                                            >
+                                                <i className="bx bx-file me-1"></i>
+                                                View Current PDF
+                                            </a>
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-outline-danger ms-3"
+                                                onClick={() => handleRemoveFile('program_structure')}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Scholarship PDF */}
-                            <div className="mb-3 col-md-12">
+                            <div className="mb-3 col-md-6">
                                 <label className="form-label">Scholarship Details (PDF)</label>
                                 <input
                                     type="file"
@@ -321,6 +387,31 @@ const Edit = ({ course, departments, degree }) => {
                                     Upload new scholarship information in PDF format
                                 </div>
                                 <div className="form-text text-danger">{errors.scholarship}</div>
+                                
+                                {/* Current Scholarship Preview */}
+                                {course.scholarship && !data.remove_scholarship && (
+                                    <div className="mt-2">
+                                        <p className="text-muted mb-1">Current File:</p>
+                                        <div className="d-flex align-items-center">
+                                            <a 
+                                                href={`${appUrl}/${course.scholarship}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-decoration-none"
+                                            >
+                                                <i className="bx bx-file me-1"></i>
+                                                View Current PDF
+                                            </a>
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-outline-danger ms-3"
+                                                onClick={() => handleRemoveFile('scholarship')}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Useful Links Section */}

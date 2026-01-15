@@ -21,7 +21,7 @@ const Edit = (props) => {
         department_id: page.department_id || "",
         image: null,
         sub_title: page.sub_title || "",
-        target_blank: page.target_blank ? "1" : "0",
+        target_blank: page.target_blank == 1 ? 1 : 0,
         publish_date: parseDateInput(page.publish_date),
         template_path: page.template_path || "",
     });

@@ -115,7 +115,7 @@ const Edit = (props) => {
             section_button_text: data.section_button_text,
             section_button_url: data.section_button_url,
             display_order: data.display_order,
-            is_active: data.is_active ? 1 : 0,
+            is_active: data.is_active == 1 ? 1 : 0,
             _method: 'PUT' // Important for update
         };
 

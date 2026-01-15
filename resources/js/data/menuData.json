@@ -165,6 +165,12 @@
                 "link": "mobile-headers.index"
             },
             {
+                "text": "Hamburger",
+                "icon": "bx bx-layout",
+                "available": true,
+                "link": "hamburger.index"
+            },
+            {
                 "text": "Admission",
                 "icon": "bx bx-notepad",
                 "available": true,

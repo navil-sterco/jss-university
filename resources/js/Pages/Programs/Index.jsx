@@ -151,10 +151,10 @@ const ProgramIndex = (props) => {
                                     <td><i className="bx bx-sort bx-sm me-2"></i>{program.display_order}</td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${program.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${program.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(program.id)}
                                         >
-                                            {program.status ? "Active" : "Inactive"}
+                                            {program.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>

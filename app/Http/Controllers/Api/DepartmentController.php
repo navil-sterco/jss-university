@@ -90,7 +90,7 @@ class DepartmentController extends Controller
             'faculty_data' => [
                 'title' => $departments->faculty_title,
                 'subtitle' => $departments->faculty_subtitle,
-                'members' => $departments->faculties->where('status', 1)->take(5)->map(fn($item) => [
+                'members' => $departments->faculties->where('status', 1)->map(fn($item) => [
                     'id' => $item->id,
                     'name' => $item->name,
                     'designation' => $item->type->name ?? 'N/A',

@@ -155,14 +155,14 @@
     "label": "Side Section",
     "fields": [
       { "name": "file", "label": "Image", "type": "file" },
-      { "name": "Title", "label": "Title", "type": "text", "placeholder": "Title" },
-      { "name": "Subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
-      { "name": "Desc", "label": "Description", "type": "text", "placeholder": "Description" },
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
+      { "name": "desc", "label": "Description", "type": "text", "placeholder": "Description" },
       { "name": "point_title", "label": "Point Title", "type": "text", "placeholder": "Point Title" },
-      { "name": "Point1", "label": "Point 1", "type": "text", "placeholder": "point 1" },
-      { "name": "Point2", "label": "Point 2", "type": "text", "placeholder": "point 2" },
-      { "name": "Point3", "label": "Point 3", "type": "text", "placeholder": "point 3" },
-      { "name": "Point4", "label": "Point 4", "type": "text", "placeholder": "point 4" }
+      { "name": "point1", "label": "Point 1", "type": "text", "placeholder": "point 1" },
+      { "name": "point2", "label": "Point 2", "type": "text", "placeholder": "point 2" },
+      { "name": "point3", "label": "Point 3", "type": "text", "placeholder": "point 3" },
+      { "name": "point4", "label": "Point 4", "type": "text", "placeholder": "point 4" }
     ]
   },
   "featuresSection": {
@@ -170,13 +170,19 @@
     "fields": [
       { "name": "file", "label": "Image", "type": "file" },
       { "name": "photo", "label": "Second Image", "type": "file" },
-      { "name": "Title", "label": "Title", "type": "text", "placeholder": "Title" },
-      { "name": "Subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
-      { "name": "Desc", "label": "Description", "type": "text", "placeholder": "Description" },
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
+      { "name": "desc", "label": "Description", "type": "text", "placeholder": "Description" },
       { "name": "additional", "label": "Additional Desc", "type": "text", "placeholder": "Additional Desc" },
       { "name": "link", "label": "Link", "type": "text", "placeholder": "Link" },
       { "name": "number", "label": "Number", "type": "text", "placeholder": "85+" },
       { "name": "quote", "label": "Quote", "type": "text", "placeholder": "Quote" }
+    ]
+  },
+  "comingSoon": {
+    "label": "Coming Soon",
+    "fields": [
+      { "name": "message", "label": "Message", "type": "text", "placeholder": "Message" }
     ]
   }
 }

@@ -33,6 +33,19 @@ class FacultyController extends Controller
                 }
             }
 
+            $sectionsData = [];
+            if ($faculty->sections) {
+                $parsedSections = is_array($faculty->sections) ? $faculty->sections : json_decode($faculty->sections, true);
+                if (is_array($parsedSections)) {
+                    $sectionsData = array_map(function($section) {
+                        return [
+                            'title' => $section['title'] ?? null,
+                            'points' => $section['points'] ?? []
+                        ];
+                    }, $parsedSections);
+                }
+            }
+
             return [
                 'id' => $faculty->id,
                 'name' => $faculty->name,
@@ -45,7 +58,8 @@ class FacultyController extends Controller
                 'type' => $faculty->type->name ?? 'N/A',
                 'type_id' => $faculty->type_id,
                 'education' => $faculty->education,
-                'research' => $researchData, // Updated research structure
+                'research' => $researchData,
+                'sections' => $sectionsData,
                 'teaching' => $faculty->teaching,
                 'award' => $faculty->award,
                 'social_engagement' => $faculty->social_engagement,
@@ -73,7 +87,7 @@ class FacultyController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type_id' => 'required|exists:types,id',
+            'type_id' => 'nullable|exists:types,id',
             'school_id' => 'required|exists:schools,id',
             'name' => 'required|string|max:255',
             'slug' => [
@@ -88,17 +102,21 @@ class FacultyController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'linkedin_url' => 'nullable|max:255',
             'education' => 'nullable|array',
-            'education.*' => 'nullable|string|max:500',
+            'education.*' => 'nullable|string',
             'research' => 'nullable|array',
             'research.*.title' => 'nullable|string|max:255',
             'research.*.link' => 'nullable|url|max:500',
             'research.*.image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'teaching' => 'nullable|array',
-            'teaching.*' => 'nullable|string|max:500',
+            'teaching.*' => 'nullable|string',
             'award' => 'nullable|array',
-            'award.*' => 'nullable|string|max:500',
+            'award.*' => 'nullable|string',
             'social_engagement' => 'nullable|array',
-            'social_engagement.*' => 'nullable|string|max:500',
+            'social_engagement.*' => 'nullable|string',
+            'sections' => 'nullable|array',
+            'sections.*.title' => 'nullable|string|max:255',
+            'sections.*.points' => 'nullable|array',
+            'sections.*.points.*' => 'nullable|string',
             'display_order' => 'nullable|integer',
             'status' => 'nullable|boolean',
         ]);
@@ -155,6 +173,10 @@ class FacultyController extends Controller
         $validated['award'] = !empty($validated['award']) ? json_encode($validated['award']) : null;
         $validated['social_engagement'] = !empty($validated['social_engagement']) ? json_encode($validated['social_engagement']) : null;
 
+        if (!empty($validated['sections'])) {
+            $validated['sections'] = $this->processSections($validated['sections']);
+        }
+
         Faculty::create($validated);
 
         return redirect()->route('faculty.index')->with('success', 'Faculty/Staff created successfully!');
@@ -175,7 +197,7 @@ class FacultyController extends Controller
     public function update(Request $request, Faculty $faculty)
     {
         $validated = $request->validate([
-            'type_id' => 'required|exists:types,id',
+            'type_id' => 'nullable|exists:types,id',
             'school_id' => 'required|exists:schools,id',
             'name' => 'required|string|max:255',
             'slug' => [
@@ -189,16 +211,20 @@ class FacultyController extends Controller
             'profile' => 'nullable|string',
             'linkedin_url' => 'nullable|max:255',
             'education' => 'nullable|array',
-            'education.*' => 'nullable|string|max:500',
+            'education.*' => 'nullable|string',
             'research' => 'nullable|array',
             'research.*.title' => 'nullable|string|max:255',
             'research.*.link' => 'nullable|url|max:500',
             'teaching' => 'nullable|array',
-            'teaching.*' => 'nullable|string|max:500',
+            'teaching.*' => 'nullable|string',
             'award' => 'nullable|array',
-            'award.*' => 'nullable|string|max:500',
+            'award.*' => 'nullable|string',
             'social_engagement' => 'nullable|array',
-            'social_engagement.*' => 'nullable|string|max:500',
+            'social_engagement.*' => 'nullable|string',
+            'sections' => 'nullable|array',
+            'sections.*.title' => 'nullable|string|max:255',
+            'sections.*.points' => 'nullable|array',
+            'sections.*.points.*' => 'nullable|string',
             'display_order' => 'nullable|integer',
             'status' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
@@ -297,6 +323,10 @@ class FacultyController extends Controller
             $validated['teaching'] = !empty($validated['teaching']) ? json_encode($validated['teaching']) : null;
             $validated['award'] = !empty($validated['award']) ? json_encode($validated['award']) : null;
             $validated['social_engagement'] = !empty($validated['social_engagement']) ? json_encode($validated['social_engagement']) : null;
+            
+            if (!empty($validated['sections'])) {
+                $validated['sections'] = $this->processSections($validated['sections']);
+            }
 
             $faculty->update($validated);
 
@@ -378,5 +408,29 @@ class FacultyController extends Controller
         $faculties->courses()->sync($validated['course_ids'] ?? []);
 
         return redirect()->route('faculty.index', $faculties->id)->with('success', 'Faculty mapped successfully!');
+    }
+
+    private function processSections($sections)
+    {
+        $processedSections = [];
+
+        foreach ($sections as $section) {
+            if (empty(trim($section['title']))) {
+                continue;
+            }
+
+            $points = array_filter($section['points'] ?? [], function ($point) {
+                return !empty(trim($point));
+            });
+
+            if (!empty(trim($section['title'])) || !empty($points)) {
+                $processedSections[] = [
+                    'title' => trim($section['title']),
+                    'points' => array_values($points)
+                ];
+            }
+        }
+
+        return $processedSections;
     }
 }

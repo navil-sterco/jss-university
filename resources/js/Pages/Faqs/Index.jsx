@@ -114,10 +114,10 @@ const Index = (props) => {
                                     </td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${faq.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${faq.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(faq.id)}
                                         >
-                                            {faq.status ? "Active" : "Inactive"}
+                                            {faq.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>

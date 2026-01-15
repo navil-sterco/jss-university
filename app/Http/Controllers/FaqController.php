@@ -48,8 +48,8 @@ class FaqController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'question' => 'required|string|max:255',
-            'answer' => 'required|string|max:255',
+            'question' => 'required|string',
+            'answer' => 'required|string',
             'status' => 'nullable|integer|in:0,1',
             'display_order' => 'nullable|integer',
         ]);
@@ -83,8 +83,8 @@ class FaqController extends Controller
     public function update(Request $request, Faq $faq)
     {
         $validated = $request->validate([
-            'question' => 'required|string|max:255',
-            'answer' => 'required|string|max:255',
+            'question' => 'required|string',
+            'answer' => 'required|string',
             'status' => 'nullable|integer|in:0,1',
             'display_order' => 'nullable|integer',
         ]);

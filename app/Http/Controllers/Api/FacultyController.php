@@ -102,18 +102,66 @@ class FacultyController extends Controller
             'profile' => $faculty->profile,
             'email' => $faculty->email,
             'linkedin' => $faculty->linkedin_url,
-            'education' => $faculty->education ? json_decode($faculty->education, true) : [],
-            'research' => $faculty->research ? array_map(function($researchItem) {
-                return [
+            'education' => $faculty->education ? (is_array($faculty->education) ? $faculty->education : json_decode($faculty->education, true)) : [],
+            'research' => $this->parseResearchData($faculty->research),
+            'teaching' => $faculty->teaching ? (is_array($faculty->teaching) ? $faculty->teaching : json_decode($faculty->teaching, true)) : [],
+            'awards' => $faculty->award ? (is_array($faculty->award) ? $faculty->award : json_decode($faculty->award, true)) : [],
+            'socialEngagement' => $faculty->social_engagement ? (is_array($faculty->social_engagement) ? $faculty->social_engagement : json_decode($faculty->social_engagement, true)) : [],
+            'sections' => $this->parseSectionsData($faculty->sections), // Added sections
+        ]);
+    }
+
+    private function parseResearchData($research)
+    {
+        if (empty($research)) {
+            return [];
+        }
+        
+        $researchArray = is_array($research) ? $research : json_decode($research, true);
+        
+        if (!is_array($researchArray)) {
+            return [];
+        }
+        
+        $result = [];
+        foreach ($researchArray as $researchItem) {
+            if (is_array($researchItem)) {
+                $result[] = [
                     'title' => $researchItem['title'] ?? '',
                     'link' => $researchItem['link'] ?? '',
-                    'image' => isset($researchItem['image']) ? asset($researchItem['image']) : ''
+                    'image' => isset($researchItem['image']) && !empty($researchItem['image']) 
+                        ? asset($researchItem['image']) 
+                        : ''
                 ];
-            }, json_decode($faculty->research, true)) : [],
-            'teaching' => $faculty->teaching ? json_decode($faculty->teaching, true) : [],
-            'awards' => $faculty->award ? json_decode($faculty->award, true) : [],
-            'socialEngagement' => $faculty->social_engagement ? json_decode($faculty->social_engagement, true) : [],
-        ]);
+            }
+        }
+        
+        return $result;
+    }
+
+    private function parseSectionsData($sections)
+    {
+        if (empty($sections)) {
+            return [];
+        }
+        
+        $sectionsArray = is_array($sections) ? $sections : json_decode($sections, true);
+        
+        if (!is_array($sectionsArray)) {
+            return [];
+        }
+        
+        $result = [];
+        foreach ($sectionsArray as $section) {
+            if (is_array($section)) {
+                $result[] = [
+                    'title' => $section['title'] ?? '',
+                    'points' => is_array($section['points'] ?? null) ? $section['points'] : []
+                ];
+            }
+        }
+        
+        return $result;
     }
 
     public function types()

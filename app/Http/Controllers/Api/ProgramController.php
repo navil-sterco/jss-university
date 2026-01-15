@@ -30,7 +30,7 @@ class ProgramController extends Controller
             'department:id,name',
             'department.school:id,name'
         ])
-        ->select('id', 'name', 'banner', 'slug', 'degree_id', 'department_id')
+        ->select('id', 'name', 'banner', 'image', 'slug', 'degree_id', 'department_id')
         ->whereIn('degree_id', $degreeIds)
         ->filter(['search' => $validated['search'] ?? null])
         ->when($validated['department_id'] ?? null, function ($query) use ($validated) {
@@ -48,6 +48,7 @@ class ProgramController extends Controller
         $transformedCourses = $courses->through(function ($course) {
             return [
                 'name' => $course->name,
+                'image' => $course->image ? url($course->image) : null,
                 'banner' => $course->banner ? url($course->banner) : null,
                 'slug' => $course->slug,
                 'degree_name' => $course->degree->short_name ?? '',
@@ -74,10 +75,56 @@ class ProgramController extends Controller
             ], 404);
         }
 
+        // Helper function to safely parse JSON or return array
+        $parseJsonField = function($data) {
+            if (!$data) return [];
+            
+            if (is_string($data)) {
+                try {
+                    $decoded = json_decode($data, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        return $decoded;
+                    }
+                } catch (\Exception $e) {
+                    // If it's a simple string, wrap it in array
+                    return [$data];
+                }
+            }
+            
+            if (is_array($data)) {
+                return $data;
+            }
+            
+            return [];
+        };
+
+        // Helper function for outcomes (PEOs, POs, PSOs)
+        $parseOutcomes = function($data) {
+            if (!$data) return [];
+            
+            if (is_string($data)) {
+                try {
+                    $parsed = json_decode($data, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($parsed)) {
+                        return $parsed;
+                    }
+                } catch (\Exception $e) {
+                    return [];
+                }
+            }
+            
+            if (is_array($data)) {
+                return $data;
+            }
+            
+            return [];
+        };
+
         $courseData = [
             'id' => $course->id,
             'name' => $course->name,
             'slug' => $course->slug,
+            'image' => $course->image ? asset($course->image) : null,
             'banner' => [
                 'name' => $course->name,
                 'image' => $course->banner ? asset($course->banner) : null,
@@ -101,15 +148,15 @@ class ProgramController extends Controller
             'eligibility' => [
                 'eligibility_criteria' => $course->eligibility_criteria,
                 'eligibility_criteria_desc' => $course->eligibility_criteria_desc,
-                'eligibility_criteria_notices' => $course->eligibility_criteria_notices,
+                'eligibility_criteria_notices' => $parseJsonField($course->eligibility_criteria_notices),
             ],
-            'peos' => $course->peos,
-            'pos' => $course->pos,
-            'pso' => $course->pso,
+            'peos' => $parseOutcomes($course->peos),
+            'pos' => $parseOutcomes($course->pos),
+            'pso' => $parseOutcomes($course->pso),
             'apply_now_link' => $course->apply_now_link,
             'curriculum' => [
                 'curriculum_title' => $course->curriculum_title,
-                'curriculum_desc' => $course->curriculum_desc,
+                'curriculum_desc' => $parseJsonField($course->curriculum_desc),
                 'curriculum_image' => $course->curriculum_image ? asset($course->curriculum_image) : null,
                 'curriculum_pdf' => $course->curriculum_pdf ? asset($course->curriculum_pdf) : null,
             ],
@@ -142,7 +189,7 @@ class ProgramController extends Controller
                 'career_subtitle' => $course->career_subtitle,
                 'career_desc' => $course->career_desc,
                 'career_image' => $course->career_image ? asset($course->career_image) : null,
-                'useful_links' => $course->useful_links,
+                'useful_links' => $parseJsonField($course->useful_links),
             ],
         ];
 
@@ -152,7 +199,6 @@ class ProgramController extends Controller
             'data' => $courseData
         ]);
     }
-    
     public function programList()
     {
         $programs = Program::select('id','name','slug','image')->get()
@@ -190,7 +236,7 @@ class ProgramController extends Controller
             'search' => 'nullable|string|max:255',
         ]);
 
-        $courses = Course::select('id', 'name')
+        $courses = Course::select('id', 'name','slug')
         ->filter(['search' => $validated['search'] ?? null])
         ->orderBy('id', 'desc')
         ->get();

@@ -7,6 +7,11 @@ const Edit = ({ faculty, types: initialTypes, schools }) => {
         ? (typeof faculty.research === 'string' ? JSON.parse(faculty.research) : faculty.research)
         : [{ title: "", image: null, link: "" }];
 
+    // Parse sections data from JSON if it exists
+    const initialSections = faculty.sections 
+        ? (typeof faculty.sections === 'string' ? JSON.parse(faculty.sections) : faculty.sections)
+        : [{ title: "", points: [""] }];
+
     const { data, setData, post, processing, errors, progress } = useForm({
         _method: "PUT",
         type_id: faculty.type_id || "",
@@ -22,6 +27,8 @@ const Edit = ({ faculty, types: initialTypes, schools }) => {
         teaching: faculty.teaching?.length ? (typeof faculty.teaching === 'string' ? JSON.parse(faculty.teaching) : faculty.teaching) : [""],
         award: faculty.award?.length ? (typeof faculty.award === 'string' ? JSON.parse(faculty.award) : faculty.award) : [""],
         social_engagement: faculty.social_engagement?.length ? (typeof faculty.social_engagement === 'string' ? JSON.parse(faculty.social_engagement) : faculty.social_engagement) : [""],
+        // NEW: Add sections field
+        sections: initialSections,
         display_order: faculty.display_order || 100,
     });
     const imageRef = useRef(null);
@@ -46,6 +53,9 @@ const Edit = ({ faculty, types: initialTypes, schools }) => {
     const addField = (fieldName) => {
         if (fieldName === 'research') {
             setData(fieldName, [...data[fieldName], { title: "", image: null, link: "" }]);
+        } else if (fieldName === 'sections') {
+            // For sections, add a new section with title and empty points array
+            setData(fieldName, [...data[fieldName], { title: "", points: [""] }]);
         } else {
             setData(fieldName, [...data[fieldName], ""]);
         }
@@ -88,6 +98,34 @@ const Edit = ({ faculty, types: initialTypes, schools }) => {
             image: null
         };
         setData("research", updatedResearch);
+    };
+
+    // NEW: Sections specific functions
+    const updateSectionField = (sectionIndex, field, value) => {
+        const updatedSections = [...data.sections];
+        updatedSections[sectionIndex] = {
+            ...updatedSections[sectionIndex],
+            [field]: value
+        };
+        setData("sections", updatedSections);
+    };
+
+    const addPointToSection = (sectionIndex) => {
+        const updatedSections = [...data.sections];
+        updatedSections[sectionIndex].points.push("");
+        setData("sections", updatedSections);
+    };
+
+    const removePointFromSection = (sectionIndex, pointIndex) => {
+        const updatedSections = [...data.sections];
+        updatedSections[sectionIndex].points = updatedSections[sectionIndex].points.filter((_, i) => i !== pointIndex);
+        setData("sections", updatedSections);
+    };
+
+    const updatePointInSection = (sectionIndex, pointIndex, value) => {
+        const updatedSections = [...data.sections];
+        updatedSections[sectionIndex].points[pointIndex] = value;
+        setData("sections", updatedSections);
     };
 
     const addType = (e) => {
@@ -198,7 +236,7 @@ const Edit = ({ faculty, types: initialTypes, schools }) => {
                                 <div className="row">
                                     {/* Type */}
                                     <div className="mb-3 col-md-6">
-                                        <label className="form-label">Type <span className="text-danger">*</span></label>
+                                        <label className="form-label">Type</label>
                                         <select
                                             className="form-control"
                                             value={data.type_id}
@@ -459,6 +497,98 @@ const Edit = ({ faculty, types: initialTypes, schools }) => {
                                             </div>
                                         ))}
                                         <div className="form-text text-danger">{errors.research}</div>
+                                    </div>
+
+                                    {/* NEW: Sections with Points - Dynamic Fields */}
+                                    <div className="mb-3 col-12">
+                                        <div className="d-flex justify-content-between align-items-center mb-2">
+                                            <label className="form-label">Additional Sections</label>
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-outline-primary"
+                                                onClick={() => addField('sections')}
+                                            >
+                                                <i className="bx bx-plus me-1"></i> Add Section
+                                            </button>
+                                        </div>
+
+                                        {data.sections.map((section, sectionIndex) => (
+                                            <div key={sectionIndex} className="card mb-3">
+                                                <div className="card-header d-flex justify-content-between align-items-center">
+                                                    <h6 className="mb-0">Section {sectionIndex + 1}</h6>
+                                                    {data.sections.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-danger"
+                                                            onClick={() => removeField('sections', sectionIndex)}
+                                                        >
+                                                            <i className="bx bx-trash"></i>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="card-body">
+                                                    {/* Section Title */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Section Title</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={section.title}
+                                                            onChange={(e) => updateSectionField(sectionIndex, 'title', e.target.value)}
+                                                            placeholder="e.g., Professional Experience, Publications, Skills"
+                                                        />
+                                                        <div className="form-text text-danger">
+                                                            {errors[`sections.${sectionIndex}.title`]}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Section Points */}
+                                                    <div className="mb-3">
+                                                        <div className="d-flex justify-content-between align-items-center mb-2">
+                                                            <label className="form-label mb-0">Points</label>
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-outline-secondary"
+                                                                onClick={() => addPointToSection(sectionIndex)}
+                                                            >
+                                                                <i className="bx bx-plus me-1"></i> Add Point
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        {section.points.map((point, pointIndex) => (
+                                                            <div key={pointIndex} className="input-group mb-2">
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control"
+                                                                    value={point}
+                                                                    onChange={(e) => updatePointInSection(sectionIndex, pointIndex, e.target.value)}
+                                                                    placeholder="Enter point details"
+                                                                />
+                                                                {section.points.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-outline-danger"
+                                                                        onClick={() => removePointFromSection(sectionIndex, pointIndex)}
+                                                                    >
+                                                                        <i className="bx bx-trash"></i>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        
+                                                        {/* Display errors for each point */}
+                                                        {section.points.map((_, pointIndex) => (
+                                                            errors[`sections.${sectionIndex}.points.${pointIndex}`] && (
+                                                                <div key={`error-${pointIndex}`} className="form-text text-danger mb-1">
+                                                                    {errors[`sections.${sectionIndex}.points.${pointIndex}`]}
+                                                                </div>
+                                                            )
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div className="form-text text-danger">{errors.sections}</div>
                                     </div>
 
                                     {/* Teaching - Dynamic Fields */}

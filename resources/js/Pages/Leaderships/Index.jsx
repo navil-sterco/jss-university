@@ -202,11 +202,11 @@ const Index = (props) => {
                                     <td>
                                         <span
                                             className={`badge cursor-pointer ${
-                                                leader.status ? "bg-label-success" : "bg-label-danger"
+                                                leader.status == 1 ? "bg-label-success" : "bg-label-danger"
                                             }`}
                                             onClick={() => toggleStatus(leader.id)}
                                         >
-                                            {leader.status ? "Active" : "Inactive"}
+                                            {leader.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td>
@@ -497,8 +497,8 @@ const Index = (props) => {
                                             <div className="space-y-3">
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Status</span>
-                                                    <span className={`badge ${selectedLeadership.status ? "bg-success" : "bg-danger"}`}>
-                                                        {selectedLeadership.status ? "Active" : "Inactive"}
+                                                    <span className={`badge ${selectedLeadership.status == 1 ? "bg-success" : "bg-danger"}`}>
+                                                        {selectedLeadership.status == 1 ? "Active" : "Inactive"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">

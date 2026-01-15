@@ -16,8 +16,10 @@ const Create = ({ departments, degree }) => {
         academic_year: "",
         apply_now_link: "",
         useful_links: [],
-        // New fields
+        // Image fields
         banner: null,
+        image: null, // This is the main/featured image
+        // Other fields
         eligibility_marks: "",
         eligibility_desc: "",
         program_structure: null,
@@ -27,7 +29,7 @@ const Create = ({ departments, degree }) => {
     const submit = (e) => {
         e.preventDefault();
         post(route("course.store"), {
-            forceFormData: true, // Important for file uploads
+            forceFormData: true,
         });
     };
 
@@ -225,7 +227,7 @@ const Create = ({ departments, degree }) => {
 
                             {/* Banner Image */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Banner Image</label>
+                                <label className="form-label">Banner Image <span className="text-muted">(For course detail page)</span></label>
                                 <input
                                     type="file"
                                     className="form-control"
@@ -236,6 +238,21 @@ const Create = ({ departments, degree }) => {
                                     Upload a banner image for the course (Recommended: 1200x400px)
                                 </div>
                                 <div className="form-text text-danger">{errors.banner}</div>
+                            </div>
+
+                            {/* Featured/Main Image */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Course Image <span className="text-muted">(For course listing)</span></label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange("image", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload a main image for course cards/listing (Recommended: 400x300px)
+                                </div>
+                                <div className="form-text text-danger">{errors.image}</div>
                             </div>
 
                             {/* Eligibility Marks */}

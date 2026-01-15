@@ -69,7 +69,7 @@ const Edit = (props) => {
             parent_id: data.parent_id,
             url: data.url,
             display_order: data.display_order,
-            is_active: data.is_active ? 1 : 0,
+            is_active: data.is_active == 1 ? 1 : 0,
             _method: 'PUT' // Important for update
         };
 

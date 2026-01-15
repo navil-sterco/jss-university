@@ -155,7 +155,6 @@ class FooterController extends Controller
             ['icon' => 'facebook', 'url' => $contactInfo->facebook ?? '#'],
             ['icon' => 'twitter', 'url' => $contactInfo->x ?? '#'],
             ['icon' => 'youtube', 'url' => $contactInfo->youtube ?? '#'],
-            ['icon' => 'linkedin', 'url' => $contactInfo->linkedin ?? '#'],
             ['icon' => 'instagram', 'url' => $contactInfo->instagram ?? '#'],
         ];
     }

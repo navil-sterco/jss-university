@@ -1,5 +1,6 @@
-import { useForm } from "@inertiajs/react";
-import React from "react";
+import React, { useEffect } from "react";
+import { useForm, usePage } from "@inertiajs/react";
+import { ToastContainer, toast } from 'react-toastify';
 
 const Edit = ({ contacts }) => {
 
@@ -19,6 +20,15 @@ const Edit = ({ contacts }) => {
         copyright: contacts?.copyright || "",
     });
 
+    const { flash } = usePage().props;
+
+    // Toast for flash messages
+    useEffect(() => {
+        if (flash.success) {
+            toast.success(flash.success);
+        }
+    }, [flash.success]);
+
     const submit = (e) => {
         e.preventDefault();
         post(route("contact.update", contacts.id));
@@ -26,6 +36,7 @@ const Edit = ({ contacts }) => {
 
     return (
         <>
+            <ToastContainer />
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1 className="text-muted mb-0">
                     Contact Information
@@ -167,11 +178,11 @@ const Edit = ({ contacts }) => {
                                 <div className="form-text text-danger">{errors.instagram}</div>
                             </div>
 
-                            {/* X (Twitter) */}
+                            {/* x */}
                             <div className="mb-3 col-md-6">
                                 <label className="form-label">
                                     <i className="bx bxl-twitter text-info me-2"></i>
-                                    X (Twitter)
+                                    x
                                 </label>
                                 <input
                                     type="url"

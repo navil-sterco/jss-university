@@ -24,6 +24,7 @@ class CourseController extends Controller
                 'department_id' => $course->department_id,
                 'degree_id' => $course->degree_id,
                 'banner' => asset($course->banner),
+                'image' => asset($course->image),
                 'program_structure' => asset($course->program_structure),
                 'scholarship' => asset($course->scholarship),
                 'eligibility_marks' => $course->eligibility_marks,
@@ -87,8 +88,8 @@ class CourseController extends Controller
             'useful_links' => 'nullable|array',
             'useful_links.*.text' => 'nullable|string|max:255',
             'useful_links.*.url' => 'nullable|url|max:500',
-            // New file validation rules
             'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'eligibility_marks' => 'nullable|string|max:255',
             'eligibility_desc' => 'nullable|string',
             'program_structure' => 'nullable|file|mimes:pdf|max:10240',
@@ -103,6 +104,14 @@ class CourseController extends Controller
             $bannerName = time() . '_' . uniqid() . '.' . $banner->getClientOriginalExtension();
             $banner->move(public_path('assets/img/courses/banners/'), $bannerName);
             $data['banner'] = 'assets/img/courses/banners/' . $bannerName;
+        }
+
+        // Handle main/featured image upload (for course listing)
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('assets/img/courses/main/'), $imageName);
+            $data['image'] = 'assets/img/courses/main/' . $imageName;
         }
 
         // Handle program structure PDF upload
@@ -169,8 +178,8 @@ class CourseController extends Controller
             'academic_year',
             'useful_links',
             'apply_now_link',
-            // New fields
             'banner',
+            'image',
             'eligibility_marks',
             'eligibility_desc',
             'program_structure',
@@ -217,15 +226,14 @@ class CourseController extends Controller
             'eligibility_marks' => 'nullable|string|max:255',
             'eligibility_desc' => 'nullable|string',
             'remove_banner' => 'nullable|boolean',
+            'remove_image' => 'nullable|boolean',
             'remove_program_structure' => 'nullable|boolean',
             'remove_scholarship' => 'nullable|boolean',
         ]);
 
         $data = $request->all();
 
-        // Handle banner upload/removal
         if ($request->has('remove_banner') && $request->remove_banner) {
-            // Remove existing banner
             if ($course->banner && file_exists(public_path($course->banner))) {
                 unlink(public_path($course->banner));
             }
@@ -234,7 +242,6 @@ class CourseController extends Controller
             $request->validate([
                 'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             ]);
-            // Remove existing banner if new one is uploaded
             if ($course->banner && file_exists(public_path($course->banner))) {
                 unlink(public_path($course->banner));
             }
@@ -244,13 +251,31 @@ class CourseController extends Controller
             $banner->move(public_path('assets/img/courses/banners/'), $bannerName);
             $data['banner'] = 'assets/img/courses/banners/' . $bannerName;
         } else {
-            // Preserve existing banner if not being updated
             $data['banner'] = $course->banner;
         }
 
-        // Handle program structure PDF upload/removal
+        if ($request->has('remove_image') && $request->remove_image) {
+            if ($course->image && file_exists(public_path($course->image))) {
+                unlink(public_path($course->image));
+            }
+            $data['image'] = null;
+        } elseif ($request->hasFile('image')) {
+            $request->validate([
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            ]);
+            if ($course->image && file_exists(public_path($course->image))) {
+                unlink(public_path($course->image));
+            }
+            
+            $image = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('assets/img/courses/main/'), $imageName);
+            $data['image'] = 'assets/img/courses/main/' . $imageName;
+        } else {
+            $data['image'] = $course->image;
+        }
+
         if ($request->has('remove_program_structure') && $request->remove_program_structure) {
-            // Remove existing program structure
             if ($course->program_structure && file_exists(public_path($course->program_structure))) {
                 unlink(public_path($course->program_structure));
             }
@@ -259,7 +284,6 @@ class CourseController extends Controller
             $request->validate([
                 'program_structure' => 'nullable|file|mimes:pdf|max:10240',
             ]);
-            // Remove existing program structure if new one is uploaded
             if ($course->program_structure && file_exists(public_path($course->program_structure))) {
                 unlink(public_path($course->program_structure));
             }
@@ -269,13 +293,10 @@ class CourseController extends Controller
             $programStructure->move(public_path('assets/files/courses/program-structure/'), $programStructureName);
             $data['program_structure'] = 'assets/files/courses/program-structure/' . $programStructureName;
         } else {
-            // Preserve existing program structure if not being updated
             $data['program_structure'] = $course->program_structure;
         }
 
-        // Handle scholarship PDF upload/removal
         if ($request->has('remove_scholarship') && $request->remove_scholarship) {
-            // Remove existing scholarship
             if ($course->scholarship && file_exists(public_path($course->scholarship))) {
                 unlink(public_path($course->scholarship));
             }
@@ -284,7 +305,6 @@ class CourseController extends Controller
             $request->validate([
                 'scholarship' => 'nullable|file|mimes:pdf|max:10240',
             ]);
-            // Remove existing scholarship if new one is uploaded
             if ($course->scholarship && file_exists(public_path($course->scholarship))) {
                 unlink(public_path($course->scholarship));
             }
@@ -294,7 +314,6 @@ class CourseController extends Controller
             $scholarship->move(public_path('assets/files/courses/scholarship/'), $scholarshipName);
             $data['scholarship'] = 'assets/files/courses/scholarship/' . $scholarshipName;
         } else {
-            // Preserve existing scholarship if not being updated
             $data['scholarship'] = $course->scholarship;
         }
 
@@ -313,7 +332,7 @@ class CourseController extends Controller
             });
             $data['useful_links'] = !empty($filteredLinks) ? json_encode(array_values($filteredLinks)) : null;
         } else {
-            $data['useful_links'] = $course->useful_links; // Preserve existing useful_links
+            $data['useful_links'] = $course->useful_links;
         }
 
         $data = array_map(function($value) {
@@ -329,6 +348,7 @@ class CourseController extends Controller
     {
         $fileFields = [
             'banner',
+            'image',
             'program_structure',
             'scholarship',
             // Keep existing fields
@@ -380,13 +400,16 @@ class CourseController extends Controller
             'program_structure' => 'nullable|string|max:255',
             'scholarship' => 'nullable|string|max:255',
 
-            // Program Outcomes
+            // Program Outcomes - Now arrays of objects with title and description
             'peos' => 'nullable|array',
-            'peos.*' => 'nullable|string|max:255',
+            'peos.*.title' => 'nullable|string|max:255',
+            'peos.*.description' => 'nullable|string',
             'pos' => 'nullable|array',
-            'pos.*' => 'nullable|string|max:255',
+            'pos.*.title' => 'nullable|string|max:255',
+            'pos.*.description' => 'nullable|string',
             'pso' => 'nullable|array',
-            'pso.*' => 'nullable|string|max:255',
+            'pso.*.title' => 'nullable|string|max:255',
+            'pso.*.description' => 'nullable|string',
 
             // Curriculum
             'curriculum_title' => 'nullable|string|max:255',
@@ -401,13 +424,14 @@ class CourseController extends Controller
             // Career Opportunities
             'career_title' => 'nullable|string|max:255',
             'career_subtitle' => 'nullable|string|max:255',
-            'career_desc' => 'nullable|string|max:255',
+            'career_desc' => 'nullable|string',
 
             // Overview
             'overview_title' => 'nullable|string|max:255',
             'overview_desc' => 'nullable|string|max:255',
         ];
 
+        // File validation rules
         if ($request->hasFile('curriculum_image')) {
             $rules['curriculum_image'] = 'image|mimes:jpg,jpeg,png,webp|max:2000';
         }
@@ -434,6 +458,7 @@ class CourseController extends Controller
 
         $validated = $request->validate($rules);
 
+        // Handle file uploads
         $fileFields = [
             'curriculum_image' => 'courses/curriculum/',
             'overview_image' => 'courses/overview/',
@@ -445,6 +470,7 @@ class CourseController extends Controller
 
         foreach ($fileFields as $field => $folder) {
             if ($request->hasFile($field)) {
+                // Delete old file if exists
                 if ($course->$field && file_exists(public_path($course->$field))) {
                     unlink(public_path($course->$field));
                 }
@@ -456,18 +482,45 @@ class CourseController extends Controller
             }
         }
 
+        // Handle JSON fields
         $jsonFields = [
             'eligibility_criteria_notices',
-            'peos',
-            'pos',
-            'pso',
             'curriculum_desc',
             'career_opportunities',
         ];
 
         foreach ($jsonFields as $field) {
             if (!empty($validated[$field])) {
-                $validated[$field] = array_values($validated[$field]);
+                $validated[$field] = json_encode(array_values($validated[$field]));
+            }
+        }
+
+        // Handle PEOS, POS, PSO - arrays of objects
+        $objectArrayFields = ['peos', 'pos', 'pso'];
+        
+        foreach ($objectArrayFields as $field) {
+            if (isset($validated[$field])) {
+                // Filter out empty objects (where both title and description are empty)
+                $filteredItems = array_filter($validated[$field], function($item) {
+                    return !empty($item['title']) || !empty($item['description']);
+                });
+                
+                // Re-index array
+                $filteredItems = array_values($filteredItems);
+                
+                if (count($filteredItems) > 0) {
+                    $validated[$field] = json_encode($filteredItems);
+                } else {
+                    $validated[$field] = null;
+                }
+            }
+        }
+
+        // If fields are not present in request but existed before, set them to null
+        $fieldsToCheck = array_merge($objectArrayFields, $jsonFields);
+        foreach ($fieldsToCheck as $field) {
+            if (!isset($validated[$field]) && $course->$field) {
+                $validated[$field] = null;
             }
         }
 

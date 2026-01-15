@@ -142,9 +142,9 @@ const Index = (props) => {
                                     </td>
                                     <td>
                                         <span
-                                            className={`badge ${page.target_blank ? "bg-label-warning" : "bg-label-secondary"}`}
+                                            className={`badge ${page.target_blank == 1 ? "bg-label-warning" : "bg-label-secondary"}`}
                                         >
-                                            {page.target_blank ? "Yes" : "No"}
+                                            {page.target_blank == 1 ? "Yes" : "No"}
                                         </span>
                                     </td>
                                     <td>
@@ -171,11 +171,11 @@ const Index = (props) => {
                                     </td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${page.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${page.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(page.id)}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            {page.status ? "ACTIVE" : "INACTIVE"}
+                                            {page.status == 1 ? "ACTIVE" : "INACTIVE"}
                                         </span>
                                     </td>
                                     <td>

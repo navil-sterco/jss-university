@@ -151,10 +151,10 @@ const DepartmentIndex = (props) => {
                                     <td><i className="bx bx-navigation bx-sm me-3"></i>{department.menu_name}</td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${department.status ? "bg-label-success" : "bg-label-danger"}`}
+                                            className={`badge cursor-pointer ${department.status == 1 ? "bg-label-success" : "bg-label-danger"}`}
                                             onClick={() => toggleStatus(department.id)}
                                         >
-                                            {department.status ? "Active" : "Inactive"}
+                                            {department.status == 1 ? "Active" : "Inactive"}
                                         </span>
                                     </td>
                                     <td><i className="bx bx-category bx-sm me-3"></i>{department.display_order ?? "-"}</td>
@@ -317,7 +317,7 @@ const DepartmentIndex = (props) => {
                                             <div className="row g-3">
                                                 <div className="col-12">
                                                     <label className="form-label fw-semibold text-muted small">Apply Now Link</label>
-                                                    {selectedDepartment.apply_now_link ? (
+                                                    {selectedDepartment.apply_now_link != null ? (
                                                         <a 
                                                             href={selectedDepartment.apply_now_link} 
                                                             target="_blank" 
@@ -346,7 +346,7 @@ const DepartmentIndex = (props) => {
                                             </h6>
                                             <div className="row g-3">
                                                 <div className="col-12">
-                                                    {selectedDepartment.brochure ? (
+                                                    {selectedDepartment.brochure != null ? (
                                                         <div className="d-flex align-items-center justify-content-between p-3 bg-white rounded border">
                                                             <div className="d-flex align-items-center">
                                                                 <i className="bx bx-file text-primary me-3" style={{ fontSize: '2rem' }}></i>
@@ -387,8 +387,8 @@ const DepartmentIndex = (props) => {
                                             <div className="space-y-3">
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">
                                                     <span className="fw-semibold">Status</span>
-                                                    <span className={`badge ${selectedDepartment.status ? "bg-success" : "bg-danger"}`}>
-                                                        {selectedDepartment.status ? "Active" : "Inactive"}
+                                                    <span className={`badge ${selectedDepartment.status == 1 ? "bg-success" : "bg-danger"}`}>
+                                                        {selectedDepartment.status == 1 ? "Active" : "Inactive"}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded border">

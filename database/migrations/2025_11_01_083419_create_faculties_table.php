@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('faculties', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('type_id')->constrained('types')->onDelete('cascade');
+            $table->foreignId('type_id')->constrained('types')->onDelete('cascade')->nullable();
             $table->foreignId('school_id')->constrained('schools')->onDelete('cascade');
             $table->string('name');
             $table->string('slug');
@@ -26,6 +26,7 @@ return new class extends Migration
             $table->text('teaching')->nullable();
             $table->text('award')->nullable();
             $table->text('social_engagement')->nullable();
+            $table->text('sections')->nullable();
             $table->boolean('status')->default(1);
             $table->integer("display_order")->default(100);
             $table->timestamps();

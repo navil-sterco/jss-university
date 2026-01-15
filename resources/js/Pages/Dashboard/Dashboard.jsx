@@ -519,8 +519,8 @@ const Dashboard = ({ schoolcount, departmentcount, programcount, coursecount, ba
                                                     </div>
 
                                                     <div className="d-flex justify-content-between align-items-center">
-                                                        <span className={`badge ${event.status ? 'bg-label-success' : 'bg-label-secondary'}`}>
-                                                            {event.status ? 'Active' : 'Inactive'}
+                                                        <span className={`badge ${event.status == 1 ? 'bg-label-success' : 'bg-label-secondary'}`}>
+                                                            {event.status == 1 ? 'Active' : 'Inactive'}
                                                         </span>
                                                         <Link
                                                             href={route("happening.edit", event.id)}
