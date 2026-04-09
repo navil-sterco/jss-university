@@ -46,6 +46,7 @@ class FooterController extends Controller
             'quick_links.*.id' => 'required',
             'quick_links.*.text' => 'required|string',
             'quick_links.*.link' => 'required',
+            'quick_links.*.target_blank' => 'nullable|boolean',
             'quick_links.*.display_order' => 'required|integer',
         ]);
 

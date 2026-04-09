@@ -1,9 +1,10 @@
 import { useForm, router } from "@inertiajs/react";
 import React, { useEffect, useRef, useState } from "react";
 
-const Create = ({ types: initialTypes }) => {
+const Create = ({ types: initialTypes, categories: initialCategories }) => {
     const { data, setData, post, processing, errors, progress } = useForm({
         type_id: "",
+        category_id: "",
         name: "",
         slug: "",
         short_description: "",
@@ -11,8 +12,10 @@ const Create = ({ types: initialTypes }) => {
         biography: "",
         banner_image: null,
         image: null,
+        page_type: "leadership",
         video: null,
         message: [""],
+        message_image: null,
         status: true,
         display_order: 100,
     });
@@ -22,10 +25,19 @@ const Create = ({ types: initialTypes }) => {
     const [itemIdDelete, setItemIdDelete] = useState(null);
 
     const [newType, setNewType] = useState("");
+    const [newTypeDisplayOrder, setNewTypeDisplayOrder] = useState("");
     const [typeError, setTypeError] = useState("");
     const [editingType, setEditingType] = useState(null);
     const [editTypeName, setEditTypeName] = useState("");
+    const [editTypeDisplayOrder, setEditTypeDisplayOrder] = useState("");
     const [typeLoading, setTypeLoading] = useState(false);
+
+    // category states
+    const [newCategory, setNewCategory] = useState("");
+    const [categoryError, setCategoryError] = useState("");
+    const [editingCategory, setEditingCategory] = useState(null);
+    const [editCategoryName, setEditCategoryName] = useState("");
+    const [categoryLoading, setCategoryLoading] = useState(false);
 
     const submit = (e) => {
         e.preventDefault();
@@ -54,11 +66,13 @@ const Create = ({ types: initialTypes }) => {
         setTypeLoading(true);
         router.post(route('types.store'), {
             name: newType,
-            element: "leadership"
+            element: "leadership",
+            display_order: newTypeDisplayOrder
         }, {
             preserveScroll: true,
             onSuccess: () => {
                 setNewType("");
+                setNewTypeDisplayOrder("");
                 setTypeLoading(false);
             },
             onError: (errors) => {
@@ -68,9 +82,30 @@ const Create = ({ types: initialTypes }) => {
         });
     };
 
+    const addCategory = (e) => {
+        e.preventDefault();
+        if (!newCategory.trim()) return;
+
+        setCategoryLoading(true);
+        router.post(route('leadership-categories.store'), {
+            name: newCategory,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setNewCategory("");
+                setCategoryLoading(false);
+            },
+            onError: (errors) => {
+                setCategoryLoading(false);
+                setCategoryError(errors);
+            }
+        });
+    };
+
     const startEditType = (type) => {
         setEditingType(type.id);
         setEditTypeName(type.name);
+        setEditTypeDisplayOrder(type.display_order ?? "");
     };
 
     const updateType = (e) => {
@@ -80,17 +115,45 @@ const Create = ({ types: initialTypes }) => {
         setTypeLoading(true);
         router.put(route('types.update', editingType), {
             name: editTypeName,
-            element: "leadership"
+            element: "leadership",
+            display_order: editTypeDisplayOrder
         }, {
             preserveScroll: true,
             onSuccess: () => {
                 setEditingType(null);
                 setEditTypeName("");
+                setEditTypeDisplayOrder("");
                 setTypeLoading(false);
             },
             onError: (errors) => {
                 setTypeLoading(false);
                 setTypeError(errors);
+            }
+        });
+    };
+
+    const startEditCategory = (category) => {
+        setEditingCategory(category.id);
+        setEditCategoryName(category.name);
+    };
+
+    const updateCategory = (e) => {
+        e.preventDefault();
+        if (!editCategoryName.trim()) return;
+
+        setCategoryLoading(true);
+        router.put(route('leadership-categories.update', editingCategory), {
+            name: editCategoryName,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setEditingCategory(null);
+                setEditCategoryName("");
+                setCategoryLoading(false);
+            },
+            onError: (errors) => {
+                setCategoryLoading(false);
+                setCategoryError(errors);
             }
         });
     };
@@ -109,7 +172,7 @@ const Create = ({ types: initialTypes }) => {
 
     const deleteType = () => {
         if (!itemIdDelete) return;
-        
+
         setTypeLoading(true);
         router.delete(route('types.destroy', itemIdDelete), {
             preserveScroll: true,
@@ -128,15 +191,42 @@ const Create = ({ types: initialTypes }) => {
         });
     };
 
+    const deleteCategory = () => {
+        if (!itemIdDelete) return;
+
+        setCategoryLoading(true);
+        router.delete(route('leadership-categories.destroy', itemIdDelete), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setCategoryLoading(false);
+                modalInstance.current.hide();
+                setItemIdDelete(null);
+                if (data.category_id == itemIdDelete) {
+                    setData("category_id", "");
+                }
+            },
+            onError: (errors) => {
+                setCategoryLoading(false);
+                console.log('Error deleting category:', errors);
+            }
+        });
+    };
+
     const cancelEdit = () => {
         setEditingType(null);
         setEditTypeName("");
+        setEditTypeDisplayOrder("");
+    };
+
+    const cancelEditCategory = () => {
+        setEditingCategory(null);
+        setEditCategoryName("");
     };
 
     return (
         <>
             <h1 className="text-muted">Add New Item</h1> {/* Replace with your title */}
-            
+
             <div className="row">
                 <div className="col-md-8 mb-2">
                     <div className="card">
@@ -159,6 +249,39 @@ const Create = ({ types: initialTypes }) => {
                                             ))}
                                         </select>
                                         <div className="form-text text-danger">{errors.type_id}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label className="form-label">Page Type <span className="text-danger">*</span></label>
+                                        <select
+                                            className="form-control"
+                                            value={data.page_type}
+                                            onChange={(e) => setData("page_type", e.target.value)}
+                                        >
+                                            <option value="">Select Type</option>
+                                            <option value="leadership">Leadership</option>
+                                            <option value="academic">Academic Council</option>
+                                            <option value="alumuni">Alumuni</option>
+                                        </select>
+                                        <div className="form-text text-danger">{errors.page_type}</div>
+                                    </div>
+
+                                    {/* Category */}
+                                    <div className="mb-3 col-md-6">
+                                        <label className="form-label">Category <span className="text-danger">*</span></label>
+                                        <select
+                                            className="form-control"
+                                            value={data.category_id}
+                                            onChange={(e) => setData("category_id", e.target.value)}
+                                        >
+                                            <option value="">Select Category</option>
+                                            {initialCategories.map((cat) => (
+                                                <option key={cat.id} value={cat.id}>
+                                                    {cat.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="form-text text-danger">{errors.category_id}</div>
                                     </div>
 
                                     {/* Name */}
@@ -285,6 +408,19 @@ const Create = ({ types: initialTypes }) => {
                                         <div className="form-text">Upload video file</div>
                                     </div>
 
+                                    {/* Message Image */}
+                                    <div className="mb-3 col-md-6">
+                                        <label className="form-label">Message Image</label>
+                                        <input
+                                            type="file"
+                                            className="form-control"
+                                            onChange={(e) => setData("message_image", e.target.files[0])}
+                                            accept="image/*"
+                                        />
+                                        <div className="form-text text-danger">{errors.message_image}</div>
+                                        <div className="form-text">Recommended: 300x300px, Max 2MB</div>
+                                    </div>
+
                                     {/* Message - Dynamic Fields (JSON) */}
                                     <div className="mb-3 col-12">
                                         <div className="d-flex justify-content-between align-items-center mb-2">
@@ -370,14 +506,14 @@ const Create = ({ types: initialTypes }) => {
                         <div className="card-header">
                             <h5 className="mb-0">
                                 <i className="bx bx-tag me-2 mb-1"></i>
-                                Manage Types
+                                Manage Types & Categories
                             </h5>
                         </div>
                         <div className="card-body">
                             {/* Add Type Form */}
                             <form onSubmit={addType} className="mb-4">
                                 <label className="form-label fw-semibold">Add New Type</label>
-                                <div className="input-group">
+                                <div className="input-group mb-2">
                                     <input
                                         type="text"
                                         className="form-control"
@@ -386,8 +522,17 @@ const Create = ({ types: initialTypes }) => {
                                         onChange={(e) => setNewType(e.target.value)}
                                         disabled={typeLoading}
                                     />
-                                    <button 
-                                        type="submit" 
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        placeholder="Order"
+                                        value={newTypeDisplayOrder}
+                                        onChange={(e) => setNewTypeDisplayOrder(e.target.value)}
+                                        disabled={typeLoading}
+                                        style={{ maxWidth: '80px' }}
+                                    />
+                                    <button
+                                        type="submit"
                                         className="btn btn-primary"
                                         disabled={!newType.trim() || typeLoading}
                                     >
@@ -399,6 +544,33 @@ const Create = ({ types: initialTypes }) => {
                                     </button>
                                 </div>
                                 <div className="form-text text-danger">{typeError.name}</div>
+                            </form>
+
+                            {/* Add Category Form */}
+                            <form onSubmit={addCategory} className="mb-4">
+                                <label className="form-label fw-semibold">Add New Category</label>
+                                <div className="input-group">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Enter category name"
+                                        value={newCategory}
+                                        onChange={(e) => setNewCategory(e.target.value)}
+                                        disabled={categoryLoading}
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={!newCategory.trim() || categoryLoading}
+                                    >
+                                        {categoryLoading ? (
+                                            <i className="bx bx-loader bx-spin"></i>
+                                        ) : (
+                                            <i className="bx bx-plus"></i>
+                                        )}
+                                    </button>
+                                </div>
+                                <div className="form-text text-danger">{categoryError.name}</div>
                             </form>
 
                             {/* Types List */}
@@ -416,9 +588,18 @@ const Create = ({ types: initialTypes }) => {
                                                         onChange={(e) => setEditTypeName(e.target.value)}
                                                         disabled={typeLoading}
                                                     />
+                                                    <input
+                                                        type="number"
+                                                        className="form-control form-control-sm me-2"
+                                                        placeholder="Order"
+                                                        value={editTypeDisplayOrder}
+                                                        onChange={(e) => setEditTypeDisplayOrder(e.target.value)}
+                                                        disabled={typeLoading}
+                                                        style={{ maxWidth: '60px' }}
+                                                    />
 
-                                                    <button 
-                                                        type="submit" 
+                                                    <button
+                                                        type="submit"
                                                         className="btn btn-success btn-sm me-1"
                                                         disabled={!editTypeName.trim() || typeLoading}
                                                     >
@@ -428,8 +609,8 @@ const Create = ({ types: initialTypes }) => {
                                                             <i className="bx bx-check"></i>
                                                         )}
                                                     </button>
-                                                    <button 
-                                                        type="button" 
+                                                    <button
+                                                        type="button"
                                                         className="btn btn-secondary btn-sm"
                                                         onClick={cancelEdit}
                                                         disabled={typeLoading}
@@ -439,19 +620,81 @@ const Create = ({ types: initialTypes }) => {
                                                 </form>
                                             ) : (
                                                 <>
-                                                    <span>{type.name}</span>
+                                                    <span>{type.name} {type.display_order !== null && type.display_order !== undefined && <small className="text-muted">(Order: {type.display_order})</small>}</span>
                                                     <div className="btn-group btn-group-sm">
-                                                        <button 
+                                                        <button
                                                             className="btn btn-outline-primary"
                                                             onClick={() => startEditType(type)}
                                                             disabled={typeLoading}
                                                         >
                                                             <i className="bx bx-edit"></i>
                                                         </button>
-                                                        <button 
+                                                        <button
                                                             className="btn btn-outline-danger"
                                                             onClick={() => showDeleteModal(type.id)}
                                                             disabled={typeLoading}
+                                                        >
+                                                            <i className="bx bx-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Categories Management */}
+                            <div className="mt-4">
+                                <h6 className="fw-semibold text-dark mb-3">Existing Categories</h6>
+                                <div className="list-group">
+                                    {initialCategories.map((cat) => (
+                                        <div key={cat.id} className="list-group-item d-flex justify-content-between align-items-center">
+                                            {editingCategory === cat.id ? (
+                                                <form onSubmit={updateCategory} className="d-flex w-100">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control form-control-sm me-2"
+                                                        value={editCategoryName}
+                                                        onChange={(e) => setEditCategoryName(e.target.value)}
+                                                        disabled={categoryLoading}
+                                                    />
+
+                                                    <button
+                                                        type="submit"
+                                                        className="btn btn-success btn-sm me-1"
+                                                        disabled={!editCategoryName.trim() || categoryLoading}
+                                                    >
+                                                        {categoryLoading ? (
+                                                            <i className="bx bx-loader bx-spin"></i>
+                                                        ) : (
+                                                            <i className="bx bx-check"></i>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-secondary btn-sm"
+                                                        onClick={cancelEditCategory}
+                                                        disabled={categoryLoading}
+                                                    >
+                                                        <i className="bx bx-x"></i>
+                                                    </button>
+                                                </form>
+                                            ) : (
+                                                <>
+                                                    <span>{cat.name}</span>
+                                                    <div className="btn-group btn-group-sm">
+                                                        <button
+                                                            className="btn btn-outline-primary"
+                                                            onClick={() => startEditCategory(cat)}
+                                                            disabled={categoryLoading}
+                                                        >
+                                                            <i className="bx bx-edit"></i>
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-outline-danger"
+                                                            onClick={() => showDeleteModal(cat.id)}
+                                                            disabled={categoryLoading}
                                                         >
                                                             <i className="bx bx-trash"></i>
                                                         </button>
@@ -475,9 +718,9 @@ const Create = ({ types: initialTypes }) => {
                                             Are you sure you want to delete this type? This action cannot be undone.
                                         </div>
                                         <div className="modal-footer">
-                                            <button 
-                                                type="button" 
-                                                className="btn btn-secondary" 
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary"
                                                 data-bs-dismiss="modal"
                                             >
                                                 Cancel

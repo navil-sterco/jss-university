@@ -45,7 +45,7 @@ class DegreeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'short_name' => 'nullable|string|max:255',
+            'short_name' => 'nullable|string',
         ]);
 
         Degree::create($validated);

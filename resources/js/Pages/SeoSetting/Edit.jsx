@@ -5,6 +5,7 @@ const SeoEdit = ({ seo }) => {
     const fileInputRef = useRef(null);
     const appUrl = usePage().props.appUrl;
     const [keywordInput, setKeywordInput] = useState("");
+    const [searchTermsInput, setSearchTermsInput] = useState("");
 
     // Parse keywords from string to array (if stored as JSON or comma-separated)
     const parseKeywords = (keywords) => {
@@ -31,6 +32,7 @@ const SeoEdit = ({ seo }) => {
         og_type: seo.og_type || "website",
         og_url: seo.og_url || "",
         keywords: parseKeywords(seo.keywords), // Initialize with parsed keywords
+        search_terms: parseKeywords(seo.search_terms), // Using parseKeywords for search_terms too
     });
 
     // Add keyword to array
@@ -55,13 +57,35 @@ const SeoEdit = ({ seo }) => {
         }
     };
 
+    // Add search term to array
+    const addSearchTerm = () => {
+        if (searchTermsInput.trim() && !data.search_terms.includes(searchTermsInput.trim())) {
+            setData("search_terms", [...data.search_terms, searchTermsInput.trim()]);
+            setSearchTermsInput("");
+        }
+    };
+
+    // Remove search term from array
+    const removeSearchTerm = (index) => {
+        const updatedSearchTerms = data.search_terms.filter((_, i) => i !== index);
+        setData("search_terms", updatedSearchTerms);
+    };
+
+    // Handle Enter key press in search terms input
+    const handleSearchTermKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addSearchTerm();
+        }
+    };
+
     const submit = (e) => {
         e.preventDefault();
         const formData = new FormData();
         Object.keys(data).forEach((key) => {
             if (data[key] !== null) {
-                // Convert keywords array to JSON string for form data
-                if (key === 'keywords' && Array.isArray(data[key])) {
+                // Convert keywords and search_terms array to JSON string for form data
+                if ((key === 'keywords' || key === 'search_terms') && Array.isArray(data[key])) {
                     formData.append(key, JSON.stringify(data[key]));
                 } else {
                     formData.append(key, data[key]);
@@ -160,6 +184,53 @@ const SeoEdit = ({ seo }) => {
                                         </div>
                                         <div className="form-text text-muted mt-1">
                                             {data.keywords.length} keyword(s) added
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Search Terms */}
+                            <div className="mb-3 col-12">
+                                <label className="form-label">Search Terms (Site Search)</label>
+                                <div className="input-group">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Add search term and press Enter or click Add"
+                                        value={searchTermsInput}
+                                        onChange={(e) => setSearchTermsInput(e.target.value)}
+                                        onKeyPress={handleSearchTermKeyPress}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-primary"
+                                        onClick={addSearchTerm}
+                                        disabled={!searchTermsInput.trim()}
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                                {errors.search_terms && <div className="form-text text-danger">{errors.search_terms}</div>}
+                                
+                                {/* Display selected search terms */}
+                                {data.search_terms?.length > 0 && (
+                                    <div className="mt-2">
+                                        <div className="d-flex flex-wrap gap-2">
+                                            {data.search_terms.map((term, index) => (
+                                                <span key={index} className="badge bg-secondary d-flex align-items-center">
+                                                    {term}
+                                                    <button
+                                                        type="button"
+                                                        className="btn-close btn-close-white ms-2"
+                                                        style={{ fontSize: '0.7rem' }}
+                                                        onClick={() => removeSearchTerm(index)}
+                                                        aria-label={`Remove ${term}`}
+                                                    />
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <div className="form-text text-muted mt-1">
+                                            {data.search_terms.length} search term(s) added
                                         </div>
                                     </div>
                                 )}

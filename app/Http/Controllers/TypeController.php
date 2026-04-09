@@ -12,11 +12,13 @@ class TypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'element' => 'required|string|max:255',
+            'display_order' => 'nullable|integer'
         ]);
 
         $type = Type::create([
             'name' => $request->name,
             'element' => $request->element,
+            'display_order' => $request->display_order ?? 0,
         ]);
 
         return redirect()->back()->with('success', 'Type created successfully!');
@@ -27,11 +29,13 @@ class TypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'element' => 'required|string|max:255',
+            'display_order' => 'nullable|integer'
         ]);
 
         $type->update([
             'name' => $request->name,
             'element' => $request->element,
+            'display_order' => $request->display_order ?? 0,
         ]);
 
         return redirect()->back()->with('success', 'Type Updated successfully!');

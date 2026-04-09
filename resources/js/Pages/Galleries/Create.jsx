@@ -10,10 +10,11 @@ const Create = () => {
         type: '',
         images: [],
         videos: [],
+        video_url: '',
         pdf: null,
         display_order: 100,
     });
-    
+
     const handleFileChange = (e, field, multiple = false) => {
         const files = multiple ? Array.from(e.target.files) : e.target.files[0];
         setData(field, files);
@@ -103,17 +104,28 @@ const Create = () => {
                                         <div className="form-text text-danger">{errors.images}</div>
                                     </div>
 
-                                    {/* Multiple Videos */}
+                                    {/* Single Video */}
                                     <div className="mb-3 col-md-6">
-                                        <label className="form-label">Videos (Max 6MB All)</label>
+                                        <label className="form-label">Video (Max 6MB)</label>
                                         <input
                                             type="file"
                                             className="form-control"
                                             accept="video/*"
-                                            multiple
                                             onChange={(e) => handleFileChange(e, 'videos', true)}
                                         />
                                         <div className="form-text text-danger">{errors.videos}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="video_url" className="form-label">Video Url</label>
+                                        <input
+                                            type="text"
+                                            id="video_url"
+                                            className="form-control"
+                                            value={data.video_url}
+                                            onChange={(e) => setData('video_url', e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.video_url}</div>
                                     </div>
                                 </>
                             )}

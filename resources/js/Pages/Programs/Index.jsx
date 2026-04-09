@@ -3,7 +3,7 @@ import { Link, useForm } from '@inertiajs/react';
 import Pagination from '@/Components/Pagination';
 import { router, usePage } from '@inertiajs/react';
 import { ToastContainer, toast } from 'react-toastify';
-import _ from 'lodash';
+import { debounce } from "lodash";
 
 const ProgramIndex = (props) => {
     const { searchTerm, programs } = props;
@@ -28,7 +28,7 @@ const ProgramIndex = (props) => {
 
     // Search debounce
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("program", { search: query }, { preserveState: true, replace: true });
         }, 300);
         delaySearch();
@@ -159,6 +159,13 @@ const ProgramIndex = (props) => {
                                     </td>
                                     <td>
                                         <div className="d-flex align-items-center gap-1">
+                                            <Link
+                                                className="btn btn-sm btn-outline-primary p-1"
+                                                href={route("program.mapping", program.id)}
+                                            >
+                                                <span className="tf-icons bx bx-right-arrow-circle bx-18px me-1"></span>
+                                                Mapping
+                                            </Link>
                                             <div className="dropdown">
                                                 <button
                                                     type="button"

@@ -53,6 +53,7 @@ class HamburgerController extends Controller
             'title' => $item->title,
             'url' => $url ?? "#",
             'type' => $item->type,
+            'target_blank' => $item->target_blank,
             'children' => $item->children->map(function ($child) {
                 return $this->formatMenuItem($child, false); // false for child items
             }),

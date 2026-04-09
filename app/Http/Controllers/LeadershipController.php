@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Type;
+use App\Models\LeadershipCategory;
 use Inertia\Inertia;
 use App\Models\Pages;
 use App\Models\Course;
@@ -18,7 +19,7 @@ class LeadershipController extends Controller
     {
         $search = $request->input('search');
 
-        $leadership = Leadership::with('type')->filter(['search' => $search])->orderBy('display_order', 'asc')->paginate(10)->withQueryString()->through(function ($item) {
+        $leadership = Leadership::with(['type', 'category'])->filter(['search' => $search])->orderBy('display_order', 'asc')->paginate(10)->withQueryString()->through(function ($item) {
             return [
                 'id' => $item->id,
                 'name' => $item->name,
@@ -26,12 +27,16 @@ class LeadershipController extends Controller
                 'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
                 'banner_image' => $item->banner_image ? asset($item->banner_image) : asset('assets/img/placeholder.png'),
                 'video' => $item->video,
+                'message_image' => $item->message_image ? asset($item->message_image) : asset('assets/img/placeholder.png'),
                 'type' => $item->type->name ?? 'N/A',
                 'type_id' => $item->type_id,
+                'category' => $item->category->name ?? 'N/A',
+                'category_id' => $item->category_id,
                 'short_description' => $item->short_description,
                 'description' => $item->description,
                 'biography' => $item->biography,
                 'message' => $item->message,
+                'page_type' => $item->page_type,
                 'display_order' => $item->display_order,
                 'status' => $item->status,
                 'created_at' => $item->created_at->format('M d, Y'),
@@ -49,6 +54,7 @@ class LeadershipController extends Controller
     {
         return Inertia::render('Leaderships/Create', [
             'types' => Type::where('element', 'leadership')->get(),
+            'categories' => LeadershipCategory::all(),
         ]);
     }
 
@@ -56,6 +62,8 @@ class LeadershipController extends Controller
     {
         $validated = $request->validate([
             'type_id' => 'required|exists:types,id',
+            'page_type' => 'required',
+            'category_id' => 'nullable|exists:leadership_categories,id',
             'name' => 'required|string|max:255',
             'slug' => [
                 'nullable',
@@ -64,7 +72,7 @@ class LeadershipController extends Controller
                 'unique:leaderships,slug',
                 'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
             ],
-            'short_description' => 'required|string',
+            'short_description' => 'nullable|string',
             'description' => 'nullable|array',
             'description.*' => 'nullable|string',
             'biography' => 'nullable|string',
@@ -73,9 +81,11 @@ class LeadershipController extends Controller
             'video' => 'nullable|file|mimes:mp4,avi,mov,webm|max:2048',
             'message' => 'nullable|array',
             'message.*' => 'nullable|string',
+            'message_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'status' => 'nullable|boolean',
             'display_order' => 'nullable|integer|min:0',
         ]);
+
 
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
@@ -111,6 +121,13 @@ class LeadershipController extends Controller
             $validated['video'] = 'assets/videos/leadership/' . $videoName;
         }
 
+        if ($request->hasFile('message_image')) {
+            $messageImage = $request->file('message_image');
+            $messageImageName = time() . '_message_' . uniqid() . '.' . $messageImage->getClientOriginalExtension();
+            $messageImage->move(public_path('assets/img/leadership/'), $messageImageName);
+            $validated['message_image'] = 'assets/img/leadership/' . $messageImageName;
+        }
+
         Leadership::create($validated);
 
         return redirect()->route('leadership.index')->with('success', 'Leadership member created successfully!');
@@ -119,10 +136,12 @@ class LeadershipController extends Controller
     public function edit(Leadership $leadership)
     {
         $types = Type::where('element', 'leadership')->get();
+        $categories = LeadershipCategory::all();
         
         return Inertia::render('Leaderships/Edit', [
             'leadership' => $leadership,
             'types' => $types,
+            'categories' => $categories,
         ]);
     }
 
@@ -130,6 +149,8 @@ class LeadershipController extends Controller
     {
         $validated = $request->validate([
             'type_id' => 'required|exists:types,id',
+            'page_type' => 'required',
+            'category_id' => 'nullable|exists:leadership_categories,id',
             'name' => 'required|string|max:255',
             'slug' => [
                 'nullable',
@@ -138,7 +159,7 @@ class LeadershipController extends Controller
                 'unique:leaderships,slug,' . $leadership->id,
                 'regex:/^\/?[a-z0-9]+(?:[-\/][a-z0-9]+)*$/i',
             ],
-            'short_description' => 'required|string',
+            'short_description' => 'nullable|string',
             'description' => 'nullable|array',
             'description.*' => 'nullable|string',
             'biography' => 'nullable|string',
@@ -210,6 +231,21 @@ class LeadershipController extends Controller
             $validated['video'] = 'assets/videos/leadership/' . $videoName;
         }
 
+        if ($request->hasFile('message_image')) {
+             $request->validate([
+                'message_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
+            
+            if ($leadership->message_image && file_exists(public_path($leadership->message_image))) {
+                unlink(public_path($leadership->message_image));
+            }
+            
+            $image = $request->file('message_image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('assets/img/leadership/'), $imageName);
+            $validated['message_image'] = 'assets/img/leadership/' . $imageName;
+        }
+
         $leadership->update($validated);
 
         return redirect()->route('leadership.index')->with('success', 'Leadership member updated successfully!');
@@ -227,6 +263,10 @@ class LeadershipController extends Controller
         
         if ($leadership->video && file_exists(public_path($leadership->video))) {
             unlink(public_path($leadership->video));
+        }
+        
+        if ($leadership->message_image && file_exists(public_path($leadership->message_image))) {
+            unlink(public_path($leadership->message_image));
         }
 
         $leadership->schools()->detach();

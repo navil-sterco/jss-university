@@ -25,6 +25,7 @@ class AdmissionController extends Controller
             'program_button_url' => '',
             'image' => null,
             'brochure' => null,
+            'file' => null,
             'menus' => [],
         ];
 
@@ -43,7 +44,7 @@ class AdmissionController extends Controller
             'description' => 'nullable|string',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
-            'apply_now_link' => 'nullable|url|max:255',
+            'apply_now_link' => 'nullable|max:255',
             'program_text' => 'nullable|string|max:255',
             'program_desc' => 'nullable|string',
             'program_button_text' => 'nullable|string|max:255',
@@ -68,6 +69,14 @@ class AdmissionController extends Controller
                 'brochure' => 'file|mimes:pdf|max:10240',
             ]);
             $validated['brochure'] = $brochureValidated['brochure'];
+        }
+
+        // Validate pdf file only if it's uploaded
+        if ($request->hasFile('academic_calendar')) {
+            $fileValidated = $request->validate([
+                'academic_calendar' => 'file|mimes:pdf|max:10240',
+            ]);
+            $validated['academic_calendar'] = $fileValidated['academic_calendar'];
         }
 
         try {
@@ -108,6 +117,24 @@ class AdmissionController extends Controller
                     $validated['brochure'] = $admission->brochure;
                 } else {
                     $validated['brochure'] = null;
+                }
+            }
+
+            // Handle file upload (PDF)
+            if ($request->hasFile('academic_calendar')) {
+                if ($admission && $admission->academic_calendar && file_exists(public_path($admission->academic_calendar))) {
+                    unlink(public_path($admission->academic_calendar));
+                }
+
+                $fileData = $request->file('academic_calendar');
+                $fileName = time() . '_' . uniqid() . '_file.' . $fileData->getClientOriginalExtension();
+                $fileData->move(public_path('assets/admission/documents/'), $fileName);
+                $validated['academic_calendar'] = 'assets/admission/documents/' . $fileName;
+            } else {
+                if ($admission) {
+                    $validated['academic_calendar'] = $admission->academic_calendar;
+                } else {
+                    $validated['academic_calendar'] = null;
                 }
             }
 

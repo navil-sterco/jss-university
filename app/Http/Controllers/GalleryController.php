@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
+use App\Models\Department;
 use App\Models\Gallery;
 use App\Models\Happening;
+use App\Models\Pages;
+use App\Models\School;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class GalleryController extends Controller
 {
@@ -76,7 +79,8 @@ class GalleryController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'event_date' => 'nullable|date',
+            'video_url' => 'nullable|string|max:255',
+            'event_date' => 'required|date',
             'type' => 'required|in:gallery,media_coverage,notice_announcement',
             'images.*' => [
                 'sometimes',
@@ -173,7 +177,8 @@ class GalleryController extends Controller
         // Validate request
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'event_date' => 'nullable|date',
+            'video_url' => 'nullable|string|max:255',
+            'event_date' => 'required|date',
             'type' => 'required|in:gallery,media_coverage,notice_announcement',
             'display_order' => 'nullable|integer',
             'images.*' => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:6144',
@@ -248,6 +253,7 @@ class GalleryController extends Controller
         $gallery->update([
             'title' => $validated['title'],
             'event_date' => $validated['event_date'] ?? null,
+            'video_url' => $validated['video_url'] ?? null,
             'type' => $validated['type'],
             'display_order' => $validated['display_order'] ?? 100,
             'images' => $currentImages,
@@ -257,12 +263,6 @@ class GalleryController extends Controller
 
         return redirect()->route('galleries.index')->with('success', 'Gallery updated successfully!');
     }
-
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Gallery $gallery)
     {
         // Delete associated files
@@ -295,18 +295,27 @@ class GalleryController extends Controller
 
     public function mapping($id)
     {
-        $gallery = Gallery::with(['happenings:id,title'])->findOrFail($id);
+        $gallery = Gallery::with(['happenings:id,title','schools:id,name', 'pages:id,title', 'departments:id,name'])->findOrFail($id);
+        $schools = School::select('id', 'name')->get();
+        $pages = Pages::select('id', 'title')->get();
         $happenings = Happening::select('id', 'title')->get();
+        $departments = Department::with('school:id,name')->get()->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'name' => $department->name,
+                'school' => $department->school ? $department->school->name : null,
+            ];
+        });
 
         return Inertia::render('Galleries/Mapping', [
             'gallery' => $gallery,
             'happenings' => $happenings,
+            'schools' => $schools,
+            'pages' => $pages,
+            'departments' => $departments,
         ]);
     }
 
-    /**
-     * Attach selected schools and pages to a Happening.
-     */
     public function attachMapping(Request $request, $id)
     {
         $gallery = Gallery::findOrFail($id);
@@ -314,11 +323,31 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'happening_ids' => 'nullable|array',
             'happening_ids.*' => 'exists:happenings,id',
+            'school_ids' => 'nullable|array',
+            'school_ids.*' => 'exists:schools,id',
+            'page_ids' => 'nullable|array',
+            'page_ids.*' => 'exists:pages,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
         ]);
 
         $gallery->happenings()->sync($validated['happening_ids'] ?? []);
+        $gallery->schools()->sync($validated['school_ids'] ?? []);
+        $gallery->pages()->sync($validated['page_ids'] ?? []);
+        $gallery->departments()->sync($validated['department_ids'] ?? []);
 
-        return redirect()->route('galleries.mapping', $gallery->id)
-                        ->with('success', 'Gallery mapped successfully!');
+
+
+
+        $validated = $request->validate([
+            'school_ids' => 'nullable|array',
+            'school_ids.*' => 'exists:schools,id',
+            'page_ids' => 'nullable|array',
+            'page_ids.*' => 'exists:pages,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
+        ]);
+
+        return redirect()->route('galleries.mapping', $gallery->id)->with('success', 'Gallery mapped successfully!');
     }
 }

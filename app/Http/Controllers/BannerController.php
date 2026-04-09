@@ -28,10 +28,13 @@ class BannerController extends Controller
                     'id' => $banner->id,
                     'heading' => $banner->heading,
                     'subheading' => $banner->subheading,
-                    'link' => asset($banner->link),
+                    'link' => $banner->link ? asset($banner->link) : '',
                     'linked_text' => $banner->linked_text,
-                    'image' => $banner->image ? asset($banner->image) : asset('assets/img/placeholder.png'),
-                    'mobile_image' => $banner->mobile_image ? asset($banner->mobile_image) : asset('assets/img/placeholder.png'),
+                    'image' => $banner->image ? asset($banner->image) : '',
+                    'mobile_image' => $banner->mobile_image ? asset($banner->mobile_image) : '',
+                    'video_desktop' => $banner->video_desktop ? asset($banner->video_desktop) : '',
+                    'video_mobile' => $banner->video_mobile ? asset($banner->video_mobile) : '',
+                    'video_url' => $banner->video_url,
                     'status' => $banner->status,
                     'show_on_home' => $banner->show_on_home,
                     'display_order' => $banner->display_order,
@@ -93,8 +96,11 @@ class BannerController extends Controller
             'subheading' => 'nullable|string|max:255',
             'linked_text' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
-            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'mobile_image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'image' => 'required_without_all:video_desktop,video_mobile,video_url|nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'mobile_image' => 'required_without_all:video_desktop,video_mobile,video_url|nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'video_desktop' => 'nullable|mimes:mp4,webm,ogg|max:51200',
+            'video_mobile' => 'nullable|mimes:mp4,webm,ogg|max:51200',
+            'video_url' => 'nullable|url|max:500',
             'display_order' => 'nullable|integer',
             'show_on_home' => 'nullable|integer|in:0,1',
         ]);
@@ -113,6 +119,20 @@ class BannerController extends Controller
             $imageMobile->move(public_path('assets/img/banners/'), $imageNameMobile);
 
             $validated['mobile_image'] = 'assets/img/banners/' . $imageNameMobile;
+        }
+
+        if ($request->hasFile('video_desktop')) {
+            $videoDesktop = $request->file('video_desktop');
+            $videoNameDesktop = time() . '_' . uniqid() . '.' . $videoDesktop->getClientOriginalExtension();
+            $videoDesktop->move(public_path('assets/video/banners/'), $videoNameDesktop);
+            $validated['video_desktop'] = 'assets/video/banners/' . $videoNameDesktop;
+        }
+
+        if ($request->hasFile('video_mobile')) {
+            $videoMobile = $request->file('video_mobile');
+            $videoNameMobile = time() . '_' . uniqid() . '.' . $videoMobile->getClientOriginalExtension();
+            $videoMobile->move(public_path('assets/video/banners/'), $videoNameMobile);
+            $validated['video_mobile'] = 'assets/video/banners/' . $videoNameMobile;
         }
 
         Banner::create($validated);
@@ -148,17 +168,23 @@ class BannerController extends Controller
             'subheading' => 'nullable|string|max:255',
             'linked_text' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
+            'video_url' => 'nullable|url|max:500',
             'display_order' => 'nullable|integer',
             'show_on_home' => 'nullable|integer|in:0,1',
         ]);
 
-        if ($request->hasFile('image')) {
+        if ($request->input('image') === 'null') {
+            if (!empty($banner->image) && file_exists(public_path($banner->image))) {
+                @unlink(public_path($banner->image));
+            }
+            $validated['image'] = null;
+        } elseif ($request->hasFile('image')) {
             $request->validate([
                 'image' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
             if (!empty($banner->image) && file_exists(public_path($banner->image))) {
-                unlink(public_path($banner->image));
+                @unlink(public_path($banner->image));
             }
 
             // Upload new image
@@ -169,13 +195,18 @@ class BannerController extends Controller
             $validated['image'] = 'assets/img/banners/' . $imageName;
         }
 
-        if ($request->hasFile('mobile_image')) {
+        if ($request->input('mobile_image') === 'null') {
+            if (!empty($banner->mobile_image) && file_exists(public_path($banner->mobile_image))) {
+                @unlink(public_path($banner->mobile_image));
+            }
+            $validated['mobile_image'] = null;
+        } elseif ($request->hasFile('mobile_image')) {
             $request->validate([
                 'mobile_image' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
             if (!empty($banner->mobile_image) && file_exists(public_path($banner->mobile_image))) {
-                unlink(public_path($banner->mobile_image));
+                @unlink(public_path($banner->mobile_image));
             }
 
             // Upload new image
@@ -184,6 +215,46 @@ class BannerController extends Controller
             $mobileImage->move(public_path('assets/img/banners/'), $imageNameMobile);
 
             $validated['mobile_image'] = 'assets/img/banners/' . $imageNameMobile;
+        }
+
+        if ($request->input('video_desktop') === 'null') {
+            if (!empty($banner->video_desktop) && file_exists(public_path($banner->video_desktop))) {
+                @unlink(public_path($banner->video_desktop));
+            }
+            $validated['video_desktop'] = null;
+        } elseif ($request->hasFile('video_desktop')) {
+            $request->validate([
+                'video_desktop' => 'mimes:mp4,webm,ogg|max:51200',
+            ]);
+
+            if (!empty($banner->video_desktop) && file_exists(public_path($banner->video_desktop))) {
+                @unlink(public_path($banner->video_desktop));
+            }
+
+            $videoDesktop = $request->file('video_desktop');
+            $videoNameDesktop = time() . '_' . uniqid() . '.' . $videoDesktop->getClientOriginalExtension();
+            $videoDesktop->move(public_path('assets/video/banners/'), $videoNameDesktop);
+            $validated['video_desktop'] = 'assets/video/banners/' . $videoNameDesktop;
+        }
+
+        if ($request->input('video_mobile') === 'null') {
+            if (!empty($banner->video_mobile) && file_exists(public_path($banner->video_mobile))) {
+                @unlink(public_path($banner->video_mobile));
+            }
+            $validated['video_mobile'] = null;
+        } elseif ($request->hasFile('video_mobile')) {
+            $request->validate([
+                'video_mobile' => 'mimes:mp4,webm,ogg|max:51200',
+            ]);
+
+            if (!empty($banner->video_mobile) && file_exists(public_path($banner->video_mobile))) {
+                @unlink(public_path($banner->video_mobile));
+            }
+
+            $videoMobile = $request->file('video_mobile');
+            $videoNameMobile = time() . '_' . uniqid() . '.' . $videoMobile->getClientOriginalExtension();
+            $videoMobile->move(public_path('assets/video/banners/'), $videoNameMobile);
+            $validated['video_mobile'] = 'assets/video/banners/' . $videoNameMobile;
         }
 
         $banner->update($validated);
@@ -199,6 +270,15 @@ class BannerController extends Controller
     {
         if ($banner->image && file_exists(public_path($banner->image))) {
             @unlink(public_path($banner->image));
+        }
+        if ($banner->mobile_image && file_exists(public_path($banner->mobile_image))) {
+            @unlink(public_path($banner->mobile_image));
+        }
+        if ($banner->video_desktop && file_exists(public_path($banner->video_desktop))) {
+            @unlink(public_path($banner->video_desktop));
+        }
+        if ($banner->video_mobile && file_exists(public_path($banner->video_mobile))) {
+            @unlink(public_path($banner->video_mobile));
         }
 
         $banner->schools()->detach();

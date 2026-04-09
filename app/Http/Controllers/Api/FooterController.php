@@ -95,13 +95,13 @@ class FooterController extends Controller
     private function getDefaultSections(): array
     {
         return [
-            ['title' => 'ABOUT JSS UNIVERSITY', 'url' => '/about'],
-            ['title' => 'ACADEMICS', 'url' => '/academics'],
-            ['title' => 'ADMISSIONS', 'url' => '/admissions'],
-            ['title' => 'FACILITIES', 'url' => '/facilities'],
-            ['title' => 'STUDENT SUPPORT', 'url' => '/student-support'],
-            ['title' => 'RESEARCH & INNOVATION', 'url' => '/research'],
-            ['title' => 'PLACEMENTS', 'url' => '/placements'],
+            ['title' => 'ABOUT JSS UNIVERSITY', 'url' => 'about-jss'],
+            ['title' => 'ACADEMICS', 'url' => 'academic-facilities'],
+            ['title' => 'ADMISSIONS', 'url' => 'admission'],
+            ['title' => 'FACILITIES', 'url' => 'campus-facilities'],
+            ['title' => 'STUDENT LIFE', 'url' => 'student-life'],
+            ['title' => 'RESEARCH & INNOVATION', 'url' => 'research'],
+            ['title' => 'PLACEMENTS', 'url' => 'placement'],
         ];
     }
 
@@ -118,7 +118,8 @@ class FooterController extends Controller
         foreach ($quickLinks as $link) {
             $transformed[] = [
                 'label' => $link['text'] ?? 'Link',
-                'url' => $link['link'] ?? '#'
+                'url' => $link['link'] ?? '#',
+                'target_blank' => $link['target_blank'] ?? false,
             ];
         }
 

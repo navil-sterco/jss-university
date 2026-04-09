@@ -12,6 +12,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         about_description: homepage.about_description || "",
         about_url: homepage.about_url || "",
         about_chancellor_video_url: homepage.about_chancellor_video_url || "",
+        about_video: null,
         about_chancellor_img: null,
         about_chancellor_title: homepage.about_chancellor_title || "",
         about_chancellor_name: homepage.about_chancellor_name || "",
@@ -106,6 +107,12 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                     label: "Video URL",
                     type: "url",
                     placeholder: "https://youtube.com/chancellor"
+                },
+                {
+                    name: "about_video",
+                    label: "About Video",
+                    type: "file",
+                    accept: "video/mp4, video/webm, video/ogg"
                 }
             ],
             dynamicFields: [
@@ -115,7 +122,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                     fields: [
                         { name: "rank", label: "Rank", type: "text", placeholder: "e.g., #1" },
                         { name: "text", label: "Text", type: "text", placeholder: "e.g., Best Engineering College" },
-                        { name: "source", label: "Source", type: "text", placeholder: "e.g., Times Ranking 2024" }
+                        { name: "source", label: "Source", type: "file", accept: "image/*", placeholder: "Upload source image" }
                     ]
                 },
                 {
@@ -162,7 +169,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                     fields: [
                         { name: "title", label: "Facility Title", type: "text", placeholder: "e.g., Library" },
                         { name: "description", label: "Facility Description", type: "textarea", placeholder: "Facility description", rows: 3 },
-                        { name: "main_link", label: "Main Link", type: "url", placeholder: "https://example.com/facility" },
+                        { name: "main_link", label: "Main Link", type: "text", placeholder: "https://example.com/facility" },
                         { name: "image", label: "Facility Image", type: "file", accept: "image/*" }
                     ],
                     nestedDynamicFields: [
@@ -171,7 +178,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                             label: "Facility Links",
                             fields: [
                                 { name: "text", label: "Link Text", type: "text", placeholder: "e.g., Virtual Tour" },
-                                { name: "url", label: "Link URL", type: "url", placeholder: "https://example.com/tour" }
+                                { name: "url", label: "Link URL", type: "text", placeholder: "https://example.com/tour" }
                             ]
                         }
                     ]
@@ -328,7 +335,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                 if (value === null || value === undefined) return false;
                 return value !== "";
             });
-            
+
             if (hasData) {
                 initiallyActive.push(section.id);
             }
@@ -338,13 +345,13 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
 
     const submit = (e) => {
         e.preventDefault();
-        
+
         // Create FormData to handle file uploads properly
         const formData = new FormData();
-        
+
         // Append all regular fields
         Object.keys(data).forEach(key => {
-            if (key === 'about_chancellor_img' || key === 'hall_of_fame_image') {
+            if (key === 'about_chancellor_img' || key === 'hall_of_fame_image' || key === 'about_video') {
                 // Handle main file fields
                 if (data[key] instanceof File) {
                     formData.append(key, data[key]);
@@ -365,7 +372,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                 formData.append(`facilities[${facilityIndex}][title]`, facility.title || '');
                 formData.append(`facilities[${facilityIndex}][description]`, facility.description || '');
                 formData.append(`facilities[${facilityIndex}][main_link]`, facility.main_link || '');
-                
+
                 // Handle facility image
                 if (facility.image instanceof File) {
                     formData.append(`facilities[${facilityIndex}][image]`, facility.image);
@@ -385,7 +392,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         if (data.logo_content && Array.isArray(data.logo_content)) {
             data.logo_content.forEach((logo, logoIndex) => {
                 formData.append(`logo_content[${logoIndex}][description]`, logo.description || '');
-                
+
                 // Handle logo image
                 if (logo.image instanceof File) {
                     formData.append(`logo_content[${logoIndex}][image]`, logo.image);
@@ -394,7 +401,21 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
         }
 
         // Append highlights and buttons as JSON
-        formData.append('highlights', JSON.stringify(data.highlights || []));
+        if (data.highlights && Array.isArray(data.highlights)) {
+            data.highlights.forEach((highlight, highlightIndex) => {
+                formData.append(`highlights[${highlightIndex}][rank]`, highlight.rank || '');
+                formData.append(`highlights[${highlightIndex}][text]`, highlight.text || '');
+
+                // Handle highlight source image
+                if (highlight.source instanceof File) {
+                    formData.append(`highlights[${highlightIndex}][source]`, highlight.source);
+                } else if (typeof highlight.source === 'string') {
+                    // Keep existing source if it's a string (already uploaded image path)
+                    formData.append(`highlights[${highlightIndex}][source]`, highlight.source);
+                }
+            });
+        }
+
         formData.append('buttons', JSON.stringify(data.buttons || []));
 
         console.log('Submitting form data...');
@@ -408,7 +429,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
     };
 
     const { flash } = usePage().props;
-    
+
     useEffect(() => {
         if (flash.success) {
             toast.success(flash.success);
@@ -426,7 +447,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
 
     const removeSection = (sectionId) => {
         setActiveSections(prev => prev.filter(id => id !== sectionId));
-        
+
         const section = sectionConfig.find(s => s.id === sectionId);
         if (section) {
             section.fields.forEach(field => {
@@ -436,7 +457,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                     setData(field.name, "");
                 }
             });
-            
+
             if (section.dynamicFields) {
                 section.dynamicFields.forEach(dynamicField => {
                     setData(dynamicField.name, []);
@@ -473,41 +494,41 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
     const addNestedDynamicField = (parentFieldName, parentIndex, nestedFieldName, template = {}) => {
         const currentFields = data[parentFieldName] || [];
         const updatedFields = [...currentFields];
-        
+
         if (!updatedFields[parentIndex][nestedFieldName]) {
             updatedFields[parentIndex][nestedFieldName] = [];
         }
-        
+
         updatedFields[parentIndex][nestedFieldName] = [
             ...updatedFields[parentIndex][nestedFieldName],
             template
         ];
-        
+
         setData(parentFieldName, updatedFields);
     };
 
     const removeNestedDynamicField = (parentFieldName, parentIndex, nestedFieldName, nestedIndex) => {
         const currentFields = data[parentFieldName] || [];
         const updatedFields = [...currentFields];
-        
+
         if (updatedFields[parentIndex][nestedFieldName]) {
             updatedFields[parentIndex][nestedFieldName] = updatedFields[parentIndex][nestedFieldName].filter((_, i) => i !== nestedIndex);
         }
-        
+
         setData(parentFieldName, updatedFields);
     };
 
     const updateNestedDynamicField = (parentFieldName, parentIndex, nestedFieldName, nestedIndex, fieldKey, value) => {
         const currentFields = data[parentFieldName] || [];
         const updatedFields = [...currentFields];
-        
+
         if (updatedFields[parentIndex][nestedFieldName]) {
             updatedFields[parentIndex][nestedFieldName][nestedIndex] = {
                 ...updatedFields[parentIndex][nestedFieldName][nestedIndex],
                 [fieldKey]: value
             };
         }
-        
+
         setData(parentFieldName, updatedFields);
     };
 
@@ -586,21 +607,41 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                             disabled={processing}
                         />
                         {fieldError && <div className="invalid-feedback">{fieldError}</div>}
-                        
-                        {homepage[field.name] && typeof homepage[field.name] === 'string' && (
+
+                        {homepage[field.name] && typeof homepage[field.name] === 'string' && data[field.name] !== 'null' && (
                             <div className="mb-3 col-md-3">
-                                <label className="form-label" htmlFor="image">Current Image</label>
-                                <div className="mb-2">
-                                    <img
-                                        src={`${appUrl}/${homepage[field.name]}`}
-                                        alt="Current Banner"
-                                        style={{
-                                            width: "100px",
-                                            height: "60px",
-                                            objectFit: "cover",
-                                            borderRadius: "4px"
-                                        }}
-                                    />
+                                <label className="form-label">Current File</label>
+                                <div className="mb-2 d-flex align-items-start gap-2">
+                                    {homepage[field.name].match(/\.(mp4|webm|ogg)$/i) ? (
+                                        <video
+                                            src={`${appUrl}/${homepage[field.name]}`}
+                                            style={{
+                                                width: "100px",
+                                                height: "60px",
+                                                objectFit: "cover",
+                                                borderRadius: "4px"
+                                            }}
+                                            controls
+                                        />
+                                    ) : (
+                                        <img
+                                            src={`${appUrl}/${homepage[field.name]}`}
+                                            alt="Current File"
+                                            style={{
+                                                width: "100px",
+                                                height: "60px",
+                                                objectFit: "cover",
+                                                borderRadius: "4px"
+                                            }}
+                                        />
+                                    )}
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-sm btn-danger" 
+                                        onClick={() => handleFieldChange(field.name, 'null')}
+                                    >
+                                        Remove
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -650,7 +691,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                     <div className="dynamic-fields-container">
                         {fields.map((fieldData, index) => (
                             <div key={index} className="card mb-4 border-primary">
-                                <div className="card-header d-flex justify-content-between align-items-center" style={{background:"#F8F8FE"}}>
+                                <div className="card-header d-flex justify-content-between align-items-center" style={{ background: "#F8F8FE" }}>
                                     <span>{dynamicFieldConfig.label} #{index + 1}</span>
                                     <button
                                         type="button"
@@ -808,7 +849,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
 
     return (
         <>
-            <ToastContainer 
+            <ToastContainer
                 position="top-right"
                 autoClose={5000}
                 hideProgressBar={false}
@@ -819,7 +860,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                 draggable
                 pauseOnHover
             />
-            
+
             <div className="d-flex align-items-center justify-content-between mb-4">
                 <h4 className="mb-0">
                     Manage Homepage Sections —{" "}
@@ -891,7 +932,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                                 </div>
                                 <div className="card-body">
                                     <div className="row">
-                                        {section.fields.map(field => 
+                                        {section.fields.map(field =>
                                             (field.type === 'file' || field.type === 'textarea') ? (
                                                 <div className="col-12" key={field.name}>
                                                     {renderField(field)}
@@ -905,7 +946,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                                     </div>
 
                                     {/* Render dynamic fields */}
-                                    {section.dynamicFields && section.dynamicFields.map(dynamicField => 
+                                    {section.dynamicFields && section.dynamicFields.map(dynamicField =>
                                         <div className="col-12" key={dynamicField.name}>
                                             {renderDynamicFields(dynamicField)}
                                         </div>
@@ -936,9 +977,9 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                 <div className="mt-4 p-4 bg-light rounded border">
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
-                            <button 
-                                type="submit" 
-                                className="btn btn-primary btn-lg" 
+                            <button
+                                type="submit"
+                                className="btn btn-primary btn-lg"
                                 disabled={processing}
                             >
                                 {processing ? (
@@ -959,7 +1000,7 @@ const CreateOrUpdateHomepageSections = ({ homepage }) => {
                             </span>
                         </div>
                     </div>
-                    
+
                     {/* Show message when no sections are active */}
                     {activeSections.length === 0 && (
                         <div className="mt-3 alert alert-warning">

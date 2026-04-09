@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Degree;
-use App\Models\School;
+use App\Models\Department;
 use App\Models\Program;
-use Illuminate\Http\Request;
+use App\Models\School;
 use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 
 class ProgramController extends Controller
 {
@@ -37,10 +38,11 @@ class ProgramController extends Controller
             $query->where('department_id', $validated['department_id']);
         })
         ->when($validated['school_id'] ?? null, function ($query) use ($validated) {
-            $query->whereHas('department', function ($q) use ($validated) {
-                $q->where('school_id', $validated['school_id']);
+            $query->whereHas('departments', function ($q) use ($validated) {
+                $q->where('departments.school_id', $validated['school_id']);
             });
         })
+        ->where('status', 1)
         ->orderBy('id', 'desc')
         ->paginate($validated['per_page'] ?? 9)
         ->withQueryString();
@@ -65,7 +67,20 @@ class ProgramController extends Controller
 
     public function detail($slug): JsonResponse
     {
-        $course = Course::where('slug', $slug)->first();
+        $course = Course::where('slug', $slug)->where('status', 1)->first();
+
+        $sectionOrNull = function (array $section) {
+            foreach ($section as $value) {
+                if (is_array($value) && count(array_filter($value)) > 0) {
+                    return $section;
+                }
+
+                if (!is_array($value) && $value !== null) {
+                    return $section;
+                }
+            }
+            return null;
+        };
         
         if (!$course) {
             return response()->json([
@@ -129,38 +144,39 @@ class ProgramController extends Controller
                 'name' => $course->name,
                 'image' => $course->banner ? asset($course->banner) : null,
             ],
-            'admissionSection' => [
+            'admissionSection' => $sectionOrNull([
                 'academic_year' => $course->academic_year,
                 'course_duration' => $course->course_duration,
                 'annual_fees' => $course->annual_fees,
                 'program_structure' => $course->program_structure ? asset($course->program_structure) : null,
+                'brouchure' => $course->brouchure ? asset($course->brouchure) : null,
                 'scholarship' => $course->scholarship ? asset($course->scholarship) : null,
                 'apply_now_link' => $course->apply_now_link,
                 'eligibility_marks' => $course->eligibility_marks,
                 'eligibility_desc' => $course->eligibility_desc,
-            ],
-            'overview' => [
+            ]),
+            'overview' => $sectionOrNull([
                 'overview_title' => $course->overview_title,
                 'overview_desc' => $course->overview_desc,
                 'overview_image' => $course->overview_image ? asset($course->overview_image) : null,
                 'apply_now_link' => $course->apply_now_link,
-            ],
-            'eligibility' => [
+            ]),
+            'eligibility' => $sectionOrNull([
                 'eligibility_criteria' => $course->eligibility_criteria,
                 'eligibility_criteria_desc' => $course->eligibility_criteria_desc,
                 'eligibility_criteria_notices' => $parseJsonField($course->eligibility_criteria_notices),
-            ],
+            ]),
             'peos' => $parseOutcomes($course->peos),
             'pos' => $parseOutcomes($course->pos),
             'pso' => $parseOutcomes($course->pso),
             'apply_now_link' => $course->apply_now_link,
-            'curriculum' => [
+            'curriculum' => $sectionOrNull([
                 'curriculum_title' => $course->curriculum_title,
                 'curriculum_desc' => $parseJsonField($course->curriculum_desc),
                 'curriculum_image' => $course->curriculum_image ? asset($course->curriculum_image) : null,
                 'curriculum_pdf' => $course->curriculum_pdf ? asset($course->curriculum_pdf) : null,
-            ],
-            'fee_structure' => [
+            ]),
+            'fee_structure' => $sectionOrNull([
                 'fee_structure_title' => $course->fee_structure_title,
                 'fee_structure_short_description' => $course->fee_structure_short_description,
                 'course_total_fees' => $course->course_total_fees,
@@ -168,7 +184,7 @@ class ProgramController extends Controller
                 'fee_structure_image' => $course->fee_structure_image ? asset($course->fee_structure_image) : null,
                 'apply_now_link' => $course->apply_now_link,
                 'academic_year' => $course->academic_year,
-            ],
+            ]),
             'testimonials' => $course->testimonials->where('status', true)->where('type','placement')->sortBy('display_order')->values()->take(15)->map(fn($item) => [
                 'id' => $item->id,
                 'title' => $item->title,
@@ -184,13 +200,32 @@ class ProgramController extends Controller
                 'short_description' => $item->short_description,
                 'apply_now_link' => $course->apply_now_link,
             ]),
-            'career_opportunities' => [
+            'career_opportunities' => $sectionOrNull([
                 'career_title' => $course->career_title,
                 'career_subtitle' => $course->career_subtitle,
                 'career_desc' => $course->career_desc,
                 'career_image' => $course->career_image ? asset($course->career_image) : null,
                 'useful_links' => $parseJsonField($course->useful_links),
+            ]),
+
+            'description' => [
+                'description_title' => $course->description_title ?? null,
+                'description_content' => $course->description_content ?? null,
             ],
+            'tabSection' => [
+                'tab_section_info' => collect(json_decode($course->tab_section_info, true))
+                    ->map(function ($item) {
+                        $item['image'] = asset($item['image']) ?? null;
+                        return $item;
+                    }),
+                'tab_section_content' => $course->tab_section_tabs ?? null,
+            ],
+            
+            'faqs' => $course->faqs->where('status', 1)->sortBy('display_order')->values()->map(fn($item) => [
+                'id' => $item->id,
+                'question' => $item->question,
+                'answer' => $item->answer,
+            ]),
         ];
 
         return response()->json([
@@ -218,11 +253,29 @@ class ProgramController extends Controller
 
     public function schoolDeparmentList()
     {
-        $schoolDepartment = School::select('id', 'name','slug')
+        $schoolDepartment = School::select('id', 'name', 'slug', 'name_short')
             ->with(['departments' => function($query) {
-                $query->select('id', 'name', 'school_id','slug');
+                $query->select('id', 'name', 'school_id', 'slug', 'image') // ✅ add image here
+                    ->orderBy('name');
             }])
-            ->get();
+            ->get()
+            ->map(function ($school) {
+                return [
+                    'id' => $school->id,
+                    'name' => $school->name,
+                    'slug' => $school->slug,
+                    'name_short' => $school->name_short,
+
+                    'departments' => $school->departments->map(function ($dept) {
+                        return [
+                            'id' => $dept->id,
+                            'name' => $dept->name,
+                            'slug' => $dept->slug,
+                            'image' => $dept->image ? url($dept->image) : null, // ✅ format image
+                        ];
+                    })
+                ];
+            });
 
         return response()->json([
             'status' => true,
@@ -236,10 +289,57 @@ class ProgramController extends Controller
             'search' => 'nullable|string|max:255',
         ]);
 
-        $courses = Course::select('id', 'name','slug')
+        $courses = Course::select('id', 'name','slug')->where('status', true)
         ->filter(['search' => $validated['search'] ?? null])
         ->orderBy('id', 'desc')
         ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $courses,
+            'message' => 'Courses retrieved successfully'
+        ]);
+    }
+
+    public function searchCourseBySchool($slug)
+    {
+        $school = School::where('slug', $slug)->firstOrFail();
+
+        $validated = request()->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $courses = Course::select('id', 'name', 'slug')
+            ->where('status', true)
+            ->whereHas('schools', function ($q) use ($school) {
+                $q->where('schools.id', $school->id);
+            })
+            ->filter(['search' => $validated['search'] ?? null])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $courses,
+            'message' => 'Courses retrieved successfully'
+        ]);
+    }
+    public function searchCourseByDepartment($slug)
+    {
+        $department = Department::where('slug', $slug)->firstOrFail();
+
+        $validated = request()->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $courses = Course::select('id', 'name', 'slug')
+            ->where('status', true)
+            ->whereHas('departments', function ($q) use ($department) {
+                $q->where('departments.id', $department->id);
+            })
+            ->filter(['search' => $validated['search'] ?? null])
+            ->orderBy('id', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,

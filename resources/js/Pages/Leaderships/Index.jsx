@@ -3,7 +3,7 @@ import { Link, useForm } from "@inertiajs/react";
 import Pagination from "@/Components/Pagination";
 import { router, usePage } from "@inertiajs/react";
 import { ToastContainer, toast } from "react-toastify";
-import _ from "lodash";
+import { debounce } from "lodash";
 
 const Index = (props) => {
     const { leadership, searchTerm } = props;
@@ -34,7 +34,7 @@ const Index = (props) => {
 
     // Search debounce
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("leadership", { search: query }, { preserveState: true, replace: true });
         }, 300);
 
@@ -94,13 +94,13 @@ const Index = (props) => {
     const closeViewModal = () => {
         viewModalInstance.current.hide();
         setSelectedLeadership(null);
-        
+
         // Remove modal backdrop manually
         const backdrops = document.querySelectorAll('.modal-backdrop');
         backdrops.forEach(backdrop => {
             backdrop.remove();
         });
-        
+
         // Remove modal-open class from body and reset styles
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
@@ -155,8 +155,8 @@ const Index = (props) => {
                             <tr>
                                 <th>Name</th>
                                 <th>Slug</th>
-                                <th>Type</th>
                                 <th>Image</th>
+                                <th>Type</th>
                                 <th>Display Order</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -165,17 +165,13 @@ const Index = (props) => {
                         <tbody>
                             {leadership.data.map((leader) => (
                                 <tr key={leader.id}>
-                                    <td>
+                                    <td className="description-cell">
                                         <i className="bx bx-user bx-sm me-3"></i>
                                         {leader.name}
                                     </td>
-                                    <td>
+                                    <td className="description-cell">
                                         <i className="bx bx-link bx-sm me-3"></i>
                                         {leader.slug}
-                                    </td>
-                                    <td>
-                                        <i className="bx bx-category bx-sm me-3"></i>
-                                        {leader.type}
                                     </td>
                                     <td>
                                         {leader.image ? (
@@ -195,15 +191,18 @@ const Index = (props) => {
                                             <span className="text-muted">No image</span>
                                         )}
                                     </td>
+                                    <td className="description-cell">
+                                        <i className="bx bx-category bx-sm me-3"></i>
+                                        {leader.page_type}
+                                    </td>
                                     <td>
                                         <i className="bx bx-sort bx-sm me-3"></i>
                                         {leader.display_order}
                                     </td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${
-                                                leader.status == 1 ? "bg-label-success" : "bg-label-danger"
-                                            }`}
+                                            className={`badge cursor-pointer ${leader.status == 1 ? "bg-label-success" : "bg-label-danger"
+                                                }`}
                                             onClick={() => toggleStatus(leader.id)}
                                         >
                                             {leader.status == 1 ? "Active" : "Inactive"}
@@ -281,9 +280,9 @@ const Index = (props) => {
                                         </p>
                                     )}
                                 </div>
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
+                                <button
+                                    type="button"
+                                    className="btn-close"
                                     onClick={closeViewModal}
                                 ></button>
                             </div>
@@ -315,6 +314,15 @@ const Index = (props) => {
                                                         <span className="badge bg-primary">
                                                             <i className="bx bx-tag me-1"></i>
                                                             {selectedLeadership.type}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="col-sm-6">
+                                                    <label className="form-label fw-semibold text-muted small">Category</label>
+                                                    <div>
+                                                        <span className="badge bg-secondary">
+                                                            <i className="bx bx-tag me-1"></i>
+                                                            {selectedLeadership.category}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -403,7 +411,7 @@ const Index = (props) => {
                                                 Profile Image
                                             </h6>
                                             {selectedLeadership.image ? (
-                                                <div 
+                                                <div
                                                     className="border rounded p-3 bg-white cursor-pointer text-center"
                                                     onClick={() => showImageModal(selectedLeadership.image)}
                                                 >
@@ -435,7 +443,7 @@ const Index = (props) => {
                                                 Banner Image
                                             </h6>
                                             {selectedLeadership.banner_image ? (
-                                                <div 
+                                                <div
                                                     className="border rounded p-3 bg-white cursor-pointer text-center"
                                                     onClick={() => showImageModal(selectedLeadership.banner_image)}
                                                 >
@@ -470,9 +478,9 @@ const Index = (props) => {
                                                 <div className="border rounded p-3 bg-white text-center">
                                                     <i className="bx bx-video text-primary mb-2" style={{ fontSize: "2rem" }}></i>
                                                     <p className="small mb-1">Video file available</p>
-                                                    <a 
-                                                        href={selectedLeadership.video} 
-                                                        target="_blank" 
+                                                    <a
+                                                        href={selectedLeadership.video}
+                                                        target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="btn btn-sm btn-outline-primary"
                                                     >
@@ -505,7 +513,7 @@ const Index = (props) => {
                                                     <span className="fw-semibold">Display Order</span>
                                                     <span className="badge bg-info">{selectedLeadership.display_order}</span>
                                                 </div>
-                                                
+
                                                 <div className="d-grid gap-2">
                                                     <button
                                                         onClick={() => handleEditFromModal(selectedLeadership.id)}
@@ -539,8 +547,8 @@ const Index = (props) => {
 
                         {/* Footer */}
                         <div className="modal-footer bg-light">
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="btn btn-secondary"
                                 onClick={closeViewModal}
                             >

@@ -47,7 +47,7 @@ class SchoolController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Schools/Create'); 
+        return Inertia::render('Schools/Create');
     }
 
     /**
@@ -88,7 +88,8 @@ class SchoolController extends Controller
 
 
         $imageFields = [
-            'image','prospectus'
+            'image',
+            'prospectus'
         ];
 
         foreach ($imageFields as $field) {
@@ -105,7 +106,7 @@ class SchoolController extends Controller
         }
 
         if (isset($data['useful_links']) && is_array($data['useful_links'])) {
-            $filteredLinks = array_filter($data['useful_links'], function($link) {
+            $filteredLinks = array_filter($data['useful_links'], function ($link) {
                 return !empty(trim($link['text'] ?? '')) || !empty(trim($link['url'] ?? ''));
             });
             $data['useful_links'] = !empty($filteredLinks) ? json_encode(array_values($filteredLinks)) : null;
@@ -113,7 +114,7 @@ class SchoolController extends Controller
             $data['useful_links'] = null;
         }
 
-        $data = array_map(function($value) {
+        $data = array_map(function ($value) {
             return $value === '' ? null : $value;
         }, $data);
 
@@ -223,7 +224,7 @@ class SchoolController extends Controller
 
         if ($request->hasFile('image')) {
             $request->validate(['image' => 'image|mimes:jpg,jpeg,png,webp|max:2048']);
-            
+
             if ($school->image && file_exists(public_path($school->image))) {
                 unlink(public_path($school->image));
             }
@@ -242,7 +243,7 @@ class SchoolController extends Controller
 
         if ($request->hasFile('prospectus')) {
             $request->validate(['prospectus' => 'mimes:pdf|max:5120']);
-            
+
             if ($school->prospectus && file_exists(public_path($school->prospectus))) {
                 unlink(public_path($school->prospectus));
             }
@@ -259,9 +260,9 @@ class SchoolController extends Controller
             $validated['prospectus'] = null;
         }
 
-        
+
         if (isset($validated['useful_links']) && is_array($validated['useful_links'])) {
-            $filteredLinks = array_filter($validated['useful_links'], function($link) {
+            $filteredLinks = array_filter($validated['useful_links'], function ($link) {
                 return !empty(trim($link['text'] ?? '')) || !empty(trim($link['url'] ?? ''));
             });
             $validated['useful_links'] = !empty($filteredLinks) ? json_encode(array_values($filteredLinks)) : null;
@@ -269,7 +270,7 @@ class SchoolController extends Controller
             $validated['useful_links'] = null;
         }
 
-        $validated = array_map(function($value) {
+        $validated = array_map(function ($value) {
             return $value === '' ? null : $value;
         }, $validated);
 
@@ -320,10 +321,10 @@ class SchoolController extends Controller
     {
         $school = School::findOrFail($id);
 
-        return Inertia::render('Schools/CreateOrUpdateSections',[
+        return Inertia::render('Schools/CreateOrUpdateSections', [
             'school' => $school,
-        ]); 
-    } 
+        ]);
+    }
 
     public function storeOrUpdate(Request $request, $id)
     {
@@ -339,25 +340,25 @@ class SchoolController extends Controller
             'about_school_subtitle' => 'nullable|string|max:255',
             'about_school_description' => 'nullable|string',
             'about_school_url' => 'nullable|url|max:255',
-            'about_school_logo_content' => 'nullable|string|max:255',
             'about_school_stats_number' => 'nullable|string|max:255',
             'about_school_stats_content' => 'nullable|string|max:255',
             'about_highlights' => 'nullable|array',
             'about_highlights.*.rank' => 'nullable|string|max:255',
             'about_highlights.*.text' => 'nullable|string|max:255',
             'about_highlights.*.source' => 'nullable|string|max:255',
-            'about_buttons' => 'nullable|array',
-            'about_buttons.*.text' => 'nullable|string|max:255',
-            'about_buttons.*.url' => 'nullable|url|max:255',
+
+            // === CHANCELLOR ITEMS (New structure) ===
+            'about_chancellor_items' => 'nullable|array',
+            'about_chancellor_items.*.content' => 'nullable|string|max:255',
+            'about_chancellor_items.*.logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:1000',
+            'about_chancellor_items.*.existing_logo' => 'nullable|string',
 
             // === DEPARTMENT SECTION ===
             'department_title' => 'nullable|string|max:255',
             'department_desc' => 'nullable|string',
             'department_programs_count' => 'nullable|string|max:255',
             'department_programs_text' => 'nullable|string|max:255',
-            'department_buttons' => 'nullable|array',
-            'department_buttons.*.text' => 'nullable|string|max:255',
-            'department_buttons.*.url' => 'nullable|url|max:255',
+            'department_buttons' => 'nullable|string|max:255',
 
             // === PLACEMENT SECTION ===
             'placement_title' => 'nullable|string|max:255',
@@ -374,22 +375,15 @@ class SchoolController extends Controller
             'happening_subtitle' => 'nullable|string|max:255',
         ];
 
-
-
         // Conditionally validate images only if uploaded
         if ($request->hasFile('about_school_chancellor_img')) {
             $rules['about_school_chancellor_img'] = 'image|mimes:jpg,jpeg,png,webp|max:1000';
         }
 
-        if ($request->hasFile('about_school_chancellor_logo')) {
-            $rules['about_school_chancellor_logo'] = 'image|mimes:jpg,jpeg,png,webp|max:1000';
-        }
-
         if ($request->hasFile('hall_of_fame_image')) {
             $rules['hall_of_fame_image'] = 'image|mimes:jpg,jpeg,png,webp|max:1000';
         }
-        
-        
+
         $validated = $request->validate($rules);
 
         // Handle Chancellor Image
@@ -400,14 +394,6 @@ class SchoolController extends Controller
             $validated['about_school_chancellor_img'] = 'assets/img/schools/' . $imageName;
         }
 
-        // Handle Chancellor Logo
-        if ($request->hasFile('about_school_chancellor_logo')) {
-            $image = $request->file('about_school_chancellor_logo');
-            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('assets/img/schools/'), $imageName);
-            $validated['about_school_chancellor_logo'] = 'assets/img/schools/' . $imageName;
-        }
-
         // Handle Hall of Fame Image
         if ($request->hasFile('hall_of_fame_image')) {
             $image = $request->file('hall_of_fame_image');
@@ -416,20 +402,62 @@ class SchoolController extends Controller
             $validated['hall_of_fame_image'] = 'assets/img/schools/' . $imageName;
         }
 
-            if ($request->has('about_highlights')) {
-                $school->about_highlights = json_encode($request->about_highlights);
-            }
-            
-            if ($request->has('about_buttons')) {
-                $school->about_buttons = json_encode($request->about_buttons);
-            }
-            
-            if ($request->has('department_buttons')) {
-                $school->department_buttons = json_encode($request->department_buttons);
+        // Handle Chancellor Items (Multiple logos with content)
+        if ($request->has('about_chancellor_items')) {
+            $chancellorItems = [];
+            $existingItems = json_decode($school->about_chancellor_items ?? '[]', true);
+
+            foreach ($request->about_chancellor_items as $index => $item) {
+                $chancellorItem = [
+                    'content' => $item['content'] ?? '',
+                    'logo' => null,
+                ];
+
+                // Handle logo upload for this item
+                if ($request->hasFile("about_chancellor_items.{$index}.logo")) {
+                    $logoFile = $request->file("about_chancellor_items.{$index}.logo");
+                    $logoName = time() . '_' . uniqid() . '.' . $logoFile->getClientOriginalExtension();
+                    $logoFile->move(public_path('assets/img/schools/chancellor/'), $logoName);
+                    $chancellorItem['logo'] = 'assets/img/schools/chancellor/' . $logoName;
+                }
+                // Keep existing logo if no new file uploaded
+                elseif (isset($item['existing_logo']) && !empty($item['existing_logo'])) {
+                    $chancellorItem['logo'] = $item['existing_logo'];
+                }
+                // Keep from existing data if available (for items that weren't modified)
+                elseif (isset($existingItems[$index]['logo']) && !empty($existingItems[$index]['logo'])) {
+                    $chancellorItem['logo'] = $existingItems[$index]['logo'];
+                }
+
+                $chancellorItems[] = $chancellorItem;
             }
 
-        // Update School
-        $school->update($validated);
+            $validated['about_chancellor_items'] = json_encode($chancellorItems);
+        }
+
+        // Handle about_highlights if present
+        if ($request->has('about_highlights')) {
+            $validated['about_highlights'] = json_encode($request->about_highlights);
+        }
+
+        // Update School - remove any fields that shouldn't be directly assigned
+        $updateData = array_diff_key($validated, array_flip([
+            'about_chancellor_items', // Already handled above
+            'about_highlights', // Already handled above
+        ]));
+
+        $school->update($updateData);
+
+        // Save JSON fields separately
+        if (isset($validated['about_chancellor_items'])) {
+            $school->about_chancellor_items = $validated['about_chancellor_items'];
+        }
+
+        if (isset($validated['about_highlights'])) {
+            $school->about_highlights = $validated['about_highlights'];
+        }
+
+        $school->save();
 
         return redirect()->back()->with('success', 'School section updated successfully.');
     }

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 const EditGallery = ({ gallery }) => {
     const appUrl = usePage().props.appUrl;
-    
+
     // State for existing media
     const [existingImages, setExistingImages] = useState(gallery.images || []);
     const [existingVideos, setExistingVideos] = useState(gallery.videos || []);
@@ -15,6 +15,7 @@ const EditGallery = ({ gallery }) => {
         type: gallery.type || '',
         images: [],
         videos: [],
+        video_url: gallery.video_url || '',
         pdf: null,
         display_order: gallery.display_order || 100,
         removed_images: [],
@@ -54,30 +55,30 @@ const EditGallery = ({ gallery }) => {
     // Submit form
     const submit = (e) => {
         e.preventDefault();
-        
+
         const formData = new FormData();
         formData.append('title', data.title);
         formData.append('event_date', data.event_date);
         formData.append('type', data.type);
         formData.append('display_order', data.display_order);
-        
+
         // Append new files
         if (data.images && data.images.length > 0) {
             data.images.forEach((file) => {
                 formData.append('images[]', file);
             });
         }
-        
+
         if (data.videos && data.videos.length > 0) {
             data.videos.forEach((file) => {
                 formData.append('videos[]', file);
             });
         }
-        
+
         if (data.pdf) {
             formData.append('pdf', data.pdf);
         }
-        
+
         // Append removed files
         if (data.removed_images.length > 0) {
             formData.append('removed_images', JSON.stringify(data.removed_images));
@@ -88,10 +89,10 @@ const EditGallery = ({ gallery }) => {
         if (data.removed_pdf) {
             formData.append('removed_pdf', data.removed_pdf);
         }
-        
+
         // Add PUT method for Laravel
         formData.append('_method', 'PUT');
-        
+
         post(route("galleries.update", gallery.id), formData);
     };
 
@@ -167,6 +168,18 @@ const EditGallery = ({ gallery }) => {
                                             onChange={(e) => handleFileChange(e, 'videos', true)}
                                         />
                                         <div className="form-text text-danger">{errors.videos}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="video_url" className="form-label">Video Url </label>
+                                        <input
+                                            type="text"
+                                            id="video_url"
+                                            className="form-control"
+                                            value={data.video_url}
+                                            onChange={(e) => setData('video_url', e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.video_url}</div>
                                     </div>
                                 </>
                             )}

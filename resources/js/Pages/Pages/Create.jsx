@@ -1,7 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import React, { useRef, useState } from 'react'
 
-const Create = ({departments}) => {
+const Create = ({departments, schools}) => {
 
     const fileInputRef = useRef(null);
     const now = new Date();
@@ -22,6 +22,7 @@ const Create = ({departments}) => {
     const { data, setData, post, progress, errors, processing } = useForm({
         title: "",
         slug: "",
+        school_id: "",
         department_id: "",
         type: "",
         image: "",
@@ -29,7 +30,19 @@ const Create = ({departments}) => {
         target_blank: 0,
         publish_date: publishDate,
         template_path: "",
+        display_order: 100,
     });
+
+    // Get selected school or department info
+    const selectedSchool = schools.find(s => s.id == data.school_id);
+    const selectedDept = departments.find(d => d.id == data.department_id);
+    // Build final slug: school prefix wins; otherwise department prefix only on content pages
+    let finalSlug = data.slug;
+    if (selectedSchool) {
+        finalSlug = `${selectedSchool.slug}/${data.slug}`;
+    } else if (selectedDept && data.type === "Content-Page") {
+        finalSlug = `${selectedDept.slug}/${data.slug}`;
+    }
 
     const submit = (e) => {
         e.preventDefault(); 
@@ -47,8 +60,27 @@ const Create = ({departments}) => {
         }
     };
 
+    // Handle school selection - disable department when school is selected
+    const handleSchoolChange = (schoolId) => {
+        setData("school_id", schoolId);
+        if (schoolId) {
+            setData("department_id", "");
+        }
+    };
+
+    // Handle department selection - disable school when department is selected
+    const handleDeptChange = (deptId) => {
+        setData("department_id", deptId);
+        if (deptId) {
+            setData("school_id", "");
+        }
+    };
+
     // Check if should show special fields
     const showSpecialFields = selectedType === "Laboratory" || selectedType === "Facility";
+    const isDepartmentDisabled = !!data.school_id;
+
+
 
 return (
     <>
@@ -96,41 +128,64 @@ return (
                                 value={data.slug} 
                                 onChange={(e) => setData("slug",e.target.value)}
                             />
+                            {data.slug && (
+                                <div className="form-text text-info mt-2">
+                                    <strong>Final Slug:</strong> {finalSlug}
+                                </div>
+                            )}
                             <div className="form-text text-danger">{errors.slug}</div> 
                         </div>
+
                         <div className="mb-3 col-md-6">
-                            <label htmlFor="sub_title" className="form-label">Sub Title</label>
+                            <label className="form-label">School (Optional)</label>
+                            <select
+                                className="form-control"
+                                value={data.school_id}
+                                onChange={(e) => handleSchoolChange(e.target.value)}
+                                disabled={!!data.department_id}
+                            >
+                                <option value="">Select School</option>
+                                {schools.map((school) => (
+                                    <option key={school.id} value={school.id}>
+                                        {school.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="form-text text-danger">{errors.school_id}</div> 
+                        </div>
+                        <div className="mb-3 col-md-6">
+                            <label htmlFor="menu_title" className="form-label">Menu Title</label>
                             <input
                                 type="text" 
                                 className="form-control" 
-                                id="sub_title" 
+                                id="menu_title" 
                                 name="sub_title" 
-                                placeholder="Sub Title" 
+                                placeholder="Menu Title" 
                                 value={data.sub_title} 
                                 onChange={(e) => setData("sub_title",e.target.value)}
                             />
                             <div className="form-text text-danger">{errors.sub_title}</div>
                         </div>
 
-                        {/* Department - Only show for Laboratory/Facility */}
-                        {showSpecialFields && (
-                            <div className="mb-3 col-md-6">
-                                <label className="form-label">Department <span className="text-danger">*</span></label>
-                                <select
-                                    className="form-control"
-                                    value={data.department_id}
-                                    onChange={(e) => setData("department_id", e.target.value)}
-                                >
-                                    <option value="">Select Department</option>
-                                    {departments.map((dept) => (
-                                        <option key={dept.id} value={dept.id}>
-                                            {dept.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="form-text text-danger">{errors.department_id}</div>
-                            </div>
-                        )}
+                        {/* Department */}
+                        <div className="mb-3 col-md-6">
+                            <label className="form-label">Department</label>
+                            <select
+                                className="form-control"
+                                value={data.department_id}
+                                onChange={(e) => handleDeptChange(e.target.value)}
+                                disabled={isDepartmentDisabled}
+                            >
+                                <option value="">Select Department</option>
+                                {departments.map((dept) => (
+                                    <option key={dept.id} value={dept.id}>
+                                        {dept.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {isDepartmentDisabled && <div className="form-text text-muted">Disabled: School is selected</div>}
+                            <div className="form-text text-danger">{errors.department_id}</div>
+                        </div>
 
                         {showSpecialFields && (
                             <div className="mb-3 col-md-6">
@@ -187,6 +242,17 @@ return (
                                     onChange={(e) => setData("publish_date",e.target.value)}
                                 />
                             <div className="form-text text-danger">{errors.publish_date}</div> 
+                        </div>
+                        <div className="mb-3 col-md-6">
+                            <label htmlFor="display_order" className="form-label">Display Order</label>
+                              <input
+                                    className="form-control"
+                                    type="number"
+                                    id="display_order" 
+                                    value={data.display_order} 
+                                    onChange={(e) => setData("display_order",e.target.value)}
+                                />
+                            <div className="form-text text-danger">{errors.display_order}</div> 
                         </div>
                     </div>
                     <div className="mt-2">

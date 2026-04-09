@@ -17,6 +17,7 @@ class Homepage extends Model
         'about_chancellor_title',
         'about_chancellor_name',
         'about_chancellor_video_url',
+        'about_video',
         'highlights',
         'buttons',
         'logo_content',

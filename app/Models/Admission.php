@@ -20,6 +20,7 @@ class Admission extends Model
         'program_desc',
         'program_button_text',
         'program_button_url',
+        'academic_calendar',
     ];
     
     protected $casts = [

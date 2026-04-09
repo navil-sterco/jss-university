@@ -40,4 +40,34 @@ class SeoSettingController extends Controller
             'data' => $data
         ]);
     }
+
+    /**
+     * Perform global site search using SEO data
+     */
+    public function globalSearch(Request $request)
+    {
+        $query = $request->input('q');
+
+        if (empty($query)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Search query is required',
+                'data' => []
+            ]);
+        }
+
+        $results = SeoSetting::where('meta_title', 'like', "%{$query}%")
+            ->orWhere('meta_description', 'like', "%{$query}%")
+            ->orWhere('slug', 'like', "%{$query}%")
+            ->orWhereJsonContains('search_terms', $query)
+            ->orWhereJsonContains('keywords', $query)
+            ->select('meta_title as title', 'meta_description as description', 'slug as url')
+            ->limit(100)
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $results
+        ]);
+    }
 }

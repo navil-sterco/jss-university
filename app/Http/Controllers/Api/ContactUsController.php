@@ -21,7 +21,7 @@ class ContactUsController extends Controller
 
     public function coursesList()
     {
-        $courses = Course::select('id','name')->get();
+        $courses = Course::where('status', 1)->select('id','name')->get();
         return response()->json([
             'status' => true,
             'data' => $courses,

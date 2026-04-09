@@ -152,7 +152,7 @@ class HeaderController extends Controller
                 
             case 'department':
                 $department = Department::select('slug')->where('id', $item->reference_id)->first();
-                return $department ? '/departments/' . $department->slug : '#';
+                return $department ? '/department/' . $department->slug : '#';
                 
             case 'page':
                 $page = Pages::select('slug')->where('id', $item->reference_id)->first();

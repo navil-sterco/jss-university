@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use App\Models\Degree;
-use App\Models\Program;
 use App\Models\Department;
+use App\Models\Faq;
+use App\Models\Program;
 use App\Models\Testimonial;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class Course extends Model
 {
@@ -29,6 +30,7 @@ class Course extends Model
         'eligibility_criteria_notices',
         'apply_now_link',
         'program_structure',
+        'brouchure',
         'scholarship',
         'peos',
         'pos',
@@ -45,6 +47,7 @@ class Course extends Model
         'career_opportunities',
         'banner',
         'image',
+        'school_listing_image',
         'eligibility_marks',
         'eligibility_desc',
         'overview_title',
@@ -54,6 +57,10 @@ class Course extends Model
         'career_subtitle',
         'career_desc',
         'career_image',
+        'description_title',
+        'description_content',
+        'tab_section_info',
+        'tab_section_tabs',
     ];
 
     protected $casts = [
@@ -64,6 +71,8 @@ class Course extends Model
         'curriculum_desc' => 'array',
         'career_opportunities' => 'array',
         'useful_links' => 'array',
+        'tab_section_info' => 'array',
+        'tab_section_tabs' => 'array',
     ];
 
     public function department()
@@ -76,9 +85,28 @@ class Course extends Model
         return $this->belongsTo(Degree::class);
     }
 
+    public function schools()
+    {
+        return $this->belongsToMany(School::class, 'courses_school', 'course_id', 'school_id')->withTimestamps();
+    }
+
+    public function pages()
+    {
+        return $this->belongsToMany(Pages::class, 'courses_page', 'course_id', 'page_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'courses_department', 'course_id', 'department_id')->withTimestamps();
+    }
+
     public function testimonials()
     {
         return $this->belongsToMany(Testimonial::class, 'testimonials_courses', 'course_id', 'testimonial_id')->withTimestamps();
+    }
+    public function faqs()
+    {
+        return $this->belongsToMany(Faq::class, 'faqs_courses', 'course_id', 'faq_id')->withTimestamps();
     }
 
     public function scopeFilter(Builder $query, $filters)

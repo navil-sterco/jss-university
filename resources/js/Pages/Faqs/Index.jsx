@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useForm, usePage, router } from '@inertiajs/react';
 import Pagination from '@/Components/Pagination';
 import { ToastContainer, toast } from 'react-toastify';
-import _ from 'lodash';
+import { debounce } from "lodash";
 
 const Index = (props) => {
     const { searchTerm, faqs } = props;
@@ -22,7 +22,7 @@ const Index = (props) => {
 
     // Debounced search
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("faq", { search: query }, { preserveState: true, replace: true });
         }, 300);
         delaySearch();

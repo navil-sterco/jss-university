@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useForm, usePage, router } from '@inertiajs/react';
 import Pagination from '@/Components/Pagination';
 import { ToastContainer, toast } from 'react-toastify';
-import _ from 'lodash';
+import { debounce } from "lodash";
 
 const Index = (props) => {
     const { searchTerm, courses } = props;
@@ -13,11 +13,15 @@ const Index = (props) => {
     const modalInstance = useRef(null);
     const [courseIdDelete, setCourseIdDelete] = useState(null);
 
+    // duplicate state
+    const [duplicateId, setDuplicateId] = useState(null);
+    const [isDuplicateAction, setIsDuplicateAction] = useState(false);
+
     const [selectedCourse, setSelectedCourse] = useState(null);
     const viewModalRef = useRef(null);
     const viewModalInstance = useRef(null);
 
-    const { get, processing } = useForm();
+    const { get, post, processing } = useForm();
 
     // Toast success messages
     useEffect(() => {
@@ -26,7 +30,7 @@ const Index = (props) => {
 
     // Debounced search
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("course", { search: query }, { preserveState: true, replace: true });
         }, 300);
         delaySearch();
@@ -42,6 +46,7 @@ const Index = (props) => {
     // Show delete confirmation modal
     const showDeleteModal = (id) => {
         setCourseIdDelete(id);
+        setIsDuplicateAction(false);
         modalInstance.current.show();
     };
 
@@ -52,6 +57,32 @@ const Index = (props) => {
                 modalInstance.current.hide();
                 setCourseIdDelete(null);
             },
+        });
+    };
+
+    // Duplicate modal handling
+    const showDuplicateModal = (id) => {
+        setDuplicateId(id);
+        setIsDuplicateAction(true);
+        modalInstance.current.show();
+    };
+
+    const handleConfirmDuplicate = () => {
+        if (!duplicateId) return;
+        modalInstance.current.hide();
+        post(route('course.duplicate', duplicateId), {}, {
+            onSuccess: () => {
+                setDuplicateId(null);
+                setIsDuplicateAction(false);
+                toast.success('Course duplicated successfully');
+            },
+            onError: () => {
+                setIsDuplicateAction(false);
+            },
+            onFinish: () => {
+                setDuplicateId(null);
+                setIsDuplicateAction(false);
+            }
         });
     };
 
@@ -177,6 +208,21 @@ const Index = (props) => {
                                     <td>
                                         <div className="d-flex align-items-center">
                                             <Link
+                                                className="btn btn-sm btn-outline-primary p-1"
+                                                href={route("course.mapping", course.id)}
+                                            >
+                                                <span className="tf-icons bx bx-right-arrow-circle bx-18px me-1"></span>
+                                                Mapping
+                                            </Link>
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-outline-secondary p-1 ms-1"
+                                                onClick={() => showDuplicateModal(course.id)}
+                                            >
+                                                <span className="tf-icons bx bx-copy bx-18px me-1"></span>
+                                                Duplicate
+                                            </button>
+                                            <Link
                                                 href={route('course.section.create', course.id)}
                                                 method="get"
                                                 as="button"
@@ -222,18 +268,23 @@ const Index = (props) => {
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title">Confirm Deletion</h5>
+                            <h5 className="modal-title">{isDuplicateAction ? 'Confirm Duplicate' : 'Confirm Deletion'}</h5>
                             <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div className="modal-body">Are you sure you want to delete this Course?</div>
+                        <div className="modal-body">
+                            {isDuplicateAction ?
+                                'Are you sure you want to duplicate this course? This will create a copy.' :
+                                'Are you sure you want to delete this Course?'
+                            }
+                        </div>
                         <div className="modal-footer">
                             <button className="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button
-                                className="btn btn-danger"
-                                onClick={handleConfirmDelete}
+                                className={isDuplicateAction ? 'btn btn-primary' : 'btn btn-danger'}
+                                onClick={isDuplicateAction ? handleConfirmDuplicate : handleConfirmDelete}
                                 disabled={processing}
                             >
-                                {processing ? 'Deleting...' : 'Yes, Delete'}
+                                {processing ? (isDuplicateAction ? 'Duplicating...' : 'Processing...') : (isDuplicateAction ? 'Yes, Duplicate' : 'Yes, Delete')}
                             </button>
                         </div>
                     </div>
@@ -389,7 +440,7 @@ const Index = (props) => {
                                             </h6>
                                             <div className="row g-3">
                                                 <div className="col-12">
-                                                    <label className="form-label fw-semibold text-muted small">Eligibility Marks</label>
+                                                    <label className="form-label fw-semibold text-muted small">Eligibility Link</label>
                                                     <div className="d-flex align-items-center">
                                                         <i className="bx bx-award text-success me-2"></i>
                                                         <span>{selectedCourse.eligibility_marks || <span className="text-muted">—</span>}</span>
@@ -468,16 +519,7 @@ const Index = (props) => {
                                                 <div className="col-12">
                                                     <label className="form-label fw-semibold text-muted small">Scholarship Details</label>
                                                     {selectedCourse.scholarship != null ? (
-                                                        <a 
-                                                            href={selectedCourse.scholarship} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer"
-                                                            className="d-flex align-items-center text-primary text-decoration-none"
-                                                        >
-                                                            <i className="bx bx-file me-2"></i>
-                                                            <span>View Scholarship Details PDF</span>
-                                                            <i className="bx bx-link-external ms-2 small"></i>
-                                                        </a>
+                                                        <p className="mb-0 text-dark">{selectedCourse.scholarship}</p>
                                                     ) : (
                                                         <span className="text-muted">—</span>
                                                     )}

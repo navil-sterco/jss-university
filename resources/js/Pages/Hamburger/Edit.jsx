@@ -25,6 +25,7 @@ const Edit = (props) => {
         section_heading_second: hamburger.section_heading_second || "",
         section_subheading_second: hamburger.section_subheading_second || "",
         section_video_url: hamburger.section_video_url || "",
+        target_blank: hamburger.target_blank ?? false,
 
         display_order: hamburger.display_order || 100,
         is_active: hamburger.is_active ?? true,
@@ -91,6 +92,7 @@ const Edit = (props) => {
             section_heading_second: data.section_heading_second,
             section_subheading_second: data.section_subheading_second,
             section_video_url: data.section_video_url,
+            target_blank: data.target_blank ? 1 : 0,
             display_order: data.display_order,
             is_active: data.is_active ? 1 : 0,
             _method: 'PUT'
@@ -235,6 +237,20 @@ const Edit = (props) => {
                             </div>
 
                             <div className="mb-3 col-md-6">
+                                <label htmlFor="target_blank" className="form-label">Target Blank</label>
+                                <select
+                                    id="target_blank"
+                                    className="form-select"
+                                    value={data.target_blank ? 'true' : 'false'}
+                                    onChange={(e) => setData('target_blank', e.target.value === 'true')}
+                                >
+                                    <option value="true">True</option>
+                                    <option value="false">False</option>
+                                </select>
+                                <div className="form-text text-danger">{errors.target_blank}</div>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
                                 <label htmlFor="is_active" className="form-label">Status</label>
                                 <select
                                     id="is_active"
@@ -248,207 +264,207 @@ const Edit = (props) => {
                                 <div className="form-text text-danger">{errors.is_active}</div>
                             </div>
                             {!data.parent_id && (
-                            <>
-                                {/* First Section Information */}
-                                <div className="col-12 mt-4">
-                                    <hr />
-                                    <h5 className="mb-3">First Section Information</h5>
-                                </div>
+                                <>
+                                    {/* First Section Information */}
+                                    <div className="col-12 mt-4">
+                                        <hr />
+                                        <h5 className="mb-3">First Section Information</h5>
+                                    </div>
 
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_title" className="form-label">Section Title</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_title"
-                                        value={data.section_title}
-                                        onChange={(e) => setData('section_title', e.target.value)}
-                                        placeholder="Enter section title"
-                                    />
-                                    <div className="form-text text-danger">{errors.section_title}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_subtitle" className="form-label">Section Subtitle</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_subtitle"
-                                        value={data.section_subtitle}
-                                        onChange={(e) => setData('section_subtitle', e.target.value)}
-                                        placeholder="Enter section subtitle"
-                                    />
-                                    <div className="form-text text-danger">{errors.section_subtitle}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="link" className="form-label">Link</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="link"
-                                        value={data.link}
-                                        onChange={(e) => setData('link', e.target.value)}
-                                        placeholder="/link or https://example.com"
-                                    />
-                                    <div className="form-text text-danger">{errors.link}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_heading_first" className="form-label">First Section Heading</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_heading_first"
-                                        value={data.section_heading_first}
-                                        onChange={(e) => setData('section_heading_first', e.target.value)}
-                                    />
-                                    <div className="form-text text-danger">{errors.section_heading_first}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_subheading_first" className="form-label">First Section Subheading</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_subheading_first"
-                                        value={data.section_subheading_first}
-                                        onChange={(e) => setData('section_subheading_first', e.target.value)}
-                                    />
-                                    <div className="form-text text-danger">{errors.section_subheading_first}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_image_first" className="form-label">First Section Image</label>
-                                    <div className="d-flex align-items-center">
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_title" className="form-label">Section Title</label>
                                         <input
                                             className="form-control"
-                                            type="file"
-                                            id="section_image_first"
-                                            accept="image/*"
-                                            onChange={(e) => handleFileChange('section_image_first', e.target.files)}
+                                            type="text"
+                                            id="section_title"
+                                            value={data.section_title}
+                                            onChange={(e) => setData('section_title', e.target.value)}
+                                            placeholder="Enter section title"
                                         />
+                                        <div className="form-text text-danger">{errors.section_title}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_subtitle" className="form-label">Section Subtitle</label>
+                                        <input
+                                            className="form-control"
+                                            type="text"
+                                            id="section_subtitle"
+                                            value={data.section_subtitle}
+                                            onChange={(e) => setData('section_subtitle', e.target.value)}
+                                            placeholder="Enter section subtitle"
+                                        />
+                                        <div className="form-text text-danger">{errors.section_subtitle}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="link" className="form-label">Link</label>
+                                        <input
+                                            className="form-control"
+                                            type="text"
+                                            id="link"
+                                            value={data.link}
+                                            onChange={(e) => setData('link', e.target.value)}
+                                            placeholder="/link or https://example.com"
+                                        />
+                                        <div className="form-text text-danger">{errors.link}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_heading_first" className="form-label">First Section Heading</label>
+                                        <input
+                                            className="form-control"
+                                            type="text"
+                                            id="section_heading_first"
+                                            value={data.section_heading_first}
+                                            onChange={(e) => setData('section_heading_first', e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.section_heading_first}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_subheading_first" className="form-label">First Section Subheading</label>
+                                        <input
+                                            className="form-control"
+                                            type="text"
+                                            id="section_subheading_first"
+                                            value={data.section_subheading_first}
+                                            onChange={(e) => setData('section_subheading_first', e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.section_subheading_first}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_image_first" className="form-label">First Section Image</label>
+                                        <div className="d-flex align-items-center">
+                                            <input
+                                                className="form-control"
+                                                type="file"
+                                                id="section_image_first"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileChange('section_image_first', e.target.files)}
+                                            />
+                                            {(data.section_image_first || hamburger.section_image_first) && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-danger ms-2"
+                                                    onClick={() => removeImage('section_image_first')}
+                                                >
+                                                    <i className='bx bx-x'></i>
+                                                </button>
+                                            )}
+                                        </div>
                                         {(data.section_image_first || hamburger.section_image_first) && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-danger ms-2"
-                                                onClick={() => removeImage('section_image_first')}
-                                            >
-                                                <i className='bx bx-x'></i>
-                                            </button>
+                                            <div className="form-text text-success mt-1">
+                                                <i className="fas fa-check me-1"></i>
+                                                {data.section_image_first instanceof File ? data.section_image_first.name : hamburger.section_image_first || 'Image exists'}
+                                            </div>
                                         )}
+                                        <div className="form-text text-danger">{errors.section_image_first}</div>
                                     </div>
-                                    {(data.section_image_first || hamburger.section_image_first) && (
-                                        <div className="form-text text-success mt-1">
-                                            <i className="fas fa-check me-1"></i>
-                                            {data.section_image_first instanceof File ? data.section_image_first.name : hamburger.section_image_first || 'Image exists'}
-                                        </div>
-                                    )}
-                                    <div className="form-text text-danger">{errors.section_image_first}</div>
-                                </div>
 
-                                {/* Second Section Information */}
-                                <div className="col-12 mt-4">
-                                    <hr />
-                                    <h5 className="mb-3">Second Section Information</h5>
-                                </div>
+                                    {/* Second Section Information */}
+                                    <div className="col-12 mt-4">
+                                        <hr />
+                                        <h5 className="mb-3">Second Section Information</h5>
+                                    </div>
 
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_title_second" className="form-label">Second Section Title</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_title_second"
-                                        value={data.section_title_second}
-                                        onChange={(e) => setData('section_title_second', e.target.value)}
-                                    />
-                                    <div className="form-text text-danger">{errors.section_title_second}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_subtitle_second" className="form-label">Second Section Subtitle</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_subtitle_second"
-                                        value={data.section_subtitle_second}
-                                        onChange={(e) => setData('section_subtitle_second', e.target.value)}
-                                    />
-                                    <div className="form-text text-danger">{errors.section_subtitle_second}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_heading_second" className="form-label">Second Section Heading</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_heading_second"
-                                        value={data.section_heading_second}
-                                        onChange={(e) => setData('section_heading_second', e.target.value)}
-                                    />
-                                    <div className="form-text text-danger">{errors.section_heading_second}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_subheading_second" className="form-label">Second Section Subheading</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_subheading_second"
-                                        value={data.section_subheading_second}
-                                        onChange={(e) => setData('section_subheading_second', e.target.value)}
-                                    />
-                                    <div className="form-text text-danger">{errors.section_subheading_second}</div>
-                                </div>
-
-                                <div className="mb-3 col-md-6">
-                                    <label htmlFor="section_image_second" className="form-label">Second Section Image</label>
-                                    <div className="d-flex align-items-center">
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_title_second" className="form-label">Second Section Title</label>
                                         <input
                                             className="form-control"
-                                            type="file"
-                                            id="section_image_second"
-                                            accept="image/*"
-                                            onChange={(e) => handleFileChange('section_image_second', e.target.files)}
+                                            type="text"
+                                            id="section_title_second"
+                                            value={data.section_title_second}
+                                            onChange={(e) => setData('section_title_second', e.target.value)}
                                         />
-                                        {(data.section_image_second || hamburger.section_image_second) && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-danger ms-2"
-                                                onClick={() => removeImage('section_image_second')}
-                                            >
-                                                <i className='bx bx-x'></i>
-                                            </button>
-                                        )}
+                                        <div className="form-text text-danger">{errors.section_title_second}</div>
                                     </div>
-                                    {(data.section_image_second || hamburger.section_image_second) && (
-                                        <div className="form-text text-success mt-1">
-                                            <i className="fas fa-check me-1"></i>
-                                            {data.section_image_second instanceof File ? data.section_image_second.name : hamburger.section_image_second || 'Image exists'}
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_subtitle_second" className="form-label">Second Section Subtitle</label>
+                                        <input
+                                            className="form-control"
+                                            type="text"
+                                            id="section_subtitle_second"
+                                            value={data.section_subtitle_second}
+                                            onChange={(e) => setData('section_subtitle_second', e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.section_subtitle_second}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_heading_second" className="form-label">Second Section Heading</label>
+                                        <input
+                                            className="form-control"
+                                            type="text"
+                                            id="section_heading_second"
+                                            value={data.section_heading_second}
+                                            onChange={(e) => setData('section_heading_second', e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.section_heading_second}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_subheading_second" className="form-label">Second Section Subheading</label>
+                                        <input
+                                            className="form-control"
+                                            type="text"
+                                            id="section_subheading_second"
+                                            value={data.section_subheading_second}
+                                            onChange={(e) => setData('section_subheading_second', e.target.value)}
+                                        />
+                                        <div className="form-text text-danger">{errors.section_subheading_second}</div>
+                                    </div>
+
+                                    <div className="mb-3 col-md-6">
+                                        <label htmlFor="section_image_second" className="form-label">Second Section Image</label>
+                                        <div className="d-flex align-items-center">
+                                            <input
+                                                className="form-control"
+                                                type="file"
+                                                id="section_image_second"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileChange('section_image_second', e.target.files)}
+                                            />
+                                            {(data.section_image_second || hamburger.section_image_second) && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-danger ms-2"
+                                                    onClick={() => removeImage('section_image_second')}
+                                                >
+                                                    <i className='bx bx-x'></i>
+                                                </button>
+                                            )}
                                         </div>
-                                    )}
-                                    <div className="form-text text-danger">{errors.section_image_second}</div>
-                                </div>
+                                        {(data.section_image_second || hamburger.section_image_second) && (
+                                            <div className="form-text text-success mt-1">
+                                                <i className="fas fa-check me-1"></i>
+                                                {data.section_image_second instanceof File ? data.section_image_second.name : hamburger.section_image_second || 'Image exists'}
+                                            </div>
+                                        )}
+                                        <div className="form-text text-danger">{errors.section_image_second}</div>
+                                    </div>
 
-                                {/* Video Section */}
-                                <div className="col-12 mt-4">
-                                    <hr />
-                                    <h5 className="mb-3">Video Section</h5>
-                                </div>
+                                    {/* Video Section */}
+                                    <div className="col-12 mt-4">
+                                        <hr />
+                                        <h5 className="mb-3">Video Section</h5>
+                                    </div>
 
-                                <div className="mb-3 col-12">
-                                    <label htmlFor="section_video_url" className="form-label">Video URL</label>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        id="section_video_url"
-                                        value={data.section_video_url}
-                                        onChange={(e) => setData('section_video_url', e.target.value)}
-                                        placeholder="https://youtube.com/embed/... or https://vimeo.com/..."
-                                    />
-                                    <div className="form-text text-danger">{errors.section_video_url}</div>
-                                </div>
-                            </>
+                                    <div className="mb-3 col-12">
+                                        <label htmlFor="section_video_url" className="form-label">Video URL</label>
+                                        <input
+                                            className="form-control"
+                                            type="text"
+                                            id="section_video_url"
+                                            value={data.section_video_url}
+                                            onChange={(e) => setData('section_video_url', e.target.value)}
+                                            placeholder="https://youtube.com/embed/... or https://vimeo.com/..."
+                                        />
+                                        <div className="form-text text-danger">{errors.section_video_url}</div>
+                                    </div>
+                                </>
                             )}
                         </div>
 

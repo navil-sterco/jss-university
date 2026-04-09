@@ -12,6 +12,7 @@ const Create = () => {
         title: "",
         description: "",
         image: "",
+        alternate_image: "",
     });
 
     const fileInputRef = useRef(null);
@@ -40,6 +41,19 @@ const Create = () => {
                                     accept="image/png, image/jpeg, image/webp"
                                 />
                                 <div className="form-text text-danger">{errors.image}</div>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label" htmlFor="alternate_image">Alternate Program Image</label>
+                                <input
+                                    type="file"
+                                    id="alternate_image"
+                                    className="form-control"
+                                    ref={fileInputRef}
+                                    onChange={(e) => setData("alternate_image", e.target.files[0])}
+                                    accept="image/png, image/jpeg, image/webp"
+                                />
+                                <div className="form-text text-danger">{errors.alternate_image}</div>
                             </div>
 
                             {/* Name */}

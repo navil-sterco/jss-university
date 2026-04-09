@@ -3,6 +3,9 @@
     "label": "Banner Top",
     "fields": [
       { "name": "title", "label": "Title", "type": "text", "placeholder": "Enter title" },
+      { "name": "subtitle", "label": "Sub Title", "type": "text", "placeholder": "Enter sub title" },
+      { "name": "count", "label": "Count", "type": "text", "placeholder": "Enter count" },
+      { "name": "count_description", "label": "Count Description", "type": "text", "placeholder": "Enter Count Description"},
       { "name": "description", "label": "Description", "type": "text", "placeholder": "Enter description" },
       { "name": "file", "label": "Image", "type": "file" }
     ]
@@ -82,6 +85,7 @@
   },
   "boxes": {
     "label": "Boxes",
+    "allow_multiple_items": true,
     "fields": [
       { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
       { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" },
@@ -98,6 +102,23 @@
   },
   "heading": {
     "label": "Heading",
+    "allow_multiple_items": false,
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" }
+    ]
+  },
+  "placementHeading": {
+    "label": "Placement Heading",
+    "allow_multiple_items": false,
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Heading" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subheading" }
+    ]
+  },
+  "placementBox": {
+    "label": "Placement Box",
+    "allow_multiple_items": true,
     "fields": [
       { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
       { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" }
@@ -177,6 +198,13 @@
       { "name": "link", "label": "Link", "type": "text", "placeholder": "Link" },
       { "name": "number", "label": "Number", "type": "text", "placeholder": "85+" },
       { "name": "quote", "label": "Quote", "type": "text", "placeholder": "Quote" }
+    ]
+  },
+  "whiteboxes": {
+    "label": "White Boxes",
+    "fields": [
+      { "name": "title", "label": "Title", "type": "text", "placeholder": "Title" },
+      { "name": "subtitle", "label": "Subtitle", "type": "text", "placeholder": "Subtitle" }
     ]
   },
   "comingSoon": {

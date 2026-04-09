@@ -3,7 +3,7 @@ import { Link, useForm } from '@inertiajs/react';
 import Pagination from '@/Components/Pagination';
 import { router, usePage } from '@inertiajs/react';
 import { ToastContainer, toast } from 'react-toastify';
-import _, { set } from "lodash";
+import _ from "lodash";
 
 const Index = (props) => {
     const { searchTerm, tabs } = props;

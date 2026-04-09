@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Models\Banner;
-use App\Models\Happening;
-use App\Models\Recruiter;
+use App\Models\Course;
 use App\Models\Department;
-use App\Models\Testimonial;
 use App\Models\FactsAndFigures;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Faculty;
+use App\Models\Happening;
+use App\Models\Program;
+use App\Models\Recruiter;
+use App\Models\Testimonial;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class School extends Model
 {
@@ -30,14 +33,14 @@ class School extends Model
 
         'placement_title', 'placement_subtitle', 'hall_of_fame_image', 'hall_of_fame_heading',
         'hall_of_fame_url', 'testimonial_title', 'testimonial_subtitle', 'happening_title',
-        'happening_subtitle',
+        'happening_subtitle','about_chancellor_items'
     ];
 
     protected $casts = [
         'about_highlights' => 'array',
         'about_buttons' => 'array',
-        'department_buttons' => 'array',
         'useful_links' => 'array',
+        'about_chancellor_items' => 'array',
     ];
 
     public function banners()
@@ -48,6 +51,24 @@ class School extends Model
     public function testimonials()
     {
         return $this->belongsToMany(Testimonial::class, 'testimonial_school', 'school_id', 'testimonial_id')->withTimestamps();
+    }
+
+    public function pages()
+    {
+        return $this->belongsToMany(Pages::class, 'pages_school', 'school_id', 'page_id')->withTimestamps();
+    }
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'courses_school', 'school_id', 'course_id')->withTimestamps();
+    }
+
+    public function programs()
+    {
+        return $this->belongsToMany(Program::class, 'programs_school', 'school_id', 'program_id')->withTimestamps();
+    }
+    public function faculty()
+    {
+        return $this->belongsToMany(Faculty::class, 'faculties_school', 'school_id', 'faculty_id')->withTimestamps();
     }
 
     public function happenings()

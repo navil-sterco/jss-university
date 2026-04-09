@@ -64,6 +64,7 @@ class TestimonialController extends Controller
             ],
             'alt_text' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'home_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'video_url' => 'nullable|string|max:555',
             'short_description' => 'nullable|string',
             'description' => 'nullable|string',
@@ -95,6 +96,20 @@ class TestimonialController extends Controller
             $image->move(public_path('assets/img/testimonials/'), $imageName);
 
             $validated['image'] = 'assets/img/testimonials/' . $imageName;
+        }
+        if ($request->hasFile('home_image')) {
+            $image = $request->file('home_image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('assets/img/testimonials/'), $imageName);
+
+            $validated['home_image'] = 'assets/img/testimonials/' . $imageName;
+        }
+        if ($request->hasFile('placement_image')) {
+            $image = $request->file('placement_image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('assets/img/testimonials/'), $imageName);
+
+            $validated['placement_image'] = 'assets/img/testimonials/' . $imageName;
         }
 
         Testimonial::create($validated);
@@ -164,6 +179,34 @@ class TestimonialController extends Controller
             $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
             $image->move(public_path('assets/img/testimonials/'), $imageName);
             $validated['image'] = 'assets/img/testimonials/' . $imageName;
+        }
+        if ($request->hasFile('home_image')) {
+            $request->validate([
+                'home_image' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
+
+            if (!empty($testimonial->home_image) && file_exists(public_path($testimonial->home_image))) {
+                unlink(public_path($testimonial->home_image));
+            }
+
+            $home_image = $request->file('home_image');
+            $imageName = time() . '_' . uniqid() . '.' . $home_image->getClientOriginalExtension();
+            $home_image->move(public_path('assets/img/testimonials/'), $imageName);
+            $validated['home_image'] = 'assets/img/testimonials/' . $imageName;
+        }
+        if ($request->hasFile('placement_image')) {
+            $request->validate([
+                'placement_image' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
+
+            if (!empty($testimonial->placement_image) && file_exists(public_path($testimonial->placement_image))) {
+                unlink(public_path($testimonial->placement_image));
+            }
+
+            $placement_image = $request->file('placement_image');
+            $imageName = time() . '_' . uniqid() . '.' . $placement_image->getClientOriginalExtension();
+            $placement_image->move(public_path('assets/img/testimonials/'), $imageName);
+            $validated['placement_image'] = 'assets/img/testimonials/' . $imageName;
         }
 
         $testimonial->update($validated);

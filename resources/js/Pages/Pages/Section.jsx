@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { router, usePage } from '@inertiajs/react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import SECTION_TEMPLATES from '../../data/sectionTemplates.json';
+import FALLBACK_SECTION_TEMPLATES from '../../data/sectionTemplates.json';
 import {
   PlusCircle,
   Trash2,
@@ -55,10 +55,91 @@ const componentIcons = {
   comingSoon: <Megaphone size={20} />,
 };
 
+// Helper function to convert File to Base64
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+// Helper to check if a value is a File
+const isFile = (value) => {
+  return value instanceof File;
+};
+
+// Helper to process data and convert files to base64
+const processItemForSubmit = async (item) => {
+  const processed = { ...item };
+
+  for (const [key, value] of Object.entries(item)) {
+    if (key === 'item_uuid' || key === 'id' || key === 'position' || key === 'allow_multiple_items') {
+      continue;
+    }
+
+    // Handle File objects
+    if (isFile(value)) {
+      try {
+        const base64 = await fileToBase64(value);
+        processed[key] = {
+          base64,
+          filename: value.name,
+          type: value.type,
+          size: value.size
+        };
+      } catch (error) {
+        console.error(`Error converting file ${key}:`, error);
+        toast.error(`Error processing file: ${value.name}`);
+      }
+    }
+    // Handle arrays (repeaters)
+    else if (Array.isArray(value)) {
+      const processedArray = [];
+
+      for (const row of value) {
+        if (typeof row === 'object' && row !== null) {
+          const processedRow = {};
+
+          for (const [subKey, subValue] of Object.entries(row)) {
+            if (isFile(subValue)) {
+              try {
+                const base64 = await fileToBase64(subValue);
+                processedRow[subKey] = {
+                  base64,
+                  filename: subValue.name,
+                  type: subValue.type,
+                  size: subValue.size
+                };
+              } catch (error) {
+                console.error(`Error converting repeater file ${subKey}:`, error);
+              }
+            } else {
+              processedRow[subKey] = subValue;
+            }
+          }
+
+          processedArray.push(processedRow);
+        } else {
+          processedArray.push(row);
+        }
+      }
+
+      processed[key] = processedArray;
+    }
+  }
+
+  return processed;
+};
+
 const PageBuilder = () => {
   const { props } = usePage();
-  const { page, existingSections = [], flash } = props;
-  
+  const { page, existingSections = [], sectionTemplates, flash } = props;
+  const SECTION_TEMPLATES = sectionTemplates && Object.keys(sectionTemplates).length > 0
+    ? sectionTemplates
+    : FALLBACK_SECTION_TEMPLATES;
+
   const [sections, setSections] = useState([]);
   const [showComponentPicker, setShowComponentPicker] = useState(false);
   const [draggedSection, setDraggedSection] = useState(null);
@@ -89,6 +170,13 @@ const PageBuilder = () => {
         section_name: section.type,
         group_key: section.group_key,
         position: index + 1,
+        allowMultipleItems: (() => {
+          const first = section.items?.[0];
+          if (first && (first.allow_multiple_items === 0 || first.allow_multiple_items === 1)) {
+            return !!first.allow_multiple_items;
+          }
+          return !!SECTION_TEMPLATES?.[section.type]?.allow_multiple_items;
+        })(),
         items: section.items.map((item, itemIndex) => ({
           ...item,
           item_uuid: item.item_uuid || generateUUID(),
@@ -99,7 +187,7 @@ const PageBuilder = () => {
       }));
       setSections(formatted);
     }
-  }, [existingSections]);
+  }, [existingSections, SECTION_TEMPLATES]);
 
   const generateUUID = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -112,6 +200,7 @@ const PageBuilder = () => {
       items: [],
       position: sections.length + 1,
       isCollapsed: false,
+      allowMultipleItems: !!SECTION_TEMPLATES?.[sectionType]?.allow_multiple_items,
     };
     setSections([...sections, newSection]);
     setShowComponentPicker(false);
@@ -120,18 +209,27 @@ const PageBuilder = () => {
 
   const addItemToSection = (sectionIndex) => {
     const updated = [...sections];
-    const newItem = { 
+    if (updated[sectionIndex]?.allowMultipleItems === false && updated[sectionIndex].items.length >= 1) {
+      toast.info("This section is set to Single item. Switch to Multiple to add more.");
+      return;
+    }
+    const newItem = {
       item_uuid: generateUUID(),
       position: updated[sectionIndex].items.length + 1
     };
-    
+
     const sectionType = updated[sectionIndex].section_name;
     if (SECTION_TEMPLATES[sectionType]) {
       SECTION_TEMPLATES[sectionType].fields.forEach(field => {
-        newItem[field.name] = '';
+        if (field.type === 'repeater') {
+          newItem[field.name] = [];
+        } else {
+          newItem[field.name] = '';
+        }
       });
     }
-    
+    newItem.allow_multiple_items = updated[sectionIndex]?.allowMultipleItems ? 1 : 0;
+
     updated[sectionIndex].items.push(newItem);
     updated[sectionIndex].isCollapsed = false;
     setSections(updated);
@@ -140,7 +238,7 @@ const PageBuilder = () => {
 
   const deleteSection = (sectionIndex) => {
     const section = sections[sectionIndex];
-    
+
     if (section.group_key) {
       router.get(route('sections.delete', section.group_key), {}, {
         preserveScroll: true,
@@ -171,20 +269,20 @@ const PageBuilder = () => {
   const deleteItem = (sectionIndex, itemIndex) => {
     const section = sections[sectionIndex];
     const item = section.items[itemIndex];
-    
+
     if (item.id) {
       router.get(route('sections.item.delete', item.id), {}, {
         preserveScroll: true,
         onSuccess: () => {
           const updated = [...sections];
           updated[sectionIndex].items = updated[sectionIndex].items.filter((_, i) => i !== itemIndex);
-          
+
           const itemsWithUpdatedPositions = updated[sectionIndex].items.map((item, index) => ({
             ...item,
             position: index + 1
           }));
           updated[sectionIndex].items = itemsWithUpdatedPositions;
-          
+
           setSections(updated);
           toast.success("Item deleted successfully");
         },
@@ -195,13 +293,13 @@ const PageBuilder = () => {
     } else {
       const updated = [...sections];
       updated[sectionIndex].items = updated[sectionIndex].items.filter((_, i) => i !== itemIndex);
-      
+
       const itemsWithUpdatedPositions = updated[sectionIndex].items.map((item, index) => ({
         ...item,
         position: index + 1
       }));
       updated[sectionIndex].items = itemsWithUpdatedPositions;
-      
+
       setSections(updated);
       toast.success("Item removed");
     }
@@ -216,6 +314,105 @@ const PageBuilder = () => {
   const handleFieldChange = (sectionIndex, itemIndex, field, value) => {
     const updated = [...sections];
     updated[sectionIndex].items[itemIndex][field] = value;
+    setSections(updated);
+  };
+
+  const normalizeRepeaterValue = (val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  const addRepeaterRow = (sectionIndex, itemIndex, fieldName, subfields = []) => {
+    const updated = [...sections];
+    const curr = normalizeRepeaterValue(updated[sectionIndex].items[itemIndex][fieldName]);
+    const row = {};
+    subfields.forEach((sf) => {
+      row[sf.name] = '';
+    });
+    updated[sectionIndex].items[itemIndex][fieldName] = [...curr, row];
+    setSections(updated);
+  };
+
+  const removeRepeaterRow = (sectionIndex, itemIndex, fieldName, rowIndex) => {
+    const updated = [...sections];
+    const curr = normalizeRepeaterValue(updated[sectionIndex].items[itemIndex][fieldName]);
+    updated[sectionIndex].items[itemIndex][fieldName] = curr.filter((_, idx) => idx !== rowIndex);
+    setSections(updated);
+  };
+
+  const updateRepeaterCell = async (sectionIndex, itemIndex, fieldName, rowIndex, subName, value) => {
+    const updated = [...sections];
+    const curr = normalizeRepeaterValue(updated[sectionIndex].items[itemIndex][fieldName]);
+
+    if (value instanceof File) {
+      // For files, we can store the File object directly
+      const next = curr.map((row, idx) => {
+        if (idx === rowIndex) {
+          return { ...(row || {}), [subName]: value };
+        }
+        return row;
+      });
+      updated[sectionIndex].items[itemIndex][fieldName] = next;
+      setSections(updated);
+    } else {
+      const next = curr.map((row, idx) =>
+        idx === rowIndex ? { ...(row || {}), [subName]: value } : row
+      );
+      updated[sectionIndex].items[itemIndex][fieldName] = next;
+      setSections(updated);
+    }
+  };
+
+  const addNestedRepeaterRow = (sectionIndex, itemIndex, fieldName, rowIndex, subName, subSubfields = []) => {
+    const updated = [...sections];
+    const curr = normalizeRepeaterValue(updated[sectionIndex].items[itemIndex][fieldName]);
+    const row = curr[rowIndex] || {};
+    const subCurr = normalizeRepeaterValue(row[subName]);
+
+    const subRow = {};
+    subSubfields.forEach((ssf) => {
+      subRow[ssf.name] = '';
+    });
+
+    curr[rowIndex] = { ...row, [subName]: [...subCurr, subRow] };
+    updated[sectionIndex].items[itemIndex][fieldName] = curr;
+    setSections(updated);
+  };
+
+  const removeNestedRepeaterRow = (sectionIndex, itemIndex, fieldName, rowIndex, subName, subRowIndex) => {
+    const updated = [...sections];
+    const curr = normalizeRepeaterValue(updated[sectionIndex].items[itemIndex][fieldName]);
+    const row = curr[rowIndex] || {};
+    const subCurr = normalizeRepeaterValue(row[subName]);
+
+    curr[rowIndex] = { ...row, [subName]: subCurr.filter((_, idx) => idx !== subRowIndex) };
+    updated[sectionIndex].items[itemIndex][fieldName] = curr;
+    setSections(updated);
+  };
+
+  const updateNestedRepeaterCell = async (sectionIndex, itemIndex, fieldName, rowIndex, subName, subRowIndex, subSubName, value) => {
+    const updated = [...sections];
+    const curr = normalizeRepeaterValue(updated[sectionIndex].items[itemIndex][fieldName]);
+    const row = curr[rowIndex] || {};
+    const subCurr = normalizeRepeaterValue(row[subName]);
+
+    const nextSubCurr = subCurr.map((subRow, idx) => {
+      if (idx === subRowIndex) {
+        return { ...(subRow || {}), [subSubName]: value };
+      }
+      return subRow;
+    });
+
+    curr[rowIndex] = { ...row, [subName]: nextSubCurr };
+    updated[sectionIndex].items[itemIndex][fieldName] = curr;
     setSections(updated);
   };
 
@@ -248,12 +445,12 @@ const PageBuilder = () => {
     const updated = [...sections];
     const [removed] = updated.splice(draggedSection, 1);
     updated.splice(dropIndex, 0, removed);
-    
+
     const withUpdatedPositions = updated.map((section, index) => ({
       ...section,
       position: index + 1
     }));
-    
+
     setSections(withUpdatedPositions);
     setDraggedSection(null);
     toast.success("Section reordered");
@@ -280,12 +477,12 @@ const PageBuilder = () => {
     const items = [...updated[sectionIndex].items];
     const [removed] = items.splice(draggedItem.itemIndex, 1);
     items.splice(dropIndex, 0, removed);
-    
+
     const itemsWithUpdatedPositions = items.map((item, index) => ({
       ...item,
       position: index + 1
     }));
-    
+
     updated[sectionIndex].items = itemsWithUpdatedPositions;
     setSections(updated);
     setDraggedItem(null);
@@ -297,64 +494,66 @@ const PageBuilder = () => {
     toast.info(`Drag & Drop ${!dragEnabled ? 'enabled' : 'disabled'}`);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
 
-    const formData = new FormData();
-    formData.append('page_id', page.id);
+    try {
+      // Prepare data structure
+      const data = {
+        page_id: page.id,
+        sections: [],
+        existing: []
+      };
 
-    sections.forEach((section, sIndex) => {
-      if (section.group_key) {
-        formData.append(`existing[${sIndex}][group_key]`, section.group_key);
-        formData.append(`existing[${sIndex}][section_name]`, section.section_name);
-        formData.append(`existing[${sIndex}][position]`, section.position);
-        
-        section.items.forEach((item, iIndex) => {
-          Object.entries(item).forEach(([key, value]) => {
-            if (value instanceof File) {
-              formData.append(`existing[${sIndex}][items][${iIndex}][${key}]`, value);
-            } else if (value !== null && value !== undefined && key !== 'id') {
-              formData.append(`existing[${sIndex}][items][${iIndex}][${key}]`, value);
-            }
-          });
-          
-          formData.append(`existing[${sIndex}][items][${iIndex}][position]`, item.position);
-          
-          if (item.id) {
-            formData.append(`existing[${sIndex}][items][${iIndex}][id]`, item.id);
-          }
-        });
-      } else {
-        formData.append(`sections[${sIndex}][section_uuid]`, section.section_uuid);
-        formData.append(`sections[${sIndex}][section_name]`, section.section_name);
-        formData.append(`sections[${sIndex}][position]`, section.position);
-        
-        section.items.forEach((item, iIndex) => {
-          Object.entries(item).forEach(([key, value]) => {
-            if (value instanceof File) {
-              formData.append(`sections[${sIndex}][items][${iIndex}][${key}]`, value);
-            } else if (value !== null && value !== undefined) {
-              formData.append(`sections[${sIndex}][items][${iIndex}][${key}]`, value);
-            }
-          });
-          formData.append(`sections[${sIndex}][items][${iIndex}][position]`, item.position);
-        });
-      }
-    });
+      // Process sections
+      for (const [sIndex, section] of sections.entries()) {
+        const sectionData = {
+          section_uuid: section.section_uuid,
+          section_name: section.section_name,
+          group_key: section.group_key,
+          position: section.position,
+          items: []
+        };
 
-    router.post(route('sections.store'), formData, {
-      preserveScroll: true,
-      onSuccess: () => {
-        setIsSaving(false);
-        toast.success("Sections saved successfully!");
-      },
-      onError: (errors) => {
-        setIsSaving(false);
-        console.error('Save errors:', errors);
-        toast.error("Error saving sections");
+        // Process items in section
+        for (const [iIndex, item] of section.items.entries()) {
+          const processedItem = await processItemForSubmit({
+            ...item,
+            allow_multiple_items: section.allowMultipleItems ? 1 : 0,
+            position: item.position
+          });
+
+          sectionData.items.push(processedItem);
+        }
+
+        if (section.group_key) {
+          data.existing.push(sectionData);
+        } else {
+          data.sections.push(sectionData);
+        }
       }
-    });
+
+      console.log('Sending data:', data);
+
+      // Send as JSON instead of FormData
+      router.post(route('sections.store'), data, {
+        preserveScroll: true,
+        onSuccess: () => {
+          setIsSaving(false);
+          toast.success("Sections saved successfully!");
+        },
+        onError: (errors) => {
+          setIsSaving(false);
+          console.error('Save errors:', errors);
+          toast.error("Error saving sections");
+        }
+      });
+    } catch (error) {
+      setIsSaving(false);
+      console.error('Error processing data:', error);
+      toast.error("Error processing files");
+    }
   };
 
   const showDeleteModal = (type, sectionIndex, itemIndex = null) => {
@@ -365,13 +564,13 @@ const PageBuilder = () => {
 
   const confirmDelete = () => {
     if (!deleteTarget) return;
-    
+
     if (deleteTarget.type === "section") {
       deleteSection(deleteTarget.sectionIndex);
     } else if (deleteTarget.type === "item") {
       deleteItem(deleteTarget.sectionIndex, deleteTarget.itemIndex);
     }
-    
+
     const modal = window.bootstrap.Modal.getInstance(modalRef.current);
     modal.hide();
     setDeleteTarget(null);
@@ -379,7 +578,7 @@ const PageBuilder = () => {
 
   return (
     <>
-      <ToastContainer 
+      <ToastContainer
         position="top-right"
         autoClose={3000}
         hideProgressBar={false}
@@ -448,9 +647,8 @@ const PageBuilder = () => {
             {sections.map((section, sIndex) => (
               <div
                 key={section.section_uuid}
-                className={`section-card ${draggedSection === sIndex ? "dragging" : ""} ${
-                  !dragEnabled ? "drag-disabled" : ""
-                }`}
+                className={`section-card ${draggedSection === sIndex ? "dragging" : ""} ${!dragEnabled ? "drag-disabled" : ""
+                  }`}
                 draggable={dragEnabled}
                 onDragStart={(e) => handleSectionDragStart(e, sIndex)}
                 onDragOver={handleSectionDragOver}
@@ -459,9 +657,9 @@ const PageBuilder = () => {
                 <div className="section-header px-4 py-3">
                   <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center gap-3">
-                      <GripVertical 
-                        size={20} 
-                        className={`drag-handle ${dragEnabled ? 'text-muted' : 'text-muted opacity-25'}`} 
+                      <GripVertical
+                        size={20}
+                        className={`drag-handle ${dragEnabled ? 'text-muted' : 'text-muted opacity-25'}`}
                       />
                       <button
                         type="button"
@@ -476,6 +674,48 @@ const PageBuilder = () => {
                           {SECTION_TEMPLATES[section.section_name]?.label || section.section_name}
                         </span>
                       </div>
+                      {section.section_name === "heading" && SECTION_TEMPLATES?.[section.section_name] && (
+                        <div className="d-flex align-items-center gap-2 ms-2">
+                          <span className="text-muted small">Heading:</span>
+                          <div className="btn-group btn-group-sm" role="group" aria-label="Multiple mode">
+                            <input
+                              type="radio"
+                              className="btn-check"
+                              name={`multiple-mode-${section.section_uuid}`}
+                              id={`single-${section.section_uuid}`}
+                              checked={!section.allowMultipleItems}
+                              onChange={() => {
+                                const updated = [...sections];
+                                updated[sIndex].allowMultipleItems = false;
+                                if (updated[sIndex].items.length > 1) {
+                                  updated[sIndex].items = updated[sIndex].items.slice(0, 1);
+                                  toast.info("Switched to Single item. Extra items were removed.");
+                                }
+                                setSections(updated);
+                              }}
+                            />
+                            <label className="btn btn-outline-secondary" htmlFor={`single-${section.section_uuid}`}>
+                              Single
+                            </label>
+
+                            <input
+                              type="radio"
+                              className="btn-check"
+                              name={`multiple-mode-${section.section_uuid}`}
+                              id={`multiple-${section.section_uuid}`}
+                              checked={!!section.allowMultipleItems}
+                              onChange={() => {
+                                const updated = [...sections];
+                                updated[sIndex].allowMultipleItems = true;
+                                setSections(updated);
+                              }}
+                            />
+                            <label className="btn btn-outline-secondary" htmlFor={`multiple-${section.section_uuid}`}>
+                              Multiple
+                            </label>
+                          </div>
+                        </div>
+                      )}
                       <span className="position-badge">Section: {section.position}</span>
                       <span className="badge-count">{section.items.length} items</span>
                     </div>
@@ -510,9 +750,8 @@ const PageBuilder = () => {
                           {section.items.map((item, iIndex) => (
                             <div
                               key={item.item_uuid}
-                              className={`item-card p-3 ${
-                                draggedItem?.sectionIndex === sIndex && draggedItem?.itemIndex === iIndex ? "dragging" : ""
-                              } ${!dragEnabled ? "drag-disabled" : ""}`}
+                              className={`item-card p-3 ${draggedItem?.sectionIndex === sIndex && draggedItem?.itemIndex === iIndex ? "dragging" : ""
+                                } ${!dragEnabled ? "drag-disabled" : ""}`}
                               draggable={dragEnabled}
                               onDragStart={(e) => handleItemDragStart(e, sIndex, iIndex)}
                               onDragOver={handleSectionDragOver}
@@ -520,9 +759,9 @@ const PageBuilder = () => {
                             >
                               <div className="d-flex align-items-center justify-content-between mb-3">
                                 <div className="d-flex align-items-center gap-2">
-                                  <GripVertical 
-                                    size={16} 
-                                    className={`drag-handle ${dragEnabled ? 'text-muted' : 'text-muted opacity-25'}`} 
+                                  <GripVertical
+                                    size={16}
+                                    className={`drag-handle ${dragEnabled ? 'text-muted' : 'text-muted opacity-25'}`}
                                   />
                                   <div className="d-flex align-items-center gap-2">
                                     {componentIcons[section.section_name] || <TextQuote size={18} />}
@@ -538,7 +777,7 @@ const PageBuilder = () => {
                                     className="btn btn-outline-danger btn-sm"
                                     onClick={() => showDeleteModal("item", sIndex, iIndex)}
                                   >
-                                    <Trash2 size={14}/>
+                                    <Trash2 size={14} />
                                     Delete Item
                                   </button>
                                 </div>
@@ -551,12 +790,43 @@ const PageBuilder = () => {
                                     {field.type === "file" ? (
                                       <div>
                                         {item[field.name] && typeof item[field.name] === "string" && (
-                                          <img src={item[field.name]} alt="Preview" className="preview-image mb-2 d-block" />
+                                          <div className="mb-2 d-flex align-items-start gap-2">
+                                            <div>
+                                              <img
+                                                src={item[field.name]}
+                                                alt="Preview"
+                                                className="preview-image mb-1 d-block"
+                                                style={{ maxWidth: '200px', maxHeight: '150px' }}
+                                              />
+                                              <small className="text-muted d-block">Current file</small>
+                                            </div>
+                                            <button
+                                              type="button"
+                                              className="btn btn-sm btn-outline-danger"
+                                              title="Remove image"
+                                              onClick={() => handleFieldChange(sIndex, iIndex, field.name, null)}
+                                            >
+                                              <Trash2 size={13} className="me-1" />
+                                              Remove
+                                            </button>
+                                          </div>
+                                        )}
+                                        {item[field.name] === null && (
+                                          <div className="mb-2">
+                                            <span className="badge bg-danger">Image will be removed on save</span>
+                                          </div>
+                                        )}
+                                        {item[field.name] instanceof File && (
+                                          <div className="mb-2">
+                                            <small className="text-success d-block">
+                                              New file selected: {item[field.name].name}
+                                            </small>
+                                          </div>
                                         )}
                                         <input
                                           type="file"
                                           className="form-control"
-                                          accept="image/*"
+                                          accept="image/*,.pdf,.doc,.docx,.mp4"
                                           onChange={(e) => {
                                             const file = e.target.files?.[0];
                                             if (file) {
@@ -565,6 +835,189 @@ const PageBuilder = () => {
                                           }}
                                         />
                                       </div>
+                                    ) : field.type === "repeater" ? (
+                                      <div className="border rounded p-2">
+                                        <div className="text-muted small mb-2">
+                                          Stored as an array (JSON). Use "Add item" to add multiple rows.
+                                        </div>
+
+                                        {normalizeRepeaterValue(item[field.name]).map((row, rIdx) => (
+                                          <div key={rIdx} className="border rounded p-2 mb-2 bg-light">
+                                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                              <div className="small fw-medium">Item #{rIdx + 1}</div>
+                                              <button
+                                                type="button"
+                                                className="btn btn-sm btn-outline-danger"
+                                                onClick={() => removeRepeaterRow(sIndex, iIndex, field.name, rIdx)}
+                                              >
+                                                <Trash2 size={14} />
+                                                Remove
+                                              </button>
+                                            </div>
+                                            <div className="row g-2">
+                                              {(field.subfields || []).map((sf, sfIdx) => (
+                                                <div key={sfIdx} className="col-12">
+                                                  <label className="form-label small fw-medium">{sf.label || sf.name}</label>
+                                                  {sf.type === "file" ? (
+                                                    <div>
+                                                      {/* Show existing file preview */}
+                                                      {row && row[sf.name] && typeof row[sf.name] === "string" && (
+                                                        <div className="mb-2 d-flex align-items-start gap-2">
+                                                          <div>
+                                                            <img
+                                                              src={row[sf.name]}
+                                                              alt="Preview"
+                                                              className="preview-image mb-1 d-block"
+                                                              style={{ maxWidth: '200px', maxHeight: '150px' }}
+                                                            />
+                                                            <small className="text-muted d-block">Current file</small>
+                                                          </div>
+                                                          <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-danger"
+                                                            title="Remove image"
+                                                            onClick={() => updateRepeaterCell(sIndex, iIndex, field.name, rIdx, sf.name, null)}
+                                                          >
+                                                            <Trash2 size={13} className="me-1" />
+                                                            Remove
+                                                          </button>
+                                                        </div>
+                                                      )}
+                                                      {row && row[sf.name] === null && (
+                                                        <div className="mb-2">
+                                                          <span className="badge bg-danger">Image will be removed on save</span>
+                                                        </div>
+                                                      )}
+                                                      {/* Show newly selected file name */}
+                                                      {row && row[sf.name] instanceof File && (
+                                                        <div className="mb-2">
+                                                          <small className="text-success d-block">
+                                                            New file: {row[sf.name].name}
+                                                          </small>
+                                                        </div>
+                                                      )}
+                                                      {/* File input */}
+                                                      <input
+                                                        type="file"
+                                                        className="form-control"
+                                                        accept="image/*,.pdf,.doc,.docx,.mp4"
+                                                        onChange={(e) => {
+                                                          const file = e.target.files?.[0];
+                                                          if (file) {
+                                                            updateRepeaterCell(sIndex, iIndex, field.name, rIdx, sf.name, file);
+                                                          }
+                                                        }}
+                                                      />
+                                                    </div>
+                                                  ) : sf.type === "textarea" ? (
+                                                    <textarea
+                                                      className="form-control"
+                                                      rows={2}
+                                                      value={(row && row[sf.name]) || ""}
+                                                      onChange={(e) =>
+                                                        updateRepeaterCell(sIndex, iIndex, field.name, rIdx, sf.name, e.target.value)
+                                                      }
+                                                      placeholder={sf.placeholder}
+                                                    />
+                                                  ) : sf.type === "repeater" ? (
+                                                    <div className="border rounded p-2 ms-3 mb-2 border-primary">
+                                                      <div className="text-muted small mb-2">Nested Repeater</div>
+                                                      {normalizeRepeaterValue((row && row[sf.name]) || []).map((subRow, srIdx) => (
+                                                        <div key={srIdx} className="border rounded p-2 mb-2 bg-white">
+                                                          <div className="d-flex justify-content-between align-items-center mb-2">
+                                                            <div className="small fw-medium">Nested Item #{srIdx + 1}</div>
+                                                            <button
+                                                              type="button"
+                                                              className="btn btn-sm btn-outline-danger"
+                                                              onClick={() => removeNestedRepeaterRow(sIndex, iIndex, field.name, rIdx, sf.name, srIdx)}
+                                                            >
+                                                              <Trash2 size={14} /> Remove
+                                                            </button>
+                                                          </div>
+                                                          <div className="row g-2">
+                                                            {(sf.subfields || []).map((ssf, ssfIdx) => (
+                                                              <div key={ssfIdx} className="col-12">
+                                                                <label className="form-label small fw-medium">{ssf.label || ssf.name}</label>
+                                                                {ssf.type === "file" ? (
+                                                                  <div>
+                                                                    {subRow && subRow[ssf.name] && typeof subRow[ssf.name] === "string" && (
+                                                                      <div className="mb-2 d-flex align-items-start gap-2">
+                                                                        <div>
+                                                                          <img src={subRow[ssf.name]} alt="Preview" className="preview-image mb-1 d-block" style={{ maxWidth: '200px', maxHeight: '150px' }} />
+                                                                          <small className="text-muted d-block">Current file</small>
+                                                                        </div>
+                                                                        <button
+                                                                          type="button"
+                                                                          className="btn btn-sm btn-outline-danger"
+                                                                          title="Remove image"
+                                                                          onClick={() => updateNestedRepeaterCell(sIndex, iIndex, field.name, rIdx, sf.name, srIdx, ssf.name, null)}
+                                                                        >
+                                                                          <Trash2 size={13} className="me-1" />
+                                                                          Remove
+                                                                        </button>
+                                                                      </div>
+                                                                    )}
+                                                                    {subRow && subRow[ssf.name] === null && (
+                                                                      <div className="mb-2"><span className="badge bg-danger">Image will be removed on save</span></div>
+                                                                    )}
+                                                                    {subRow && subRow[ssf.name] instanceof File && (
+                                                                      <div className="mb-2"><small className="text-success d-block">New file: {subRow[ssf.name].name}</small></div>
+                                                                    )}
+                                                                    <input type="file" className="form-control" accept="image/*,.pdf,.doc,.docx,.mp4" onChange={(e) => {
+                                                                      const file = e.target.files?.[0];
+                                                                      if (file) updateNestedRepeaterCell(sIndex, iIndex, field.name, rIdx, sf.name, srIdx, ssf.name, file);
+                                                                    }} />
+                                                                  </div>
+                                                                ) : ssf.type === "textarea" ? (
+                                                                  <textarea className="form-control" rows={2} value={(subRow && subRow[ssf.name]) || ""} onChange={(e) => updateNestedRepeaterCell(sIndex, iIndex, field.name, rIdx, sf.name, srIdx, ssf.name, e.target.value)} placeholder={ssf.placeholder} />
+                                                                ) : (
+                                                                  <input type={ssf.type || "text"} className="form-control" value={(subRow && subRow[ssf.name]) || ""} onChange={(e) => updateNestedRepeaterCell(sIndex, iIndex, field.name, rIdx, sf.name, srIdx, ssf.name, e.target.value)} placeholder={ssf.placeholder} />
+                                                                )}
+                                                              </div>
+                                                            ))}
+                                                          </div>
+                                                        </div>
+                                                      ))}
+                                                      <button type="button" className="btn btn-sm btn-outline-primary w-100 mt-2" style={{ borderStyle: "dashed" }} onClick={() => addNestedRepeaterRow(sIndex, iIndex, field.name, rIdx, sf.name, sf.subfields || [])}>
+                                                        <PlusCircle size={16} className="me-2" />
+                                                        Add nested item
+                                                      </button>
+                                                    </div>
+                                                  ) : (
+                                                    <input
+                                                      type={sf.type || "text"}
+                                                      className="form-control"
+                                                      value={(row && row[sf.name]) || ""}
+                                                      onChange={(e) =>
+                                                        updateRepeaterCell(sIndex, iIndex, field.name, rIdx, sf.name, e.target.value)
+                                                      }
+                                                      placeholder={sf.placeholder}
+                                                    />
+                                                  )}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ))}
+
+                                        <button
+                                          type="button"
+                                          className="btn btn-sm btn-outline-primary w-100"
+                                          style={{ borderStyle: "dashed" }}
+                                          onClick={() => addRepeaterRow(sIndex, iIndex, field.name, field.subfields || [])}
+                                        >
+                                          <PlusCircle size={16} className="me-2" />
+                                          Add item
+                                        </button>
+                                      </div>
+                                    ) : field.type === "textarea" ? (
+                                      <textarea
+                                        className="form-control"
+                                        value={item[field.name] || ""}
+                                        onChange={(e) => handleFieldChange(sIndex, iIndex, field.name, e.target.value)}
+                                        placeholder={field.placeholder}
+                                        rows={3}
+                                      />
                                     ) : (
                                       <input
                                         type={field.type}
@@ -581,15 +1034,17 @@ const PageBuilder = () => {
                           ))}
                         </div>
 
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-primary mt-3 w-100"
-                          style={{ borderStyle: "dashed" }}
-                          onClick={() => addItemToSection(sIndex)}
-                        >
-                          <PlusCircle size={16} className="me-2" />
-                          Add an entry
-                        </button>
+                        {section.allowMultipleItems !== false && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary mt-3 w-100"
+                            style={{ borderStyle: "dashed" }}
+                            onClick={() => addItemToSection(sIndex)}
+                          >
+                            <PlusCircle size={16} className="me-2" />
+                            Add an entry
+                          </button>
+                        )}
                       </>
                     )}
                   </div>

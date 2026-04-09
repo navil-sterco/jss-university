@@ -36,6 +36,11 @@
                         "link": "pages.index"
                     },
                     {
+                        "text": "Section",
+                        "available": true,
+                        "link": "section-templates.index"
+                    },
+                    {
                         "text": "Tabs",
                         "available": true,
                         "link": "tab.index"
@@ -181,6 +186,12 @@
                 "icon": "bx bx-layout",
                 "available": true,
                 "link": "footer.index"
+            },
+            {
+                "text": "Popup",
+                "icon": "bx bx-window-open",
+                "available": true,
+                "link": "popup.edit"
             }
         ]
     },

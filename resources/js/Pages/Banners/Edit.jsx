@@ -14,6 +14,9 @@ const Edit = ({ banner }) => {
         link: banner.link || "",
         image: null,
         mobile_image: null,
+        video_desktop: null,
+        video_mobile: null,
+        video_url: banner.video_url || "",
         display_order: banner.display_order || "",
         show_on_home: banner.show_on_home || 0,
     });
@@ -135,6 +138,49 @@ const Edit = ({ banner }) => {
                                 {errors.mobile_image && <div className="form-text text-danger">{errors.mobile_image}</div>}
                             </div>
                             
+                            {/* Video Desktop */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label" htmlFor="video_desktop">Desktop Video</label>
+                                <input
+                                    type="file"
+                                    id="video_desktop"
+                                    className="form-control"
+                                    ref={fileInputRef}
+                                    onChange={(e) => setData("video_desktop", e.target.files[0])}
+                                    accept="video/mp4, video/webm, video/ogg"
+                                />
+                                {errors.video_desktop && <div className="form-text text-danger">{errors.video_desktop}</div>}
+                            </div>
+
+                            {/* Video Mobile */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label" htmlFor="video_mobile">Mobile Video</label>
+                                <input
+                                    type="file"
+                                    id="video_mobile"
+                                    className="form-control"
+                                    ref={fileInputRef}
+                                    onChange={(e) => setData("video_mobile", e.target.files[0])}
+                                    accept="video/mp4, video/webm, video/ogg"
+                                />
+                                {errors.video_mobile && <div className="form-text text-danger">{errors.video_mobile}</div>}
+                            </div>
+
+                            {/* Video URL */}
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="video_url" className="form-label">Video URL</label>
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    id="video_url"
+                                    name="video_url"
+                                    placeholder='https://www.youtube.com/...'
+                                    value={data.video_url}
+                                    onChange={(e) => setData("video_url",e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.video_url}</div> 
+                            </div>
+                            
                             {/* Show on Home */}
                             <div className="mb-3 col-md-6">
                                 <label htmlFor="show_on_home" className="form-label">Show on Home</label>
@@ -149,9 +195,9 @@ const Edit = ({ banner }) => {
                                 </select>
                             </div>
                             <div className="mb-3 col-md-3">
-                                <label className="form-label" htmlFor="image">Current Desktop Banner</label>
-                                {banner.image && (
-                                    <div className="mb-2">
+                                <label className="form-label">Current Desktop Banner</label>
+                                {banner.image && data.image !== 'null' && (
+                                    <div className="mb-2 d-flex align-items-start gap-2">
                                         <img
                                             src={`${appUrl}/${banner.image}`}
                                             alt="Current Banner"
@@ -162,13 +208,23 @@ const Edit = ({ banner }) => {
                                                 borderRadius: "4px"
                                             }}
                                         />
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-sm btn-danger" 
+                                            onClick={() => {
+                                                setData('image', 'null');
+                                                if (document.getElementById('image')) document.getElementById('image').value = '';
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
                                     </div>
                                 )}
                             </div>
                             <div className="mb-3 col-md-3">
-                                <label className="form-label" htmlFor="image">Current Mobile Banner</label>
-                                {banner.mobile_image && (
-                                    <div className="mb-2">
+                                <label className="form-label">Current Mobile Banner</label>
+                                {banner.mobile_image && data.mobile_image !== 'null' && (
+                                    <div className="mb-2 d-flex align-items-start gap-2">
                                         <img
                                             src={`${appUrl}/${banner.mobile_image}`}
                                             alt="Current Mobile Banner"
@@ -179,6 +235,70 @@ const Edit = ({ banner }) => {
                                                 borderRadius: "4px"
                                             }}
                                         />
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-sm btn-danger" 
+                                            onClick={() => {
+                                                setData('mobile_image', 'null');
+                                                if (document.getElementById('mobile_image')) document.getElementById('mobile_image').value = '';
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label">Current Desktop Video</label>
+                                {banner.video_desktop && data.video_desktop !== 'null' && (
+                                    <div className="mb-2 d-flex align-items-start gap-2">
+                                        <video
+                                            src={`${appUrl}/${banner.video_desktop}`}
+                                            style={{
+                                                width: "100px",
+                                                height: "60px",
+                                                objectFit: "cover",
+                                                borderRadius: "4px"
+                                            }}
+                                            controls
+                                        />
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-sm btn-danger" 
+                                            onClick={() => {
+                                                setData('video_desktop', 'null');
+                                                if (document.getElementById('video_desktop')) document.getElementById('video_desktop').value = '';
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mb-3 col-md-3">
+                                <label className="form-label">Current Mobile Video</label>
+                                {banner.video_mobile && data.video_mobile !== 'null' && (
+                                    <div className="mb-2 d-flex align-items-start gap-2">
+                                        <video
+                                            src={`${appUrl}/${banner.video_mobile}`}
+                                            style={{
+                                                width: "100px",
+                                                height: "60px",
+                                                objectFit: "cover",
+                                                borderRadius: "4px"
+                                            }}
+                                            controls
+                                        />
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-sm btn-danger" 
+                                            onClick={() => {
+                                                setData('video_mobile', 'null');
+                                                if (document.getElementById('video_mobile')) document.getElementById('video_mobile').value = '';
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
                                     </div>
                                 )}
                             </div>

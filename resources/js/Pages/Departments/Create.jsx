@@ -7,6 +7,7 @@ const Create = () => {
         menu_name: "",
         name_short: "",
         slug: "",
+        image: "",
         display_order: 100,
         school_id: "",
         academic_year: "",
@@ -14,6 +15,11 @@ const Create = () => {
         brochure: null,
         useful_links: [],
     });
+
+    const imageRefs = {
+        image: useRef(null),
+        prospectus: useRef(null),
+    };
 
     const { schools } = usePage().props;
     
@@ -148,6 +154,18 @@ const Create = () => {
                                     onChange={(e) => setData("apply_now_link", e.target.value)}
                                 />
                                 <div className="form-text text-danger">{errors.apply_now_link}</div>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Listing Image</label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    ref={imageRefs.image}
+                                    accept="image/png,image/jpeg,image/webp"
+                                    onChange={(e) => setData("image", e.target.files[0])}
+                                />
+                                <div className="form-text text-danger">{errors.image}</div>
                             </div>
 
                             <div className="mb-3 col-md-6">

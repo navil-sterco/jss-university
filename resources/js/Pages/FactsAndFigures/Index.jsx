@@ -3,7 +3,7 @@ import { Link, useForm } from '@inertiajs/react';
 import Pagination from '@/Components/Pagination';
 import { router, usePage } from '@inertiajs/react';
 import { ToastContainer, toast } from 'react-toastify';
-import _, { set } from "lodash";
+import { debounce } from "lodash";
 
 const Index = (props) => {
     const { searchTerm, factsAndFigures } = props;
@@ -28,7 +28,7 @@ const Index = (props) => {
 
     // Search debounce
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("facts-and-figures", { search: query }, { preserveState: true, replace: true });
         }, 300);
 

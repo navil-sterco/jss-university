@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react'
 
 const SeoCreate = (props) => {
     const [keywordInput, setKeywordInput] = useState("");
+    const [searchTermsInput, setSearchTermsInput] = useState("");
     const { data, setData, post, progress, errors, processing } = useForm({
         meta_title: "",
         meta_description: "",
@@ -14,6 +15,7 @@ const SeoCreate = (props) => {
         og_type: "website",
         og_url: "",
         keywords: [], // Changed to array
+        search_terms: [],
     });
     
     const fileInputRef = useRef(null);
@@ -42,6 +44,28 @@ const SeoCreate = (props) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             addKeyword();
+        }
+    };
+
+    // Add search term to array
+    const addSearchTerm = () => {
+        if (searchTermsInput.trim() && !data.search_terms.includes(searchTermsInput.trim())) {
+            setData("search_terms", [...data.search_terms, searchTermsInput.trim()]);
+            setSearchTermsInput("");
+        }
+    };
+
+    // Remove search term from array
+    const removeSearchTerm = (index) => {
+        const updatedSearchTerms = data.search_terms.filter((_, i) => i !== index);
+        setData("search_terms", updatedSearchTerms);
+    };
+
+    // Handle Enter key press in search terms input
+    const handleSearchTermKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addSearchTerm();
         }
     };
 
@@ -132,6 +156,53 @@ const SeoCreate = (props) => {
                                         </div>
                                         <div className="form-text text-muted mt-1">
                                             {data.keywords.length} keyword(s) added
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Search Terms */}
+                            <div className="mb-3 col-12">
+                                <label className="form-label">Search Terms (Site Search)</label>
+                                <div className="input-group">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Add search term and press Enter or click Add"
+                                        value={searchTermsInput}
+                                        onChange={(e) => setSearchTermsInput(e.target.value)}
+                                        onKeyPress={handleSearchTermKeyPress}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-primary"
+                                        onClick={addSearchTerm}
+                                        disabled={!searchTermsInput.trim()}
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                                <div className="form-text text-danger">{errors.search_terms}</div>
+                                
+                                {/* Display selected search terms */}
+                                {data.search_terms.length > 0 && (
+                                    <div className="mt-2">
+                                        <div className="d-flex flex-wrap gap-2">
+                                            {data.search_terms.map((term, index) => (
+                                                <span key={index} className="badge bg-secondary d-flex align-items-center">
+                                                    {term}
+                                                    <button
+                                                        type="button"
+                                                        className="btn-close btn-close-white ms-2"
+                                                        style={{ fontSize: '0.7rem' }}
+                                                        onClick={() => removeSearchTerm(index)}
+                                                        aria-label={`Remove ${term}`}
+                                                    />
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <div className="form-text text-muted mt-1">
+                                            {data.search_terms.length} search term(s) added
                                         </div>
                                     </div>
                                 )}

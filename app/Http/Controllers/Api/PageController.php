@@ -3,21 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Pages;
-use App\Models\Banner;
 use App\Models\PageSection;
-use App\Models\Testimonial;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 class PageController extends Controller
 {
     public function show($slug)
     {
-        $page = Pages::where('slug', $slug)->first();
-
-        if (!$page) {
-            return response()->json(['error' => 'Page not found'], 404);
-        }
+        $page = Pages::where('slug', $slug)->where('status',1)->firstOrFail();
 
         $sections = PageSection::where('page_id', $page->id)
             ->orderBy('position')
@@ -31,7 +24,7 @@ class PageController extends Controller
             })
             ->values();
 
-        $mainTab = $page->tabs->first();
+        $mainTab = $page->tabs()->first();
 
         $relatedPages = [];
 
@@ -39,6 +32,8 @@ class PageController extends Controller
             $relatedPages = Pages::join('tab_pages', 'pages.id', '=', 'tab_pages.page_id')
                 ->where('tab_pages.tab_id', $mainTab->id)
                 ->select('pages.title as text', 'pages.slug')
+                ->orderBy('display_order')
+                ->where('status',1)
                 ->get()
                 ->map(function ($item) {
                     return [
@@ -50,7 +45,7 @@ class PageController extends Controller
 
         return response()->json([
             "tabs" => [
-                "title"     => $mainTab->title ?? null,
+                "title"     => $page->sub_title ?? $mainTab->title ?? null,
                 "subTitle"  => $mainTab->subtitle ?? null,
                 "tabs"      => $relatedPages
             ],

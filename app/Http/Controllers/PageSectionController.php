@@ -7,17 +7,21 @@ use Exception;
 use Inertia\Inertia;
 use App\Models\Pages;
 use App\Models\PageSection;
+use App\Models\SectionTemplate;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 
 class PageSectionController extends Controller
 {
     public function index($page_id)
     {
         $page = Pages::findOrFail($page_id);
+
+        $sectionTemplates = $this->getSectionTemplates();
 
         $sections = PageSection::where('page_id', $page_id)
             ->orderBy('position')
@@ -26,9 +30,13 @@ class PageSectionController extends Controller
             ->map(function ($group) {
                 $items = $group->map(function ($item) {
                     try {
-                        $content = is_array($item->content)
-                            ? $item->content
-                            : json_decode($item->content, true) ?? [];
+                        if (is_array($item->content)) {
+                            $content = $item->content;
+                        } elseif (is_string($item->content)) {
+                            $content = json_decode((string) $item->content, true) ?? [];
+                        } else {
+                            $content = [];
+                        }
 
                         $content['id'] = $item->id;
                         
@@ -59,6 +67,7 @@ class PageSectionController extends Controller
         return Inertia::render('Pages/Section', [
             'page' => $page,
             'existingSections' => $sections,
+            'sectionTemplates' => $sectionTemplates,
         ]);
     }
 
@@ -73,6 +82,7 @@ class PageSectionController extends Controller
 
         $allSectionGroups = [];
         
+        // Process new sections
         foreach ($sections as $sIndex => $section) {
             $sectionType = $section['section_name'] ?? null;
             $items = $section['items'] ?? [];
@@ -84,7 +94,8 @@ class PageSectionController extends Controller
             $allSectionGroups[$groupKey] = $sectionPosition;
 
             foreach ($items as $iIndex => $item) {
-                $content = $this->buildContent($request, $item, $sectionType, $sIndex, $iIndex);
+                
+                $content = $this->buildContentFromJson($item, $sectionType);
                 $itemPosition = $item['position'] ?? ($iIndex + 1);
 
                 $content['position'] = $itemPosition;
@@ -99,6 +110,7 @@ class PageSectionController extends Controller
             }
         }
 
+        // Process existing sections
         foreach ($existing as $sIndex => $section) {
             $sectionType = $section['section_name'] ?? null;
             $groupKey = $section['group_key'] ?? null;
@@ -115,13 +127,29 @@ class PageSectionController extends Controller
                 if (isset($item['id'])) {
                     $existingItem = PageSection::where('id', $item['id'])->first();
                     if ($existingItem) {
-                        $existingContent = is_array($existingItem->content) 
-                            ? $existingItem->content 
-                            : json_decode($existingItem->content, true);
+                        if (is_array($existingItem->content)) {
+                            $existingContent = $existingItem->content;
+                        } elseif (is_string($existingItem->content)) {
+                            $existingContent = json_decode((string) $existingItem->content, true) ?? [];
+                        } else {
+                            $existingContent = [];
+                        }
                         
                         $existingContent['position'] = $itemPosition;
                         
-                        $updatedContent = $this->buildContent($request, $item, $sectionType, $sIndex, $iIndex, true, $existingContent);
+                        // Extract old URLs before we update
+                        $oldUrls = $this->extractAllUrls($existingContent);
+                        
+                        $updatedContent = $this->buildContentFromJson($item, $sectionType);
+                        
+                        // Extract new URLs after we update
+                        $newUrls = $this->extractAllUrls($updatedContent);
+                        
+                        // Delete any files that were removed
+                        $urlsToDelete = array_diff($oldUrls, $newUrls);
+                        foreach ($urlsToDelete as $url) {
+                            $this->deleteImageFromDisk($url);
+                        }
                         
                         $existingItem->update([
                             'position' => $sectionPosition,
@@ -129,7 +157,7 @@ class PageSectionController extends Controller
                         ]);
                     }
                 } else {
-                    $content = $this->buildContent($request, $item, $sectionType, $sIndex, $iIndex, true);
+                    $content = $this->buildContentFromJson($item, $sectionType);
                     $itemPosition = $item['position'] ?? ($iIndex + 1);
 
                     $content['position'] = $itemPosition;
@@ -145,6 +173,7 @@ class PageSectionController extends Controller
             }
         }
 
+        // Update section positions
         foreach ($allSectionGroups as $groupKey => $newPosition) {
             PageSection::where('group_key', $groupKey)
                 ->update(['position' => $newPosition]);
@@ -155,62 +184,135 @@ class PageSectionController extends Controller
             ->with('success', 'Sections saved successfully!');
     }
 
-    private function buildContent(Request $request, array $item, string $type, int $sIndex, int $iIndex, bool $isExisting = false, array $existingContent = [])
+    private function extractAllUrls(array $data): array
     {
-        $content = $existingContent ?: [];
-
-        foreach ($item as $field => $value) {
-            if (!is_array($value) && !$value instanceof \Illuminate\Http\UploadedFile) {
-                $content[$field] = $value;
+        $urls = [];
+        array_walk_recursive($data, function ($value) use (&$urls) {
+            if (is_string($value) && filter_var($value, FILTER_VALIDATE_URL)) {
+                $urls[] = $value;
             }
-        }
-
-        $fileFields = ['file', 'file_mobile', 'video', 'icon', 'photo'];
-
-        $basePath = $isExisting
-            ? "existing.{$sIndex}.items.{$iIndex}"
-            : "sections.{$sIndex}.items.{$iIndex}";
-
-        foreach ($fileFields as $field) {
-            $file = $request->file("{$basePath}.{$field}");
-
-            if ($file instanceof \Illuminate\Http\UploadedFile) {
-                if (!empty($content[$field]) && !empty($existingContent)) {
-                    $this->deleteImageFromDisk($content[$field]);
-                }
-                
-                $content[$field] = $this->moveImage($file, $type);
-            } elseif (is_array($file)) {
-                $oldFiles = $content[$field] ?? [];
-                if (is_array($oldFiles) && !empty($existingContent)) {
-                    foreach ($oldFiles as $oldFile) {
-                        $this->deleteImageFromDisk($oldFile);
-                    }
-                }
-                
-                $content[$field] = array_map(fn($f) => $this->moveImage($f, $type), $file);
-            } elseif (empty($content[$field]) && isset($existingContent[$field])) {
-                $content[$field] = $existingContent[$field];
-            }
-        }
-
-        return $content;
+        });
+        return array_unique($urls);
     }
 
-
-
-    private function moveImage(UploadedFile $file, string $type)
+    private function buildContentFromJson($data, string $type)
     {
-        $folder = "assets/img/{$type}/";
-        $path = public_path($folder);
-
-        if (!File::exists($path)) {
-            File::makeDirectory($path, 0755, true);
+        if (is_array($data) && isset($data['base64']) && isset($data['filename'])) {
+            return $this->saveBase64File($data['base64'], $type, $data['filename']);
         }
 
-        $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $file->move($path, $imageName);
-        return url($folder . $imageName);
+        if (!is_array($data)) {
+            return $data;
+        }
+
+        $result = [];
+
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                if (isset($value['base64']) && isset($value['filename'])) {
+                    $result[$key] = $this->saveBase64File($value['base64'], $type, $value['filename']);
+                } else {
+                    $result[$key] = $this->buildContentFromJson($value, $type);
+                }
+            } else {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    private function saveBase64File($base64Data, $type, $filename)
+    {
+        if (empty($base64Data) || !str_contains($base64Data, 'base64,')) {
+            return null;
+        }
+        
+        try {
+            // Extract the base64 data
+            $data = explode(',', $base64Data);
+            $imageData = base64_decode($data[1]);
+            
+            if ($imageData === false) {
+                return null;
+            }
+            
+            $folder = "assets/img/{$type}/";
+            $path = public_path($folder);
+            
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0755, true);
+            }
+            
+            // Get file extension
+            $extension = pathinfo($filename, PATHINFO_EXTENSION);
+            if (empty($extension)) {
+                // Try to determine from mime type in base64
+                $finfo = finfo_open();
+                $mimeType = finfo_buffer($finfo, $imageData, FILEINFO_MIME_TYPE);
+                finfo_close($finfo);
+                
+                $extension = explode('/', $mimeType)[1] ?? 'png';
+                // Handle common mime types
+                $extensionMap = [
+                    'image/jpeg' => 'jpg',
+                    'image/png' => 'png',
+                    'image/gif' => 'gif',
+                    'image/webp' => 'webp',
+                    'application/pdf' => 'pdf',
+                ];
+                
+                $extension = $extensionMap[$mimeType] ?? $extension;
+            }
+            
+            // Create unique filename
+            $safeName = Str::slug(pathinfo($filename, PATHINFO_FILENAME));
+            $imageName = time() . '_' . uniqid() . '_' . $safeName . '.' . $extension;
+            $filePath = $path . $imageName;
+            
+            // Save the file
+            file_put_contents($filePath, $imageData);
+            
+            $fileUrl = url($folder . $imageName);
+            
+            return $fileUrl;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    private function getSectionTemplates(): array
+    {
+        if (Schema::hasTable('section_templates') && SectionTemplate::count() > 0) {
+            return SectionTemplate::where('is_active', true)
+                ->orderBy('key')
+                ->get()
+                ->mapWithKeys(function ($t) {
+                    return [
+                        $t->key => [
+                            'label' => $t->label,
+                            'allow_multiple_items' => (bool) $t->allow_multiple_items,
+                            'fields' => $t->fields ?? [],
+                        ]
+                    ];
+                })
+                ->toArray();
+        }
+
+        $path = resource_path('js/data/sectionTemplates.json');
+        if (File::exists($path)) {
+            $json = json_decode(File::get($path), true);
+            if (is_array($json)) {
+                foreach ($json as $k => $def) {
+                    if (!isset($json[$k]['allow_multiple_items'])) {
+                        $json[$k]['allow_multiple_items'] = $k === 'heading' ? false : true;
+                    }
+                }
+                return $json;
+            }
+        }
+
+        return [];
     }
 
     public function deleteSection($group_key)
@@ -232,13 +334,26 @@ class PageSectionController extends Controller
             }
 
             if (is_array($content)) {
-                $fileFields = ['file', 'file_mobile','video','icon','photo'];
+                // Delete files from repeater fields
+                foreach ($content as $key => $value) {
+                    if (is_array($value)) {
+                        foreach ($value as $row) {
+                            if (is_array($row)) {
+                                foreach ($row as $subValue) {
+                                    if (is_string($subValue) && filter_var($subValue, FILTER_VALIDATE_URL)) {
+                                        $this->deleteImageFromDisk($subValue);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
+                // Delete regular file fields
+                $fileFields = ['file', 'file_mobile', 'video', 'icon', 'photo'];
                 foreach ($fileFields as $field) {
                     if (!empty($content[$field])) {
                         $images = is_array($content[$field]) ? $content[$field] : [$content[$field]];
-                        
-
                         foreach ($images as $imageUrl) {
                             $this->deleteImageFromDisk($imageUrl);
                         }
@@ -280,21 +395,36 @@ class PageSectionController extends Controller
 
         $content = is_array($section->content)
             ? $section->content
-            : json_decode($section->content, true);
+            : (is_string($section->content) ? (json_decode((string) $section->content, true) ?? []) : []);
 
         if (is_array($content)) {
-            $fileFields = ['file', 'file_mobile', 'video', 'icon', 'photo'];
+            // Delete files from repeater fields
+            foreach ($content as $key => $value) {
+                if (is_array($value)) {
+                    foreach ($value as $row) {
+                        if (is_array($row)) {
+                            foreach ($row as $subValue) {
+                                if (is_string($subValue) && filter_var($subValue, FILTER_VALIDATE_URL)) {
+                                    $this->deleteImageFromDisk($subValue);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
+            // Delete regular file fields
+            $fileFields = ['file', 'file_mobile', 'video', 'icon', 'photo'];
             foreach ($fileFields as $field) {
                 if (!empty($content[$field])) {
                     $images = is_array($content[$field]) ? $content[$field] : [$content[$field]];
-
                     foreach ($images as $imageUrl) {
                         $this->deleteImageFromDisk($imageUrl);
                     }
                 }
             }
         }
+        
         $section->delete();
 
         return back()->with('success', 'Item Deleted successfully!');

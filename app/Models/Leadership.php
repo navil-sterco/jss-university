@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Type;
+use App\Models\LeadershipCategory;
 use App\Models\Pages;
 use App\Models\Course;
 use App\Models\School;
@@ -14,11 +15,14 @@ class Leadership extends Model
 {
     protected $fillable = [
         'type_id',
+        'category_id',
         'name',
         'slug',
         'image',
         'banner_image',
         'video',
+        'page_type',
+        'message_image',
         'short_description',
         'description',
         'biography', 
@@ -55,6 +59,11 @@ class Leadership extends Model
     public function type()
     {
         return $this->belongsTo(Type::class, 'type_id');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(LeadershipCategory::class, 'category_id');
     }
 
     public function scopeFilter(Builder $query, $filters)

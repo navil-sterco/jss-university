@@ -15,6 +15,7 @@ class Hamburger extends Model
         'section_title',
         'section_subtitle',
         'link',
+        'target_blank',
         'section_title_second',
         'section_subtitle_second',
         'section_image_first',
@@ -30,6 +31,7 @@ class Hamburger extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'target_blank' => 'boolean',
     ];
 
     public function parent()

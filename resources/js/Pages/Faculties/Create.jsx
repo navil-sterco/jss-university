@@ -26,9 +26,11 @@ const Create = ({ types: initialTypes, schools }) => {
     const [itemIdDelete, setItemIdDelete] = useState(null);
 
     const [newType, setNewType] = useState("");
+    const [newTypeDisplayOrder, setNewTypeDisplayOrder] = useState("");
     const [typeError, setTypeError] = useState("");
     const [editingType, setEditingType] = useState(null);
     const [editTypeName, setEditTypeName] = useState("");
+    const [editTypeDisplayOrder, setEditTypeDisplayOrder] = useState("");
     const [typeLoading, setTypeLoading] = useState(false);
 
     const submit = (e) => {
@@ -121,11 +123,13 @@ const Create = ({ types: initialTypes, schools }) => {
         setTypeLoading(true);
         router.post(route('types.store'), {
             name: newType,
-            element: "faculty"
+            element: "faculty",
+            display_order: newTypeDisplayOrder
         }, {
             preserveScroll: true,
             onSuccess: () => {
                 setNewType("");
+                setNewTypeDisplayOrder("");
                 setTypeLoading(false);
             },
             onError: (errors) => {
@@ -138,6 +142,7 @@ const Create = ({ types: initialTypes, schools }) => {
     const startEditType = (type) => {
         setEditingType(type.id);
         setEditTypeName(type.name);
+        setEditTypeDisplayOrder(type.display_order ?? "");
     };
 
     const updateType = (e) => {
@@ -147,12 +152,14 @@ const Create = ({ types: initialTypes, schools }) => {
         setTypeLoading(true);
         router.put(route('types.update', editingType), {
             name: editTypeName,
-            element: "faculty"
+            element: "faculty",
+            display_order: editTypeDisplayOrder
         }, {
             preserveScroll: true,
             onSuccess: () => {
                 setEditingType(null);
                 setEditTypeName("");
+                setEditTypeDisplayOrder("");
                 setTypeLoading(false);
             },
             onError: (errors) => {
@@ -198,6 +205,7 @@ const Create = ({ types: initialTypes, schools }) => {
     const cancelEdit = () => {
         setEditingType(null);
         setEditTypeName("");
+        setEditTypeDisplayOrder("");
     };
 
     return (
@@ -735,7 +743,7 @@ const Create = ({ types: initialTypes, schools }) => {
                             {/* Add Type Form */}
                             <form onSubmit={addType} className="mb-4">
                                 <label className="form-label fw-semibold">Add New Type</label>
-                                <div className="input-group">
+                                <div className="input-group mb-2">
                                     <input
                                         type="text"
                                         className="form-control"
@@ -743,6 +751,15 @@ const Create = ({ types: initialTypes, schools }) => {
                                         value={newType}
                                         onChange={(e) => setNewType(e.target.value)}
                                         disabled={typeLoading}
+                                    />
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        placeholder="Order"
+                                        value={newTypeDisplayOrder}
+                                        onChange={(e) => setNewTypeDisplayOrder(e.target.value)}
+                                        disabled={typeLoading}
+                                        style={{ maxWidth: '80px' }}
                                     />
                                     <button
                                         type="submit"
@@ -774,6 +791,15 @@ const Create = ({ types: initialTypes, schools }) => {
                                                         onChange={(e) => setEditTypeName(e.target.value)}
                                                         disabled={typeLoading}
                                                     />
+                                                    <input
+                                                        type="number"
+                                                        className="form-control form-control-sm me-2"
+                                                        placeholder="Order"
+                                                        value={editTypeDisplayOrder}
+                                                        onChange={(e) => setEditTypeDisplayOrder(e.target.value)}
+                                                        disabled={typeLoading}
+                                                        style={{ maxWidth: '60px' }}
+                                                    />
 
                                                     <button
                                                         type="submit"
@@ -797,7 +823,7 @@ const Create = ({ types: initialTypes, schools }) => {
                                                 </form>
                                             ) : (
                                                 <>
-                                                    <span>{type.name}</span>
+                                                    <span>{type.name} {type.display_order !== null && type.display_order !== undefined && <small className="text-muted">(Order: {type.display_order})</small>}</span>
                                                     <div className="btn-group btn-group-sm">
                                                         <button
                                                             className="btn btn-outline-primary"

@@ -9,8 +9,8 @@ const Edit = (props) => {
     const initialMenus = Array.isArray(admission.menus)
         ? admission.menus
         : admission.menus
-        ? JSON.parse(admission.menus)
-        : [];
+            ? JSON.parse(admission.menus)
+            : [];
 
     const { data, setData, post, processing, errors } = useForm({
         _method: "PUT",
@@ -21,7 +21,7 @@ const Edit = (props) => {
         email: admission.email || "",
         phone: admission.phone || "",
         apply_now_link: admission.apply_now_link || "",
-        
+
         // Program fields
         program_text: admission.program_text || "",
         program_desc: admission.program_desc || "",
@@ -31,12 +31,13 @@ const Edit = (props) => {
         // Files (will handle separately)
         image: admission.image || null,
         brochure: admission.brochure || null,
+        academic_calendar: admission.academic_calendar || null,
 
         // Menus array
         menus: initialMenus,
     });
     const { flash } = usePage().props;
-    
+
     // Toast for flash messages
     useEffect(() => {
         if (flash.success) {
@@ -65,6 +66,18 @@ const Edit = (props) => {
         }
     };
 
+    // ✅ Handle file change for academic calendar (PDF)
+    const handleAcademicCalendarChange = (e) => {
+        const fileData = e.target.files[0];
+        if (fileData) {
+            if (fileData.type !== 'application/pdf') {
+                alert('Please select a PDF file for the academic calendar.');
+                return;
+            }
+            setData("academic_calendar", fileData);
+        }
+    };
+
     // ✅ Remove image
     const removeImage = () => {
         setData("image", null);
@@ -73,6 +86,11 @@ const Edit = (props) => {
     // ✅ Remove brochure
     const removeBrochure = () => {
         setData("brochure", null);
+    };
+
+    // ✅ Remove academic calendar
+    const removeAcademicCalendar = () => {
+        setData("academic_calendar", null);
     };
 
     // ✅ Add new menu item
@@ -296,6 +314,34 @@ const Edit = (props) => {
                                     </div>
                                 )}
                                 <div className="form-text text-danger">{errors.brochure}</div>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Academic Calendar (PDF only)</label>
+                                <div className="d-flex align-items-center">
+                                    <input
+                                        className="form-control"
+                                        type="file"
+                                        accept=".pdf,application/pdf"
+                                        onChange={handleAcademicCalendarChange}
+                                    />
+                                    {(data.academic_calendar instanceof File || (data.academic_calendar && typeof data.academic_calendar === 'string')) && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-danger ms-2"
+                                            onClick={removeAcademicCalendar}
+                                        >
+                                            <i className='bx bx-x'></i>
+                                        </button>
+                                    )}
+                                </div>
+                                {(data.academic_calendar instanceof File || (data.academic_calendar && typeof data.academic_calendar === 'string')) && (
+                                    <div className="form-text text-success">
+                                        <i className="fas fa-check me-1"></i>
+                                        {data.academic_calendar instanceof File ? data.academic_calendar.name : 'Academic Calendar exists'}
+                                    </div>
+                                )}
+                                <div className="form-text text-danger">{errors.academic_calendar}</div>
                             </div>
 
                             <div className="mb-3 col-12">

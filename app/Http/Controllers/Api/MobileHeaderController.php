@@ -47,6 +47,7 @@ class MobileHeaderController extends Controller
     private function formatMenuItem($item)
     {
         $url = $this->resolveUrl($item);
+        $school = $this->getSchool($item);
 
         return [
             'id' => $item->id,
@@ -56,6 +57,7 @@ class MobileHeaderController extends Controller
             'children' => $item->children->map(function ($child) {
                 return $this->formatMenuItem($child);
             }),
+            'school' => $school ?? null,
         ];
     }
 
@@ -79,6 +81,17 @@ class MobileHeaderController extends Controller
                 
             default:
                 return $item->url ?? '#';
+        }
+    }
+    private function getSchool($item)
+    {
+        switch ($item->title) {
+            case 'Schools':
+                $school = School::select('name','slug')->get();
+                return $school;
+                
+            default:
+                return null;
         }
     }
 }

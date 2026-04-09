@@ -3,7 +3,7 @@ import { Link, useForm } from '@inertiajs/react';
 import Pagination from '@/Components/Pagination';
 import { router, usePage } from '@inertiajs/react';
 import { ToastContainer, toast } from 'react-toastify';
-import _, { set } from "lodash";
+import { debounce } from "lodash";
 
 const Index = (props) => {
     const { searchTerm, banners } = props;
@@ -30,7 +30,7 @@ const Index = (props) => {
 
     // Search debounce
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("banners", { search: query }, { preserveState: true, replace: true });
         }, 300);
 
@@ -118,10 +118,7 @@ const Index = (props) => {
                         <thead>
                             <tr>
                                 <th>Heading</th>
-                                <th>Subheading</th>
                                 <th>Shown On</th>
-                                <th>Link</th>
-                                <th>Linked Text</th>
                                 <th>Desktop Banner</th>
                                 <th>Mobile Banner</th>
                                 <th>Display Order</th>
@@ -134,10 +131,7 @@ const Index = (props) => {
                             {banners.data.map((banner) => (
                                 <tr key={banner.id}>
                                     <td className='description-cell'><i className="bx bx-news bx-sm me-3"></i>{banner.heading}</td>
-                                    <td className='description-cell'><i className="bx bx-news bx-sm me-3"></i>{banner.subheading}</td>
                                     <td className='description-cell'><i className="bx bx-image bx-sm me-3"></i>{banner.banner_shown_on}</td>
-                                    <td className='description-cell'><i className="bx bx-link bx-sm me-3"></i>{banner.link}</td>
-                                    <td className='description-cell'><i className="bx bx-link bx-sm me-3"></i>{banner.linked_text}</td>
                                     <td>
                                         {banner.image ? (
                                             <img

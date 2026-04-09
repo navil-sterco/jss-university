@@ -27,6 +27,7 @@ class Faq extends Model
     {
         return $this->belongsToMany(Pages::class, 'faqs_page', 'faq_id', 'page_id')->withTimestamps();
     }
+    
 
     public function departments()
     {

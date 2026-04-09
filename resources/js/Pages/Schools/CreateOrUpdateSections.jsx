@@ -6,6 +6,49 @@ const CreateOrUpdateSections = ({ school }) => {
     const [activeSections, setActiveSections] = useState([]);
     const appUrl = usePage().props.appUrl;
 
+    // Helper function to ensure chancellor items is always an array with proper format
+    const initializeChancellorItems = (items) => {
+        if (!items) return [{ logo: null, content: "", existing_logo: "" }];
+        
+        // If it's a string, try to parse it
+        if (typeof items === 'string') {
+            try {
+                items = JSON.parse(items);
+            } catch (e) {
+                console.error('Failed to parse chancellor items:', e);
+                return [{ logo: null, content: "", existing_logo: "" }];
+            }
+        }
+        
+        // Ensure it's an array
+        if (!Array.isArray(items)) {
+            return [{ logo: null, content: "", existing_logo: "" }];
+        }
+        
+        // Map each item to the correct format
+        return items.map(item => ({
+            logo: null, // Reset file input for new uploads
+            content: item.content || "",
+            existing_logo: item.logo || "" // Store existing logo path
+        }));
+    };
+
+    // Helper function to ensure highlights is always an array
+    const initializeHighlights = (highlights) => {
+        if (!highlights) return [{ rank: "", text: "", source: "" }];
+        
+        if (typeof highlights === 'string') {
+            try {
+                highlights = JSON.parse(highlights);
+            } catch (e) {
+                console.error('Failed to parse highlights:', e);
+                return [{ rank: "", text: "", source: "" }];
+            }
+        }
+        
+        return Array.isArray(highlights) ? highlights : [{ rank: "", text: "", source: "" }];
+    };
+
     const { data, setData, post, progress, processing, errors } = useForm({
         // About School Section
         about_school_title: school.about_school_title || "",
@@ -13,21 +56,19 @@ const CreateOrUpdateSections = ({ school }) => {
         about_school_description: school.about_school_description || "",
         about_school_url: school.about_school_url || "",
         about_school_chancellor_img: null,
-        about_school_chancellor_logo: null,
-        about_school_logo_content: school.about_school_logo_content || "",
+        about_chancellor_items: initializeChancellorItems(school.about_chancellor_items),
         about_school_stats_number: school.about_school_stats_number || "",
         about_school_stats_content: school.about_school_stats_content || "",
         
-        // Dynamic arrays for highlights and buttons
-        about_highlights: school.about_highlights || [{ rank: "", text: "", source: "" }],
-        about_buttons: school.about_buttons || [{ text: "", url: "" }],
+        // Dynamic arrays for highlights
+        about_highlights: initializeHighlights(school.about_highlights),
 
         // Department Section
         department_title: school.department_title || "",
         department_desc: school.department_desc || "",
         department_programs_count: school.department_programs_count || "",
         department_programs_text: school.department_programs_text || "",
-        department_buttons: school.department_buttons || [{ text: "", url: "" }],
+        department_buttons: school.department_buttons || "",
 
         // Placement Section
         placement_title: school.placement_title || "",
@@ -79,16 +120,10 @@ const CreateOrUpdateSections = ({ school }) => {
                     accept: "image/*"
                 },
                 {
-                    name: "about_school_chancellor_logo",
-                    label: "Chancellor Logo",
-                    type: "file",
-                    accept: "image/*"
-                },
-                {
-                    name: "about_school_logo_content",
-                    label: "Logo Content",
-                    type: "text",
-                    placeholder: "Logo content text"
+                    name: "about_chancellor_items",
+                    label: "Chancellor Items",
+                    type: "chancellor_items",
+                    description: "Add multiple chancellor logos (upload images) and content"
                 },
                 {
                     name: "about_school_stats_number",
@@ -107,12 +142,6 @@ const CreateOrUpdateSections = ({ school }) => {
                     label: "Highlights",
                     type: "highlights",
                     placeholder: "Highlight"
-                },
-                {
-                    name: "about_buttons",
-                    label: "Buttons",
-                    type: "buttons",
-                    placeholder: "Button"
                 }
             ]
         },
@@ -149,10 +178,10 @@ const CreateOrUpdateSections = ({ school }) => {
                 },
                 {
                     name: "department_buttons",
-                    label: "Department Buttons",
-                    type: "buttons",
-                    placeholder: "Button"
-                }
+                    label: "Academic Year Desc",
+                    type: "text",
+                    placeholder: "e.g., Academic Year Desc"
+                },
             ]
         },
         {
@@ -243,11 +272,15 @@ const CreateOrUpdateSections = ({ school }) => {
                 const value = data[field.name];
                 if (value === null || value === undefined) return false;
                 if (Array.isArray(value)) {
-                    return value.some(item => 
-                        typeof item === 'object' 
-                            ? Object.values(item).some(val => val && val !== "")
-                            : item && item !== ""
-                    );
+                    return value.some(item => {
+                        if (typeof item === 'object') {
+                            // Check if any field has value (including existing_logo for files)
+                            return Object.values(item).some(val => 
+                                val && val !== "" && val !== null
+                            );
+                        }
+                        return item && item !== "";
+                    });
                 }
                 return value !== "";
             });
@@ -261,7 +294,36 @@ const CreateOrUpdateSections = ({ school }) => {
 
     const submit = (e) => {
         e.preventDefault();
+        
+        // Create FormData object for file uploads
+        const formData = new FormData();
+        
+        // Append all regular fields
+        Object.keys(data).forEach(key => {
+            if (key === 'about_chancellor_items') {
+                // Handle chancellor items specially
+                data[key].forEach((item, index) => {
+                    if (item.logo instanceof File) {
+                        formData.append(`about_chancellor_items[${index}][logo]`, item.logo);
+                    }
+                    // Always include existing_logo
+                    if (item.existing_logo) {
+                        formData.append(`about_chancellor_items[${index}][existing_logo]`, item.existing_logo);
+                    }
+                    formData.append(`about_chancellor_items[${index}][content]`, item.content || '');
+                });
+            } else if (key === 'about_highlights') {
+                // Handle highlights as JSON
+                formData.append(key, JSON.stringify(data[key]));
+            } else if (data[key] instanceof File) {
+                formData.append(key, data[key]);
+            } else if (data[key] !== null && data[key] !== undefined) {
+                formData.append(key, data[key]);
+            }
+        });
+        
         post(route("school.section.update", school.id), {
+            data: formData,
             forceFormData: true,
             preserveScroll: true,
         });
@@ -277,6 +339,15 @@ const CreateOrUpdateSections = ({ school }) => {
             toast.error(flash.error);
         }
     }, [flash]);
+
+    // Helper function to add array item
+    const addArrayItem = (fieldName, defaultItem = null) => {
+        if (fieldName === 'about_chancellor_items') {
+            setData(fieldName, [...data[fieldName], { logo: null, content: "", existing_logo: "" }]);
+        } else if (fieldName === 'about_highlights') {
+            setData(fieldName, [...data[fieldName], { rank: "", text: "", source: "" }]);
+        }
+    };
 
     // Section management
     const addSection = (sectionId) => {
@@ -296,21 +367,12 @@ const CreateOrUpdateSections = ({ school }) => {
                     setData(field.name, null);
                 } else if (field.type === 'highlights') {
                     setData(field.name, [{ rank: "", text: "", source: "" }]);
-                } else if (field.type === 'buttons') {
-                    setData(field.name, [{ text: "", url: "" }]);
+                } else if (field.type === 'chancellor_items') {
+                    setData(field.name, [{ logo: null, content: "", existing_logo: "" }]);
                 } else {
                     setData(field.name, "");
                 }
             });
-        }
-    };
-
-    // Array management functions
-    const addArrayItem = (fieldName) => {
-        if (fieldName === 'about_highlights') {
-            setData(fieldName, [...data[fieldName], { rank: "", text: "", source: "" }]);
-        } else if (fieldName === 'about_buttons' || fieldName === 'department_buttons') {
-            setData(fieldName, [...data[fieldName], { text: "", url: "" }]);
         }
     };
 
@@ -324,7 +386,23 @@ const CreateOrUpdateSections = ({ school }) => {
 
     const handleArrayChange = (fieldName, index, field, value) => {
         const updatedArray = [...data[fieldName]];
-        updatedArray[index][field] = value;
+        
+        if (field === 'logo' && value instanceof File) {
+            // Handle file upload for logo
+            updatedArray[index] = {
+                ...updatedArray[index],
+                logo: value,
+                // Keep existing_logo until new file is saved
+                existing_logo: updatedArray[index].existing_logo
+            };
+        } else {
+            // Handle regular field changes
+            updatedArray[index] = {
+                ...updatedArray[index],
+                [field]: value
+            };
+        }
+        
         setData(fieldName, updatedArray);
     };
 
@@ -402,12 +480,12 @@ const CreateOrUpdateSections = ({ school }) => {
                         
                         {/* Show current file if exists in school data */}
                         {school[field.name] && typeof school[field.name] === 'string' && (
-                            <div className="mb-3 col-md-3">
-                                <label className="form-label" htmlFor="image">Current Image</label>
-                                <div className="mb-2">
+                            <div className="mt-2">
+                                <label className="form-label small">Current Image</label>
+                                <div>
                                     <img
                                         src={`${appUrl}/${school[field.name]}`}
-                                        alt="Current Banner"
+                                        alt="Current"
                                         style={{
                                             width: "100px",
                                             height: "60px",
@@ -425,13 +503,13 @@ const CreateOrUpdateSections = ({ school }) => {
                 return (
                     <div className="mb-3" key={field.name}>
                         <label className="form-label">{field.label}</label>
-                        {value.map((item, index) => (
+                        {Array.isArray(value) && value.map((item, index) => (
                             <div key={index} className="d-flex gap-2 mb-2">
                                 <input
                                     type="text"
                                     className="form-control"
                                     placeholder="Rank (e.g., #1)"
-                                    value={item.rank}
+                                    value={item.rank || ''}
                                     onChange={(e) => handleArrayChange(field.name, index, 'rank', e.target.value)}
                                     disabled={processing}
                                 />
@@ -439,7 +517,7 @@ const CreateOrUpdateSections = ({ school }) => {
                                     type="text"
                                     className="form-control"
                                     placeholder="Text (e.g., Best Engineering College)"
-                                    value={item.text}
+                                    value={item.text || ''}
                                     onChange={(e) => handleArrayChange(field.name, index, 'text', e.target.value)}
                                     disabled={processing}
                                 />
@@ -447,7 +525,7 @@ const CreateOrUpdateSections = ({ school }) => {
                                     type="text"
                                     className="form-control"
                                     placeholder="Source (e.g., Times Ranking 2024)"
-                                    value={item.source}
+                                    value={item.source || ''}
                                     onChange={(e) => handleArrayChange(field.name, index, 'source', e.target.value)}
                                     disabled={processing}
                                 />
@@ -475,48 +553,104 @@ const CreateOrUpdateSections = ({ school }) => {
                     </div>
                 );
 
-            case 'buttons':
+            case 'chancellor_items':
                 return (
                     <div className="mb-3" key={field.name}>
                         <label className="form-label">{field.label}</label>
-                        {value.map((item, index) => (
-                            <div key={index} className="d-flex gap-2 mb-2">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Button Text"
-                                    value={item.text}
-                                    onChange={(e) => handleArrayChange(field.name, index, 'text', e.target.value)}
-                                    disabled={processing}
-                                />
-                                <input
-                                    type="url"
-                                    className="form-control"
-                                    placeholder="https://example.com"
-                                    value={item.url}
-                                    onChange={(e) => handleArrayChange(field.name, index, 'url', e.target.value)}
-                                    disabled={processing}
-                                />
-                                {value.length > 1 && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-danger"
-                                        onClick={() => removeArrayItem(field.name, index)}
-                                        disabled={processing}
-                                    >
-                                        ×
-                                    </button>
-                                )}
+                        {field.description && (
+                            <small className="text-muted d-block mb-2">{field.description}</small>
+                        )}
+                        
+                        {Array.isArray(value) && value.map((item, index) => (
+                            <div key={index} className="card mb-3 border">
+                                <div className="card-header bg-light py-2">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <h6 className="mb-0">Chancellor Item {index + 1}</h6>
+                                        {value.length > 1 && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-danger btn-sm"
+                                                onClick={() => removeArrayItem(field.name, index)}
+                                                disabled={processing}
+                                            >
+                                                <i className="bx bx-trash me-1"></i>
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="card-body">
+                                    <div className="row">
+                                        <div className="col-md-6">
+                                            <div className="mb-3">
+                                                <label className="form-label small fw-bold">Chancellor Logo</label>
+                                                <input
+                                                    type="file"
+                                                    className="form-control form-control-sm"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        if (e.target.files[0]) {
+                                                            handleArrayChange(field.name, index, 'logo', e.target.files[0]);
+                                                        }
+                                                    }}
+                                                    disabled={processing}
+                                                />
+                                                {item.existing_logo && (
+                                                    <div className="mt-2">
+                                                        <label className="form-label small">Current Logo</label>
+                                                        <div>
+                                                            <img
+                                                                src={`${appUrl}/${item.existing_logo}`}
+                                                                alt={`Chancellor Logo ${index + 1}`}
+                                                                style={{
+                                                                    width: "80px",
+                                                                    height: "80px",
+                                                                    objectFit: "cover",
+                                                                    borderRadius: "4px",
+                                                                    border: "1px solid #dee2e6"
+                                                                }}
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {item.logo instanceof File && (
+                                                    <div className="mt-2">
+                                                        <small className="text-success">
+                                                            New file selected: {item.logo.name}
+                                                        </small>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="mb-3">
+                                                <label className="form-label small fw-bold">Content</label>
+                                                <textarea
+                                                    className="form-control form-control-sm"
+                                                    rows="3"
+                                                    placeholder="Enter content text"
+                                                    value={item.content || ''}
+                                                    onChange={(e) => handleArrayChange(field.name, index, 'content', e.target.value)}
+                                                    disabled={processing}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                         {fieldError && <div className="invalid-feedback d-block">{fieldError}</div>}
                         <button
                             type="button"
-                            className="btn btn-outline-secondary btn-sm"
+                            className="btn btn-outline-primary btn-sm"
                             onClick={() => addArrayItem(field.name)}
                             disabled={processing}
                         >
-                            + Add {field.label}
+                            <i className="bx bx-plus me-1"></i>
+                            Add Chancellor Item
                         </button>
                     </div>
                 );
@@ -619,7 +753,7 @@ const CreateOrUpdateSections = ({ school }) => {
                                 <div className="card-body">
                                     <div className="row">
                                         {section.fields.map(field => 
-                                            (field.type === 'file' || field.type === 'textarea' || field.type === 'highlights' || field.type === 'buttons') ? (
+                                            (field.type === 'file' || field.type === 'textarea' || field.type === 'highlights' || field.type === 'chancellor_items') ? (
                                                 <div className="col-12" key={field.name}>
                                                     {renderField(field)}
                                                 </div>

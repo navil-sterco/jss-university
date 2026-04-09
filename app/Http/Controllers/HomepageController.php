@@ -78,7 +78,6 @@ class HomepageController extends Controller
             'highlights' => 'nullable|array',
             'highlights.*.rank' => 'nullable|string|max:255',
             'highlights.*.text' => 'nullable|string|max:255',
-            'highlights.*.source' => 'nullable|string|max:255',
             
             'buttons' => 'nullable|array',
             'buttons.*.text' => 'nullable|string|max:255',
@@ -90,10 +89,10 @@ class HomepageController extends Controller
             'facilities' => 'nullable|array',
             'facilities.*.title' => 'nullable|string|max:255',
             'facilities.*.description' => 'nullable|string',
-            'facilities.*.main_link' => 'nullable|url|max:255',
+            'facilities.*.main_link' => 'nullable|max:255',
             'facilities.*.links' => 'nullable|array',
             'facilities.*.links.*.text' => 'nullable|string|max:255',
-            'facilities.*.links.*.url' => 'nullable|url|max:255',
+            'facilities.*.links.*.url' => 'nullable|max:255',
         ];
 
         $rules = array_merge($rules, $arrayRules);
@@ -103,35 +102,53 @@ class HomepageController extends Controller
             $rules['about_chancellor_img'] = 'image|mimes:jpg,jpeg,png,webp|max:2000';
         }
 
+        if ($request->hasFile('about_video')) {
+            $rules['about_video'] = 'mimes:mp4,webm,ogg|max:51200';
+        }
+
         if ($request->hasFile('hall_of_fame_image')) {
             $rules['hall_of_fame_image'] = 'image|mimes:jpg,jpeg,png,webp|max:2000';
+        }
+
+        // Add validation for highlight image files
+        $highlightFiles = $request->allFiles();
+        foreach ($highlightFiles as $key => $file) {
+            if (preg_match('/^highlights\[\d+\]\[source\]$/', $key)) {
+                $rules[$key] = 'image|mimes:jpg,jpeg,png,webp|max:2000';
+            }
         }
 
         $validated = $request->validate($rules);
 
         // Handle main file uploads
         $fileFields = [
-            'about_chancellor_img' => 'homepage/about/',
-            'hall_of_fame_image' => 'homepage/placement/',
+            'about_chancellor_img' => ['path' => 'assets/img/homepage/about/'],
+            'hall_of_fame_image' => ['path' => 'assets/img/homepage/placement/'],
+            'about_video' => ['path' => 'assets/video/homepage/about/'],
         ];
 
-        foreach ($fileFields as $field => $folder) {
-            if ($request->hasFile($field)) {
+        foreach ($fileFields as $field => $config) {
+            if ($request->input($field) === 'null') {
+                if (!empty($homepage->$field) && file_exists(public_path($homepage->$field))) {
+                    @unlink(public_path($homepage->$field));
+                }
+                $validated[$field] = null;
+            } elseif ($request->hasFile($field)) {
                 // Delete old file if it exists
                 if (!empty($homepage->$field) && file_exists(public_path($homepage->$field))) {
-                    unlink(public_path($homepage->$field));
+                    @unlink(public_path($homepage->$field));
                 }
 
                 // Upload new file
                 $file = $request->file($field);
                 $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('assets/img/' . $folder), $fileName);
-                $validated[$field] = 'assets/img/' . $folder . $fileName;
+                $file->move(public_path($config['path']), $fileName);
+                $validated[$field] = $config['path'] . $fileName;
             }
         }
 
-        // Process JSON arrays directly (Inertia sends them as arrays)
-        $validated['highlights'] = $request->input('highlights', []);
+        // Process arrays with file handling
+        $validated['highlights'] = $this->processHighlights($request, $homepage);
         $validated['buttons'] = $request->input('buttons', []);
         $validated['logo_content'] = $this->processLogoContent($request, $homepage);
         $validated['facilities'] = $this->processFacilities($request, $homepage);
@@ -185,6 +202,51 @@ class HomepageController extends Controller
         }
 
         return $logoContent;
+    }
+
+    /**
+ * Process highlights with image uploads
+ */
+    private function processHighlights(Request $request, $homepage)
+    {
+        $highlights = [];
+        $existingHighlights = $homepage->highlights ?? [];
+
+        // Get highlights data from request
+        $highlightsData = $request->input('highlights', []);
+        
+        foreach ($highlightsData as $index => $highlightData) {
+            $highlight = [
+                'rank' => $highlightData['rank'] ?? '',
+                'text' => $highlightData['text'] ?? '',
+                'source' => $existingHighlights[$index]['source'] ?? null,
+            ];
+
+            // Handle highlight source image upload
+            $fileKey = "highlights.{$index}.source";
+            if ($request->hasFile($fileKey)) {
+                $file = $request->file($fileKey);
+                
+                // Delete old file if exists in existing data
+                if (isset($existingHighlights[$index]['source']) && 
+                    !empty($existingHighlights[$index]['source']) && 
+                    file_exists(public_path($existingHighlights[$index]['source']))) {
+                    unlink(public_path($existingHighlights[$index]['source']));
+                }
+
+                // Upload new file
+                $fileName = time() . '_highlight_' . $index . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('assets/img/homepage/highlights/'), $fileName);
+                $highlight['source'] = 'assets/img/homepage/highlights/' . $fileName;
+            }
+
+            // Only add highlight if it has some content
+            if (!empty($highlight['rank']) || !empty($highlight['text']) || !empty($highlight['source'])) {
+                $highlights[] = $highlight;
+            }
+        }
+
+        return $highlights;
     }
 
     /**
@@ -255,7 +317,8 @@ class HomepageController extends Controller
             // Define all file fields that need to be unlinked
             $fileFields = [
                 'about_chancellor_img',
-                'hall_of_fame_image'
+                'hall_of_fame_image',
+                'about_video'
             ];
 
             // Delete main files

@@ -17,14 +17,15 @@ class HappeningController extends Controller
             $validated = $request->validate([
                 'month' => 'nullable|integer|min:1|max:12',
                 'school' => 'nullable|integer|exists:schools,id',
+                'department' => 'nullable|integer|exists:departments,id',
                 'page' => 'nullable|integer|min:1'
             ]);
             $today = Carbon::today();
 
-            $upcomingQuery = Happening::with('schools:id,name')->where('status', 1)
+            $upcomingQuery = Happening::with('schools:id,name','departments:id,name')->where('status', 1)
                 ->whereDate('event_date_from', '>=', $today);
 
-            $otherQuery = Happening::with('schools:id,name')->where('status', 1)
+            $otherQuery = Happening::with('schools:id,name','departments:id,name')->where('status', 1)
                 ->whereDate('event_date_from', '<', $today);
 
             if ($request->filled('month')) {
@@ -42,6 +43,16 @@ class HappeningController extends Controller
                 });
             }
 
+            if ($request->filled('department')) {
+                $upcomingQuery->whereHas('departments', function ($q) use ($validated) {
+                    $q->where('department_id', $validated['department']);
+                });
+
+                $otherQuery->whereHas('departments', function ($q) use ($validated) {
+                    $q->where('department_id', $validated['department']);
+                });
+            }
+
             $upcomingEvents = $upcomingQuery->orderBy('display_order', 'asc')
                 ->get(['id', 'title', 'event_type', 'slug', 'banner_images', 'short_description', 'event_date_from']);
 
@@ -55,7 +66,21 @@ class HappeningController extends Controller
                 'event_date_from' => $event->event_date_from,
             ]);
 
-            $firstEvent = $otherQuery->orderBy('display_order', 'asc')->first();
+            if ($request->filled('school')) {
+                $firstEvent = Happening::with('schools:id,name')->where('status', 1)
+                ->whereDate('event_date_from', '<', $today)->whereHas('schools', function ($q) use ($validated) {
+                    $q->where('school_id', $validated['school']);
+                })->orderBy('display_order', 'asc')->first();
+            }
+            else if($request->filled('department')){
+                $firstEvent = Happening::with('departments:id,name')->where('status', 1)
+                ->whereDate('event_date_from', '<', $today)->whereHas('departments', function ($q) use ($validated) {
+                    $q->where('department_id', $validated['department']);
+                })->orderBy('display_order', 'asc')->first();
+            }
+            else{
+                $firstEvent = Happening::where('status', 1)->orderBy('display_order', 'asc')->first();
+            }
 
             $firstEventFormatted = $firstEvent ? [
                 'id' => $firstEvent->id,
@@ -73,14 +98,14 @@ class HappeningController extends Controller
             $otherEventsQuery = $otherQuery->where('id', '!=', optional($firstEvent)->id)
                 ->orderBy('display_order', 'asc');
 
-            $otherEventsPaginated = $otherEventsQuery->paginate($perPage, ['id', 'title', 'event_type', 'slug', 'banner_images', 'short_description', 'event_date_from'], 'page', $page);
+            $otherEventsPaginated = $otherEventsQuery->paginate($perPage, ['id', 'title', 'event_type', 'slug', 'image', 'short_description', 'event_date_from'], 'page', $page);
 
             $otherEventsFormatted = $otherEventsPaginated->getCollection()->map(fn($event) => [
                 'id' => $event->id,
                 'title' => $event->title,
                 'slug' => $event->slug,
                 'event_type' => $event->event_type,
-                'banner_image' => $event->banner_images ? asset($event->banner_images) : null,
+                'banner_image' => $event->image ? asset($event->image) : null,
                 'desc' => $event->short_description,
                 'event_date_from' => $event->event_date_from,
             ]);
@@ -115,7 +140,7 @@ class HappeningController extends Controller
 
     public function show($slug)
     {
-        $happening = Happening::with('galleries')->where('slug', $slug)->first();
+        $happening = Happening::with('galleries')->where('status', 1)->where('slug', $slug)->first();
         
         if (!$happening) {
             return response()->json([
@@ -140,7 +165,7 @@ class HappeningController extends Controller
             'sections' => [
                 [
                     'smallImg' => $happening->image ? asset($happening->image) : "/images/custom-page/happsmall.webp",
-                    'content' => $this->formatDescription($happening->description ?: $happening->short_description),
+                    'content' => $happening->description,
                 ],
             ],
             'related' => $this->getRelatedHappenings($happening->id),
@@ -307,24 +332,43 @@ class HappeningController extends Controller
 
     public function gallery(Request $request)
     {
-        $today = now()->format('Y-m-d');
         $filter = $request->query('filter'); // image | video | both
-        $perPage = 8;
+        $schoolId = $request->query('school');
+        $departmentId = $request->query('department');
+        $perPage = 9;
         $page = $request->get('page', 1);
 
         $query = Gallery::where('type', 'gallery');
 
-        // DB level filter
+        // Filter by school
+        if ($schoolId) {
+            $query->whereHas('schools', function ($q) use ($schoolId) {
+                $q->where('school_id', $schoolId);
+            });
+        }
+
+        // Filter by department
+        if ($departmentId) {
+            $query->whereHas('departments', function ($q) use ($departmentId) {
+                $q->where('sdepartment_id', $departmentId);
+            });
+        }
+
+        // Filter logic
         if ($filter === 'video') {
-            $query->whereJsonLength('videos', '>', 0);
+            $query->where(function ($q) {
+                $q->whereJsonLength('videos', '>', 0)
+                ->orWhereNotNull('video_url');
+            });
         } elseif ($filter === 'image') {
             $query->whereJsonLength('images', '>', 0);
         }
 
-        // Helper to merge images + videos
+        // Helper to merge media
         $formatMedia = function ($item) use ($filter) {
             $media = collect();
 
+            // Images
             if ($filter !== 'video' && is_array($item->images)) {
                 foreach ($item->images as $i => $img) {
                     $media->push([
@@ -335,6 +379,7 @@ class HappeningController extends Controller
                 }
             }
 
+            // Videos (JSON column)
             if ($filter !== 'image' && is_array($item->videos)) {
                 foreach ($item->videos as $i => $vid) {
                     $media->push([
@@ -345,36 +390,24 @@ class HappeningController extends Controller
                 }
             }
 
+            // Video URL column
+            if ($filter !== 'image' && !empty($item->video_url)) {
+                $media->push([
+                    'type' => 'video',
+                    'url' => $item->video_url,
+                    'alt' => 'Gallery Video',
+                ]);
+            }
+
             return $media->values();
         };
 
-        //-------------------------------------------------------
-        // ✅ UPCOMING EVENTS  (NO PAGINATION)
-        //-------------------------------------------------------
-        $upcomingEvents = (clone $query)
-            ->whereDate('event_date', '>=', $today)
-            ->orderBy('event_date', 'asc')
-            ->get()
-            ->map(function ($item) {
-
-                return [
-                    'id' => $item->id,
-                    'title' => $item->title,
-                    'banner_image' => isset($item->images[0]) ? asset($item->images[0]) : null,
-                    'event_type' => "Event",
-                    'event_date_from' => $item->event_date,
-                ];
-            });
-
-        //-------------------------------------------------------
-        // ✅ PAST EVENTS  (PAGINATED)
-        //-------------------------------------------------------
-        $pastPaginated = (clone $query)
-            ->whereDate('event_date', '<', $today)
+        // Paginated data
+        $paginated = $query
             ->orderBy('event_date', 'desc')
             ->paginate($perPage, ['*'], 'page', $page);
 
-        $galleryData = $pastPaginated->getCollection()->map(function ($item) use ($formatMedia) {
+        $galleryData = $paginated->getCollection()->map(function ($item) use ($formatMedia) {
 
             $media = $formatMedia($item);
 
@@ -384,36 +417,52 @@ class HappeningController extends Controller
                 'date' => $item->event_date,
                 'stats' => [
                     'photos' => is_array($item->images) ? count($item->images) : 0,
-                    'videos' => is_array($item->videos) ? count($item->videos) : 0,
+                    'videos' => (is_array($item->videos) ? count($item->videos) : 0)
+                                + (!empty($item->video_url) ? 1 : 0),
                 ],
+                'video_url' => $item->video_url,
+                'video' => !empty($item->videos[0])
+                            ? asset($item->videos[0])
+                            :  null,
                 'thumbnail' => $media->first()['url'] ?? asset('assets/img/placeholder.png'),
                 'media' => $media
             ];
         });
 
-        //-------------------------------------------------------
-        // FINAL RESPONSE (Pagination Outside)
-        //-------------------------------------------------------
         return response()->json([
-            'upcoming_events' => $upcomingEvents,
             'gallery_data' => $galleryData,
             'pagination' => [
-                'current_page' => $pastPaginated->currentPage(),
-                'last_page' => $pastPaginated->lastPage(),
-                'per_page' => $pastPaginated->perPage(),
-                'total' => $pastPaginated->total(),
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
             ]
         ]);
     }
 
-    public function mediaCoverage()
+    public function mediaCoverage(Request $request)
     {
-        $mediaGalleries = Gallery::where('type', 'media_coverage')->get();
+        $schoolId = $request->query('school');
+        $departmentId = $request->query('department');
+
+        $query = Gallery::where('type', 'media_coverage');
+
+        if ($schoolId) {
+            $query->whereHas('schools', function ($q) use ($schoolId) {
+                $q->where('school_id', $schoolId);
+            });
+        }
+        if ($departmentId) {
+            $query->whereHas('departments', function ($q) use ($departmentId) {
+                $q->where('departments_id', $departmentId);
+            });
+        }
+
+        $mediaGalleries = $query->get();
 
         $galleryData = $mediaGalleries->map(function ($gallery, $index) {
             $mediaItems = collect();
 
-            // Handle images
             if (is_array($gallery->images)) {
                 foreach ($gallery->images as $i => $image) {
                     $mediaItems->push([
@@ -424,7 +473,6 @@ class HappeningController extends Controller
                 }
             }
 
-            // Handle videos (if available)
             if (is_array($gallery->videos)) {
                 foreach ($gallery->videos as $i => $video) {
                     $mediaItems->push([
@@ -445,17 +493,32 @@ class HappeningController extends Controller
         return response()->json($galleryData);
     }
 
-
-    public function pressRlease()
+    public function pressRlease(Request $request)
     {
-        $pressReleases = Gallery::where('type', 'notice_announcement')->get();
+        $schoolId = $request->query('school');
+        $departmentId = $request->query('department');
+
+        $query = Gallery::where('type', 'notice_announcement');
+
+        if ($schoolId) {
+            $query->whereHas('schools', function ($q) use ($schoolId) {
+                $q->where('school_id', $schoolId);
+            });
+        }
+        if ($departmentId) {
+            $query->whereHas('departments', function ($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            });
+        }
+
+        $pressReleases = $query->get();
 
         $documentsData = $pressReleases->map(function ($item, $index) {
             return [
                 'id' => $item->id,
                 'title' => $item->title ?? 'Untitled Document',
                 'date' => $item->event_date
-                    ? \Carbon\Carbon::parse($item->event_date)->format('j F Y')
+                    ? Carbon::parse($item->event_date)->format('j F Y')
                     : null,
                 'pdfUrl' => $item->pdf ? asset($item->pdf) : null,
             ];
@@ -463,4 +526,51 @@ class HappeningController extends Controller
 
         return response()->json($documentsData);
     }
+
+    public function count(Request $request)
+    {
+        $schoolId = $request->query('school');
+        $departmentId = $request->query('department');
+
+        // Base query with filters
+        $baseQuery = Gallery::query();
+
+        if ($schoolId) {
+            $baseQuery->whereHas('schools', function ($q) use ($schoolId) {
+                $q->where('school_id', $schoolId);
+            });
+        }
+
+        if ($departmentId) {
+            $baseQuery->whereHas('departments', function ($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            });
+        }
+
+        // Clone and count for each type
+        $galleryCount = (clone $baseQuery)
+            ->where('type', 'gallery')
+            ->count();
+
+        $mediaCoverageCount = (clone $baseQuery)
+            ->where('type', 'media_coverage')
+            ->count();
+
+        $pressReleaseCount = (clone $baseQuery)
+            ->where('type', 'notice_announcement')
+            ->count();
+
+        // Total count
+        $totalCount = $galleryCount + $mediaCoverageCount + $pressReleaseCount;
+
+        return response()->json([
+            'gallery_count' => $galleryCount,
+            'media_coverage_count' => $mediaCoverageCount,
+            'press_release_count' => $pressReleaseCount,
+            'newsletter' => 10,
+            'total_count' => $totalCount,
+        ]);
+    }
+
+    
 }

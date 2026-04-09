@@ -64,6 +64,7 @@ const PageManager = ({ schools, departments, pages, footerConfig }) => {
             id: Date.now(),
             text: '',
             link: '',
+            target_blank: false,
             display_order: quickLinks.length > 0 ? Math.max(...quickLinks.map(l => l.display_order)) + 1 : 1
         };
         setQuickLinks([...quickLinks, newLink]);
@@ -320,7 +321,7 @@ const PageManager = ({ schools, departments, pages, footerConfig }) => {
                                     {quickLinks.map((link, index) => (
                                         <div key={link.id} className="border rounded p-4 bg-white hover-shadow">
                                             <div className="row g-3">
-                                                <div className="col-md-5">
+                                                <div className="col-md-4">
                                                     <label className="form-label fw-medium text-dark small">Link Text <span className="text-danger">*</span></label>
                                                     <input
                                                         type="text"
@@ -333,7 +334,7 @@ const PageManager = ({ schools, departments, pages, footerConfig }) => {
                                                         <div className="form-text text-danger">{getQuickLinkError(index, 'text')}</div>
                                                     )}
                                                 </div>
-                                                <div className="col-md-5">
+                                                <div className="col-md-4">
                                                     <label className="form-label fw-medium text-dark small">URL <span className="text-danger">*</span></label>
                                                     <input
                                                         type="text"
@@ -345,6 +346,20 @@ const PageManager = ({ schools, departments, pages, footerConfig }) => {
                                                     {getQuickLinkError(index, 'link') && (
                                                         <div className="form-text text-danger">{getQuickLinkError(index, 'link')}</div>
                                                     )}
+                                                </div>
+                                                <div className="col-md-2 align-self-end mb-1">
+                                                    <div className="form-check">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            checked={link.target_blank || false}
+                                                            onChange={(e) => updateQuickLink(link.id, 'target_blank', e.target.checked)}
+                                                            id={`target_blank_${link.id}`}
+                                                        />
+                                                        <label className="form-check-label fw-medium text-dark small" htmlFor={`target_blank_${link.id}`}>
+                                                            New Tab
+                                                        </label>
+                                                    </div>
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="form-label fw-medium text-dark small">Order</label>

@@ -11,7 +11,7 @@ class BannerController extends Controller
     public function index()
     {
         try {
-            $banners = Banner::orderBy('display_order', 'asc')
+            $banners = Banner::where('status', 1)->orderBy('display_order', 'asc')
                 ->get()
                 ->map(function ($banner) {
                     return [

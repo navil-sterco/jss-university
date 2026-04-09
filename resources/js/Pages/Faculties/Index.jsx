@@ -3,7 +3,7 @@ import { Link, useForm } from "@inertiajs/react";
 import Pagination from "@/Components/Pagination";
 import { router, usePage } from "@inertiajs/react";
 import { ToastContainer, toast } from "react-toastify";
-import _ from "lodash";
+import { debounce } from "lodash";
 
 const Index = (props) => {
     const { faculty, searchTerm } = props;
@@ -23,7 +23,7 @@ const Index = (props) => {
     const imageModalRef = useRef(null);
     const imageModalInstance = useRef(null);
 
-    const { get, processing } = useForm();
+    const { get, post, processing } = useForm();
 
     // Toast for flash messages
     useEffect(() => {
@@ -34,7 +34,7 @@ const Index = (props) => {
 
     // Search debounce
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("faculty", { search: query }, { preserveState: true, replace: true });
         }, 300);
 
@@ -58,6 +58,7 @@ const Index = (props) => {
     // Delete modal
     const showDeleteModal = (id) => {
         setIdDelete(id);
+        setIsDuplicateAction(false);
         modalInstance.current.show();
     };
 
@@ -78,6 +79,37 @@ const Index = (props) => {
         });
     };
 
+    // Duplicate modal handling
+    const [duplicateId, setDuplicateId] = useState(null);
+    const [isDuplicateAction, setIsDuplicateAction] = useState(false);
+
+    const showDuplicateModal = (id) => {
+        setDuplicateId(id);
+        setIsDuplicateAction(true);
+        modalInstance.current.show();
+    };
+
+    const handleConfirmDuplicate = () => {
+        if (!duplicateId) return;
+        // hide modal immediately to avoid leaving it open during redirect
+        modalInstance.current.hide();
+        post(route('faculty.duplicate', duplicateId), {}, {
+            onSuccess: () => {
+                setDuplicateId(null);
+                setIsDuplicateAction(false);
+                toast.success('Faculty duplicated successfully');
+            },
+            onError: () => {
+                setIsDuplicateAction(false);
+            },
+            onFinish: () => {
+                // ensure state reset even if redirect occurs
+                setDuplicateId(null);
+                setIsDuplicateAction(false);
+            }
+        });
+    };
+
     // Image preview modal
     const showImageModal = (imageUrl) => {
         setSelectedImage(imageUrl);
@@ -94,13 +126,13 @@ const Index = (props) => {
     const closeViewModal = () => {
         viewModalInstance.current.hide();
         setSelectedFaculty(null);
-        
+
         // Remove modal backdrop manually
         const backdrops = document.querySelectorAll('.modal-backdrop');
         backdrops.forEach(backdrop => {
             backdrop.remove();
         });
-        
+
         // Remove modal-open class from body and reset styles
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
@@ -117,12 +149,12 @@ const Index = (props) => {
 
     const parseJsonArrayField = (fieldData) => {
         if (!fieldData) return [];
-        
+
         try {
             if (Array.isArray(fieldData)) {
                 return fieldData.filter(item => item && item.trim() !== '');
             }
-            
+
             if (typeof fieldData === 'string') {
                 const parsed = JSON.parse(fieldData);
                 if (Array.isArray(parsed)) {
@@ -130,7 +162,7 @@ const Index = (props) => {
                 }
                 return parsed && parsed.trim() !== '' ? [parsed] : [];
             }
-            
+
             return [];
         } catch (error) {
             // If it's a simple string (not JSON), use it as a single item
@@ -140,12 +172,12 @@ const Index = (props) => {
 
     const parseResearchField = (researchData) => {
         if (!researchData) return [];
-        
+
         try {
             if (Array.isArray(researchData)) {
                 return researchData.filter(r => r && r.title && r.title.trim() !== '');
             }
-            
+
             if (typeof researchData === 'string') {
                 const parsed = JSON.parse(researchData);
                 if (Array.isArray(parsed)) {
@@ -153,7 +185,7 @@ const Index = (props) => {
                 }
                 return [];
             }
-            
+
             return [];
         } catch (error) {
             return [];
@@ -162,7 +194,7 @@ const Index = (props) => {
 
     const parseSectionsField = (sectionsData) => {
         if (!sectionsData) return [];
-        
+
         try {
             if (typeof sectionsData === 'string') {
                 return JSON.parse(sectionsData);
@@ -216,8 +248,6 @@ const Index = (props) => {
                                 <th>Name</th>
                                 <th>Slug</th>
                                 <th>School</th>
-                                <th>Type</th>
-                                <th>Email</th>
                                 <th>Image</th>
                                 <th>Display Order</th>
                                 <th>Status</th>
@@ -230,8 +260,6 @@ const Index = (props) => {
                                     <td><i className="bx bx-heading bx-sm me-3"></i>{facultyMember.name}</td>
                                     <td><i className="bx bx-links bx-sm me-3"></i>{facultyMember.slug}</td>
                                     <td><i className="bx bx-book bx-sm me-3"></i>{facultyMember.school}</td>
-                                    <td><i className="bx bx-category bx-sm me-3"></i>{facultyMember.type}</td>
-                                    <td><i className="bx bx-envelope bx-sm me-3"></i>{facultyMember.email}</td>
                                     <td>
                                         {facultyMember.image ? (
                                             <img
@@ -253,9 +281,8 @@ const Index = (props) => {
                                     <td><i className="bx bx-category bx-sm me-3"></i>{facultyMember.display_order}</td>
                                     <td>
                                         <span
-                                            className={`badge cursor-pointer ${
-                                                facultyMember.status == 1 ? "bg-label-success" : "bg-label-danger"
-                                            }`}
+                                            className={`badge cursor-pointer ${facultyMember.status == 1 ? "bg-label-success" : "bg-label-danger"
+                                                }`}
                                             onClick={() => toggleStatus(facultyMember.id)}
                                         >
                                             {facultyMember.status == 1 ? "Active" : "Inactive"}
@@ -270,6 +297,15 @@ const Index = (props) => {
                                                 <span className="tf-icons bx bx-right-arrow-circle bx-18px me-1"></span>
                                                 Mapping
                                             </Link>
+
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-outline-secondary p-1 ms-1"
+                                                onClick={() => showDuplicateModal(facultyMember.id)}
+                                            >
+                                                <span className="tf-icons bx bx-copy bx-18px me-1"></span>
+                                                Duplicate
+                                            </button>
 
                                             <div className="dropdown">
                                                 <button
@@ -335,9 +371,9 @@ const Index = (props) => {
                                         </p>
                                     )}
                                 </div>
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
+                                <button
+                                    type="button"
+                                    className="btn-close"
                                     onClick={closeViewModal}
                                 ></button>
                             </div>
@@ -388,9 +424,9 @@ const Index = (props) => {
                                                 <div className="col-12">
                                                     <label className="form-label fw-semibold text-muted small">LinkedIn</label>
                                                     {selectedFaculty.linkedin_url != null ? (
-                                                        <a 
-                                                            href={selectedFaculty.linkedin_url} 
-                                                            target="_blank" 
+                                                        <a
+                                                            href={selectedFaculty.linkedin_url}
+                                                            target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="d-flex align-items-center text-primary text-decoration-none"
                                                         >
@@ -440,7 +476,7 @@ const Index = (props) => {
                                             </h6>
                                             {(() => {
                                                 const researchArray = parseResearchField(selectedFaculty.research);
-                                                
+
                                                 return researchArray.length > 0 ? (
                                                     <div className="space-y-3">
                                                         {researchArray.map((research, index) => (
@@ -448,24 +484,24 @@ const Index = (props) => {
                                                                 <div className="row align-items-center">
                                                                     {research.image && (
                                                                         <div className="col-auto">
-                                                                            <img 
-                                                                                src={research.image} 
+                                                                            <img
+                                                                                src={research.image}
                                                                                 alt={research.title}
                                                                                 className="rounded"
                                                                                 style={{ width: '60px', height: '60px', objectFit: 'cover' }}
                                                                             />
                                                                         </div>
                                                                     )}
-                                                                    
+
                                                                     <div className={research.image != null ? "col" : "col-12"}>
                                                                         <div className="d-flex align-items-start">
                                                                             <i className="bx bx-bulb text-warning me-2 mt-1"></i>
                                                                             <div className="flex-grow-1">
                                                                                 <h6 className="mb-1 fw-semibold">{research.title}</h6>
                                                                                 {research.link && (
-                                                                                    <a 
-                                                                                        href={research.link} 
-                                                                                        target="_blank" 
+                                                                                    <a
+                                                                                        href={research.link}
+                                                                                        target="_blank"
                                                                                         rel="noopener noreferrer"
                                                                                         className="small text-primary text-decoration-none"
                                                                                     >
@@ -488,7 +524,7 @@ const Index = (props) => {
                                                 );
                                             })()}
                                         </div>
-                                        
+
                                         {/* NEW: Sections */}
                                         <div className="mb-4">
                                             <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
@@ -497,7 +533,7 @@ const Index = (props) => {
                                             </h6>
                                             {(() => {
                                                 const sectionsArray = parseSectionsField(selectedFaculty.sections);
-                                                
+
                                                 return sectionsArray.length > 0 ? (
                                                     <div className="space-y-4">
                                                         {sectionsArray.map((section, sectionIndex) => (
@@ -506,7 +542,7 @@ const Index = (props) => {
                                                                     <i className="bx bx-category text-primary me-2 mb-1"></i>
                                                                     <div className="flex-grow-1">
                                                                         <h6 className="mb-1 fw-semibold">{section.title}</h6>
-                                                                        
+
                                                                         {/* Points */}
                                                                         {section.points && section.points.length > 0 && (
                                                                             <div className="mt-2 ps-3">
@@ -531,7 +567,7 @@ const Index = (props) => {
                                                 );
                                             })()}
                                         </div>
-                                        
+
                                         {/* Teaching */}
                                         <div className="mb-4">
                                             <h6 className="section-title text-uppercase text-muted fw-semibold mb-3">
@@ -570,7 +606,7 @@ const Index = (props) => {
                                                 Profile Image
                                             </h6>
                                             {selectedFaculty.image ? (
-                                                <div 
+                                                <div
                                                     className="border rounded p-3 bg-white cursor-pointer text-center"
                                                     onClick={() => showImageModal(selectedFaculty.image)}
                                                 >
@@ -668,7 +704,7 @@ const Index = (props) => {
                                                     <span className="fw-semibold">Display Order</span>
                                                     <span className="badge bg-info">{selectedFaculty.display_order}</span>
                                                 </div>
-                                                
+
                                                 <div className="d-grid gap-2">
                                                     <button
                                                         onClick={() => handleEditFromModal(selectedFaculty.id)}
@@ -702,8 +738,8 @@ const Index = (props) => {
 
                         {/* Footer */}
                         <div className="modal-footer bg-light">
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="btn btn-secondary"
                                 onClick={closeViewModal}
                             >
@@ -726,11 +762,15 @@ const Index = (props) => {
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title">Confirm Deletion</h5>
+                            <h5 className="modal-title">{isDuplicateAction ? 'Confirm Duplicate' : 'Confirm Deletion'}</h5>
                             <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div className="modal-body">
-                            Are you sure you want to delete this faculty member? This action cannot be undone.
+                            {isDuplicateAction ? (
+                                'Are you sure you want to duplicate this faculty member? This will create a copy.'
+                            ) : (
+                                'Are you sure you want to delete this faculty member? This action cannot be undone.'
+                            )}
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
@@ -738,11 +778,11 @@ const Index = (props) => {
                             </button>
                             <button
                                 type="button"
-                                className="btn btn-danger"
-                                onClick={handleConfirmDelete}
+                                className={isDuplicateAction ? 'btn btn-primary' : 'btn btn-danger'}
+                                onClick={isDuplicateAction ? handleConfirmDuplicate : handleConfirmDelete}
                                 disabled={processing}
                             >
-                                {processing ? "Deleting..." : "Yes, Delete"}
+                                {processing ? (isDuplicateAction ? 'Duplicating...' : 'Processing...') : (isDuplicateAction ? 'Yes, Duplicate' : 'Yes, Delete')}
                             </button>
                         </div>
                     </div>

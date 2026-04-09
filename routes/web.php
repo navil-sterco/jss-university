@@ -1,39 +1,42 @@
 <?php
 
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Application;
-use App\Http\Controllers\FaqController;
-use App\Http\Controllers\TabController;
-use App\Http\Controllers\TypeController;
-use App\Http\Controllers\PagesController;
-use App\Http\Controllers\BannerController;
-use App\Http\Controllers\CourseController;
-use App\Http\Controllers\DegreeController;
-use App\Http\Controllers\FooterController;
-use App\Http\Controllers\HeaderController;
-use App\Http\Controllers\SchoolController;
-use App\Http\Controllers\FacultyController;
-use App\Http\Controllers\GalleryController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProgramController;
-use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\AdmissionController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\HamburgerController;
-use App\Http\Controllers\HappeningController;
-use App\Http\Controllers\RecruiterController;
-use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\LeadershipController;
-use App\Http\Controllers\MainHeaderController;
-use App\Http\Controllers\SeoSettingController;
+use App\Http\Controllers\BannerController;
 use App\Http\Controllers\ContactFormController;
 use App\Http\Controllers\ContactInfoController;
-use App\Http\Controllers\PageSectionController;
-use App\Http\Controllers\TestimonialController;
-use App\Http\Controllers\MobileHeaderController;
-use App\Http\Controllers\SchoolHeaderController;
+use App\Http\Controllers\CourseController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DegreeController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FactsAndFiguresController;
+use App\Http\Controllers\FacultyController;
+use App\Http\Controllers\FaqController;
+use App\Http\Controllers\FooterController;
+use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\HamburgerController;
+use App\Http\Controllers\HappeningController;
+use App\Http\Controllers\HeaderController;
+use App\Http\Controllers\HomepageController;
+use App\Http\Controllers\LeadershipCategoryController;
+use App\Http\Controllers\LeadershipController;
+use App\Http\Controllers\MainHeaderController;
+use App\Http\Controllers\MobileHeaderController;
+use App\Http\Controllers\PopupController;
+use App\Http\Controllers\PagesController;
+use App\Http\Controllers\PageSectionController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\RecruiterController;
+use App\Http\Controllers\SchoolController;
+use App\Http\Controllers\SchoolHeaderController;
+use App\Http\Controllers\SectionTemplateController;
+use App\Http\Controllers\SeoSettingController;
+use App\Http\Controllers\TabController;
+use App\Http\Controllers\TestimonialController;
+use App\Http\Controllers\TypeController;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -80,6 +83,11 @@ Route::middleware('auth', 'is_admin')->group(function () {
         Route::post('item/update', [PageSectionController::class, 'updateItem'])->name('sections.item.update');
         Route::get('item/{id}/delete', [PageSectionController::class, 'deleteItem'])->name('sections.item.delete');
     });
+
+    // Section templates (Page Builder inputs)
+    Route::resource('section-templates', SectionTemplateController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->names('section-templates');
 
     //Banner
     Route::resource('banners', BannerController::class)->except(['destroy']);
@@ -141,6 +149,7 @@ Route::middleware('auth', 'is_admin')->group(function () {
     Route::resource('course', CourseController::class)->except(['destroy']);
     Route::prefix('course')->group(function () {
         Route::get('/{course}/destroy', [CourseController::class, 'destroy'])->name('course.destroy');
+        Route::post('/{course}/duplicate', [CourseController::class, 'duplicate'])->name('course.duplicate');
         Route::post('/{id}/toggle-status', [CourseController::class, 'toggleStatus'])->name('course.toggleStatus');
         Route::get('/{course}/mapping', [CourseController::class, 'mapping'])->name('course.mapping');
         Route::post('{id}/mapping', [CourseController::class, 'attachMapping'])->name('course.mapping.attach');
@@ -197,6 +206,7 @@ Route::middleware('auth', 'is_admin')->group(function () {
     Route::resource('faculty', FacultyController::class)->except(['destroy']);
     Route::prefix('faculty')->group(function () {
         Route::get('/{faculty}/destroy', [FacultyController::class, 'destroy'])->name('faculty.destroy');
+        Route::post('/{faculty}/duplicate', [FacultyController::class, 'duplicate'])->name('faculty.duplicate');
         Route::post('/{id}/toggle-status', [FacultyController::class, 'toggleStatus'])->name('faculty.toggleStatus');
         Route::get('/{faculty}/mapping', [FacultyController::class, 'mapping'])->name('faculty.mapping');
         Route::post('{id}/mapping', [FacultyController::class, 'attachMapping'])->name('faculty.mapping.attach');
@@ -213,6 +223,8 @@ Route::middleware('auth', 'is_admin')->group(function () {
 
     //Types
     Route::resource('types', TypeController::class)->only(['store', 'update', 'destroy']);
+    // leadership categories for dynamic select
+    Route::resource('leadership-categories', LeadershipCategoryController::class)->only(['store', 'update', 'destroy']);
 
     //Homepage
     Route::get('home', [HomepageController::class, 'createSections'])->name('home');
@@ -279,6 +291,10 @@ Route::middleware('auth', 'is_admin')->group(function () {
     Route::prefix('seo')->group(function () {
         Route::get('/{seo}/destroy', [SeoSettingController::class, 'destroy'])->name('seo.destroy');
     });
+
+    //Popup
+    Route::get('/popup', [PopupController::class, 'edit'])->name('popup.edit');
+    Route::post('/popup', [PopupController::class, 'update'])->name('popup.update');
 });
 
 require __DIR__.'/auth.php';

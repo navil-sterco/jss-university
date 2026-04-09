@@ -1,8 +1,10 @@
 import { useForm, usePage } from "@inertiajs/react";
-import React from "react";
+import React, { useState } from "react";
 
 const Edit = ({ course, departments, degree }) => {
     const appUrl = usePage().props.appUrl;
+    const [fileInputRevision, setFileInputRevision] = useState({});
+
     const { data, setData, post, processing, errors, progress } = useForm({
         _method: "PUT",
         department_id: course.department_id || "",
@@ -20,56 +22,90 @@ const Edit = ({ course, departments, degree }) => {
         useful_links: course.useful_links || [],
         banner: null,
         image: null,
+        school_listing_image: null,
         eligibility_marks: course.eligibility_marks || "",
+        fee_structure_pdf: course.fee_structure_pdf || "",
         eligibility_desc: course.eligibility_desc || "",
         program_structure: null,
-        scholarship: null,
+        brouchure: null,
+        scholarship: course.scholarship || "",
         remove_banner: false,
         remove_image: false,
+        remove_school_listing_image: false,
         remove_program_structure: false,
-        remove_scholarship: false,
+        remove_brouchure: false,
     });
 
     const submit = (e) => {
         e.preventDefault();
         post(route("course.update", course.id), {
-            forceFormData: true, // Important for file uploads
+            forceFormData: true,
+            transform: (form) => ({
+                ...form,
+                useful_links: JSON.stringify(form.useful_links ?? []),
+            }),
         });
     };
 
     // Add a new useful link
     const addUsefulLink = () => {
-        setData("useful_links", [
-            ...data.useful_links,
-            { text: "", url: "" }
-        ]);
+        setData((prev) => ({
+            ...prev,
+            useful_links: [...(prev.useful_links || []), { text: "", url: "" }],
+        }));
     };
 
     // Remove a useful link
     const removeUsefulLink = (index) => {
-        const updatedLinks = data.useful_links.filter((_, i) => i !== index);
-        setData("useful_links", updatedLinks);
+        setData((prev) => ({
+            ...prev,
+            useful_links: (prev.useful_links || []).filter((_, i) => i !== index),
+        }));
     };
 
     // Update a useful link
     const updateUsefulLink = (index, field, value) => {
-        const updatedLinks = data.useful_links.map((link, i) => 
-            i === index ? { ...link, [field]: value } : link
-        );
-        setData("useful_links", updatedLinks);
+        setData((prev) => ({
+            ...prev,
+            useful_links: (prev.useful_links || []).map((link, i) =>
+                i === index ? { ...link, [field]: value } : link
+            ),
+        }));
     };
 
     // Handle file input changes
     const handleFileChange = (field, file) => {
-        setData(field, file);
-        // Reset removal flag if new file is selected
-        setData(`remove_${field}`, false);
+        setData((prev) => ({
+            ...prev,
+            [field]: file,
+            [`remove_${field}`]: false,
+        }));
     };
 
-    // Handle file removal
+    // Remove existing server file (mark for deletion on save)
     const handleRemoveFile = (field) => {
-        setData(field, null);
-        setData(`remove_${field}`, true);
+        setData((prev) => ({
+            ...prev,
+            [field]: null,
+            [`remove_${field}`]: true,
+        }));
+        setFileInputRevision((r) => ({
+            ...r,
+            [field]: (r[field] || 0) + 1,
+        }));
+    };
+
+    // Clear a newly chosen file without removing the saved one
+    const clearStagedFile = (field) => {
+        setData((prev) => ({
+            ...prev,
+            [field]: null,
+            [`remove_${field}`]: false,
+        }));
+        setFileInputRevision((r) => ({
+            ...r,
+            [field]: (r[field] || 0) + 1,
+        }));
     };
 
     return (
@@ -237,8 +273,9 @@ const Edit = ({ course, departments, degree }) => {
 
                             {/* Banner Image */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Banner Image <span className="text-muted">(For course detail page)</span></label>                        
+                                <label className="form-label">Banner Image <span className="text-muted">(For course detail page)</span></label>
                                 <input
+                                    key={`banner-${fileInputRevision.banner ?? 0}`}
                                     type="file"
                                     className="form-control"
                                     accept="image/*"
@@ -247,6 +284,15 @@ const Edit = ({ course, departments, degree }) => {
                                 <div className="form-text">
                                     Upload a new banner image (Recommended: 1200x400px)
                                 </div>
+                                {data.banner instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary mt-2"
+                                        onClick={() => clearStagedFile("banner")}
+                                    >
+                                        Cancel new upload
+                                    </button>
+                                )}
                                 <div className="form-text text-danger">{errors.banner}</div>
                             </div>
 
@@ -255,9 +301,9 @@ const Edit = ({ course, departments, degree }) => {
                                 <div className="mb-3 col-md-6">
                                     <label className="form-label">Current Banner</label>
                                     <div className="border rounded p-2">
-                                        <img 
-                                            src={`${appUrl}/${course.banner}`} 
-                                            alt="Current banner" 
+                                        <img
+                                            src={`${appUrl}/${course.banner}`}
+                                            alt="Current banner"
                                             className="img-fluid rounded mb-2"
                                             style={{ maxHeight: '150px' }}
                                         />
@@ -276,6 +322,7 @@ const Edit = ({ course, departments, degree }) => {
                             <div className="mb-3 col-md-6">
                                 <label className="form-label">Image <span className="text-muted">(For course listing)</span></label>
                                 <input
+                                    key={`image-${fileInputRevision.image ?? 0}`}
                                     type="file"
                                     className="form-control"
                                     accept="image/*"
@@ -284,6 +331,15 @@ const Edit = ({ course, departments, degree }) => {
                                 <div className="form-text">
                                     Upload a new image (Recommended: 400x300px)
                                 </div>
+                                {data.image instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary mt-2"
+                                        onClick={() => clearStagedFile("image")}
+                                    >
+                                        Cancel new upload
+                                    </button>
+                                )}
                                 <div className="form-text text-danger">{errors.image}</div>
                             </div>
 
@@ -291,9 +347,9 @@ const Edit = ({ course, departments, degree }) => {
                                 <div className="mb-3 col-md-6">
                                     <label className="form-label">Current Course Image</label>
                                     <div className="border rounded p-2">
-                                        <img 
-                                            src={`${appUrl}/${course.image}`} 
-                                            alt="Current course image" 
+                                        <img
+                                            src={`${appUrl}/${course.image}`}
+                                            alt="Current course image"
                                             className="img-fluid rounded mb-2"
                                             style={{ maxHeight: '150px', objectFit: 'cover' }}
                                         />
@@ -307,27 +363,80 @@ const Edit = ({ course, departments, degree }) => {
                                     </div>
                                 </div>
                             )}
+                            {/* Featured Image */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">School Listing Image <span className="text-muted">(For course listing)</span></label>
+                                <input
+                                    key={`school_listing_image-${fileInputRevision.school_listing_image ?? 0}`}
+                                    type="file"
+                                    className="form-control"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange("school_listing_image", e.target.files[0])}
+                                />
+                                {data.school_listing_image instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary mt-2"
+                                        onClick={() => clearStagedFile("school_listing_image")}
+                                    >
+                                        Cancel new upload
+                                    </button>
+                                )}
+                                <div className="form-text text-danger">{errors.school_listing_image}</div>
+                            </div>
+
+                            {course.school_listing_image && !data.remove_school_listing_image && (
+                                <div className="mb-3 col-md-6">
+                                    <label className="form-label">Current School Listing Image</label>
+                                    <div className="border rounded p-2">
+                                        <img
+                                            src={`${appUrl}/${course.school_listing_image}`}
+                                            alt="Current school listing image"
+                                            className="img-fluid rounded mb-2"
+                                            style={{ maxHeight: '150px', objectFit: 'cover' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger w-100"
+                                            onClick={() => handleRemoveFile('school_listing_image')}
+                                        >
+                                            <i className="bx bx-trash"></i> Remove School Listing Image
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Eligibility Marks */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Eligibility Marks</label>
+                                <label className="form-label">Eligibility Link</label>
                                 <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="e.g., 60% in 12th standard"
+                                    placeholder="Eligibility"
                                     value={data.eligibility_marks}
                                     onChange={(e) => setData("eligibility_marks", e.target.value)}
                                 />
                                 <div className="form-text text-danger">{errors.eligibility_marks}</div>
                             </div>
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Fee Structure Link</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Fee Structure"
+                                    value={data.fee_structure_pdf}
+                                    onChange={(e) => setData("fee_structure_pdf", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.fee_structure_pdf}</div>
+                            </div>
 
                             {/* Eligibility Description */}
                             <div className="mb-3 col-12">
-                                <label className="form-label">Eligibility Description</label>
+                                <label className="form-label">Description</label>
                                 <textarea
                                     className="form-control"
                                     rows="4"
-                                    placeholder="Detailed eligibility criteria and requirements..."
+                                    placeholder="Description"
                                     value={data.eligibility_desc}
                                     onChange={(e) => setData("eligibility_desc", e.target.value)}
                                 />
@@ -336,8 +445,9 @@ const Edit = ({ course, departments, degree }) => {
 
                             {/* Program Structure PDF */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Program Structure (PDF)</label>                                
+                                <label className="form-label">Program Structure (PDF)</label>
                                 <input
+                                    key={`program_structure-${fileInputRevision.program_structure ?? 0}`}
                                     type="file"
                                     className="form-control"
                                     accept=".pdf,application/pdf"
@@ -347,13 +457,22 @@ const Edit = ({ course, departments, degree }) => {
                                     Upload new program structure document in PDF format
                                 </div>
                                 <div className="form-text text-danger">{errors.program_structure}</div>
-                                
+                                {data.program_structure instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary mt-2"
+                                        onClick={() => clearStagedFile("program_structure")}
+                                    >
+                                        Cancel new upload
+                                    </button>
+                                )}
+
                                 {/* Current Program Structure Preview */}
                                 {course.program_structure && !data.remove_program_structure && (
                                     <div className="mt-2">
                                         <p className="text-muted mb-1">Current File:</p>
                                         <div className="d-flex align-items-center">
-                                            <a 
+                                            <a
                                                 href={`${appUrl}/${course.program_structure}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -373,28 +492,37 @@ const Edit = ({ course, departments, degree }) => {
                                     </div>
                                 )}
                             </div>
-
-                            {/* Scholarship PDF */}
+                            {/* brouchure Structure PDF */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Scholarship Details (PDF)</label>
+                                <label className="form-label">Brouchure (PDF)</label>
                                 <input
+                                    key={`brouchure-${fileInputRevision.brouchure ?? 0}`}
                                     type="file"
                                     className="form-control"
                                     accept=".pdf,application/pdf"
-                                    onChange={(e) => handleFileChange("scholarship", e.target.files[0])}
+                                    onChange={(e) => handleFileChange("brouchure", e.target.files[0])}
                                 />
                                 <div className="form-text">
-                                    Upload new scholarship information in PDF format
+                                    Upload new brouchure document in PDF format
                                 </div>
-                                <div className="form-text text-danger">{errors.scholarship}</div>
-                                
-                                {/* Current Scholarship Preview */}
-                                {course.scholarship && !data.remove_scholarship && (
+                                <div className="form-text text-danger">{errors.brouchure}</div>
+                                {data.brouchure instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary mt-2"
+                                        onClick={() => clearStagedFile("brouchure")}
+                                    >
+                                        Cancel new upload
+                                    </button>
+                                )}
+
+                                {/* Current Program Structure Preview */}
+                                {course.brouchure && !data.remove_brouchure && (
                                     <div className="mt-2">
                                         <p className="text-muted mb-1">Current File:</p>
                                         <div className="d-flex align-items-center">
-                                            <a 
-                                                href={`${appUrl}/${course.scholarship}`}
+                                            <a
+                                                href={`${appUrl}/${course.brouchure}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-decoration-none"
@@ -405,13 +533,26 @@ const Edit = ({ course, departments, degree }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-sm btn-outline-danger ms-3"
-                                                onClick={() => handleRemoveFile('scholarship')}
+                                                onClick={() => handleRemoveFile('brouchure')}
                                             >
                                                 Remove
                                             </button>
                                         </div>
                                     </div>
                                 )}
+                            </div>
+
+                            {/* Scholarship PDF */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Scholarship Url</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Scholarship"
+                                    value={data.scholarship}
+                                    onChange={(e) => setData("scholarship", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.scholarship}</div>
                             </div>
 
                             {/* Useful Links Section */}
@@ -448,7 +589,7 @@ const Edit = ({ course, departments, degree }) => {
                                                     <div className="col-md-5">
                                                         <label className="form-label">Link URL</label>
                                                         <input
-                                                            type="url"
+                                                            type="text"
                                                             className="form-control"
                                                             placeholder="https://example.com/curriculum"
                                                             value={link.url}

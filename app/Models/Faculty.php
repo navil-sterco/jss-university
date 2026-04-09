@@ -111,7 +111,7 @@ class Faculty extends Model
     {
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('name', 'like', "%{$filters['search']}%");
+                $q->where('faculties.name', 'like', "%{$filters['search']}%");
             });
         }
     }

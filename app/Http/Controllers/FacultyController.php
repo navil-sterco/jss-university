@@ -11,6 +11,7 @@ use App\Models\Faculty;
 use App\Models\Department;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FacultyController extends Controller
 {
@@ -341,10 +342,6 @@ class FacultyController extends Controller
 
     public function destroy(Faculty $faculty)
     {
-        if ($faculty->image && file_exists(public_path($faculty->image))) {
-            unlink(public_path($faculty->image));
-        }
-
         $faculty->schools()->detach();
         $faculty->pages()->detach();
         $faculty->departments()->detach();
@@ -353,6 +350,65 @@ class FacultyController extends Controller
         $faculty->delete();
 
         return redirect()->route('faculty.index')->with('success', 'Faculty/Staff deleted successfully!');
+    }
+
+    public function duplicate($id)
+    {
+        $faculty = Faculty::with(['schools', 'pages', 'departments', 'courses'])->findOrFail($id);
+
+        DB::beginTransaction();
+        try {
+            // Replicate basic attributes
+            $new = $faculty->replicate();
+            $new->name = 'Copy of ' . $faculty->name;
+
+            // Generate unique slug
+            $baseSlug = Str::slug($new->name);
+            $slug = $baseSlug;
+            $i = 1;
+            while (Faculty::where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-copy' . $i++;
+            }
+            $new->slug = $slug;
+
+            // Preserve email but ensure uniqueness (append +copyN before @ if needed)
+            $newEmail = $faculty->email;
+            if ($newEmail) {
+                $base = $newEmail;
+                $i = 1;
+                while (Faculty::where('email', $newEmail)->exists()) {
+                    // insert +copyN before @ if email contains @, otherwise append -copyN
+                    if (strpos($base, '@') !== false) {
+                        [$local, $domain] = explode('@', $base, 2);
+                        $newEmail = $local . '+copy' . $i++ . '@' . $domain;
+                    } else {
+                        $newEmail = $base . '-copy' . $i++;
+                    }
+                }
+            }
+            $new->email = $newEmail;
+
+            // Keep same image path (do not duplicate actual file)
+            $new->image = $faculty->image;
+
+            // Preserve research JSON as-is (do not copy research images)
+            $new->research = $faculty->research;
+
+            $new->save();
+
+            // Duplicate relationships
+            $new->schools()->sync($faculty->schools->pluck('id')->toArray());
+            $new->pages()->sync($faculty->pages->pluck('id')->toArray());
+            $new->departments()->sync($faculty->departments->pluck('id')->toArray());
+            $new->courses()->sync($faculty->courses->pluck('id')->toArray());
+
+            DB::commit();
+
+            return redirect()->route('faculty.index')->with('success', 'Faculty duplicated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to duplicate faculty/staff: ' . $e->getMessage());
+        }
     }
 
     public function toggleStatus($id)

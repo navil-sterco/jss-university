@@ -17,6 +17,8 @@ class Testimonial extends Model
         'slug',
         'alt_text',
         'image',
+        'home_image',
+        'placement_image',
         'video_url',
         'short_description',
         'name',

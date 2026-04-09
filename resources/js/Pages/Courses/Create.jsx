@@ -1,7 +1,9 @@
 import { useForm } from "@inertiajs/react";
-import React from "react";
+import React, { useState } from "react";
 
 const Create = ({ departments, degree }) => {
+    const [fileInputRevision, setFileInputRevision] = useState({});
+
     const { data, setData, post, processing, errors, progress } = useForm({
         department_id: "",
         degree_id: "",
@@ -19,10 +21,13 @@ const Create = ({ departments, degree }) => {
         // Image fields
         banner: null,
         image: null, // This is the main/featured image
+        school_listing_image: null,
         // Other fields
         eligibility_marks: "",
+        fee_structure_pdf: "",
         eligibility_desc: "",
         program_structure: null,
+        brouchure: null,
         scholarship: null,
     });
 
@@ -30,34 +35,50 @@ const Create = ({ departments, degree }) => {
         e.preventDefault();
         post(route("course.store"), {
             forceFormData: true,
+            transform: (form) => ({
+                ...form,
+                useful_links: JSON.stringify(form.useful_links ?? []),
+            }),
         });
     };
 
     // Add a new useful link
     const addUsefulLink = () => {
-        setData("useful_links", [
-            ...data.useful_links,
-            { text: "", url: "" }
-        ]);
+        setData((prev) => ({
+            ...prev,
+            useful_links: [...(prev.useful_links || []), { text: "", url: "" }],
+        }));
     };
 
     // Remove a useful link
     const removeUsefulLink = (index) => {
-        const updatedLinks = data.useful_links.filter((_, i) => i !== index);
-        setData("useful_links", updatedLinks);
+        setData((prev) => ({
+            ...prev,
+            useful_links: (prev.useful_links || []).filter((_, i) => i !== index),
+        }));
     };
 
     // Update a useful link
     const updateUsefulLink = (index, field, value) => {
-        const updatedLinks = data.useful_links.map((link, i) => 
-            i === index ? { ...link, [field]: value } : link
-        );
-        setData("useful_links", updatedLinks);
+        setData((prev) => ({
+            ...prev,
+            useful_links: (prev.useful_links || []).map((link, i) =>
+                i === index ? { ...link, [field]: value } : link
+            ),
+        }));
     };
 
     // Handle file input changes
     const handleFileChange = (field, file) => {
         setData(field, file);
+    };
+
+    const clearSelectedFile = (fieldName) => {
+        setData(fieldName, null);
+        setFileInputRevision((prev) => ({
+            ...prev,
+            [fieldName]: (prev[fieldName] || 0) + 1,
+        }));
     };
 
     return (
@@ -229,6 +250,7 @@ const Create = ({ departments, degree }) => {
                             <div className="mb-3 col-md-6">
                                 <label className="form-label">Banner Image <span className="text-muted">(For course detail page)</span></label>
                                 <input
+                                    key={`banner-${fileInputRevision.banner ?? 0}`}
                                     type="file"
                                     className="form-control"
                                     accept="image/*"
@@ -237,6 +259,15 @@ const Create = ({ departments, degree }) => {
                                 <div className="form-text">
                                     Upload a banner image for the course (Recommended: 1200x400px)
                                 </div>
+                                {data.banner instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-danger mt-2"
+                                        onClick={() => clearSelectedFile("banner")}
+                                    >
+                                        <i className="bx bx-trash"></i> Remove selected file
+                                    </button>
+                                )}
                                 <div className="form-text text-danger">{errors.banner}</div>
                             </div>
 
@@ -244,6 +275,7 @@ const Create = ({ departments, degree }) => {
                             <div className="mb-3 col-md-6">
                                 <label className="form-label">Course Image <span className="text-muted">(For course listing)</span></label>
                                 <input
+                                    key={`image-${fileInputRevision.image ?? 0}`}
                                     type="file"
                                     className="form-control"
                                     accept="image/*"
@@ -252,29 +284,69 @@ const Create = ({ departments, degree }) => {
                                 <div className="form-text">
                                     Upload a main image for course cards/listing (Recommended: 400x300px)
                                 </div>
+                                {data.image instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-danger mt-2"
+                                        onClick={() => clearSelectedFile("image")}
+                                    >
+                                        <i className="bx bx-trash"></i> Remove selected file
+                                    </button>
+                                )}
                                 <div className="form-text text-danger">{errors.image}</div>
+                            </div>
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">School Listing Image <span className="text-muted">(For course listing)</span></label>
+                                <input
+                                    key={`school_listing_image-${fileInputRevision.school_listing_image ?? 0}`}
+                                    type="file"
+                                    className="form-control"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange("school_listing_image", e.target.files[0])}
+                                />
+                                {data.school_listing_image instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-danger mt-2"
+                                        onClick={() => clearSelectedFile("school_listing_image")}
+                                    >
+                                        <i className="bx bx-trash"></i> Remove selected file
+                                    </button>
+                                )}
+                                <div className="form-text text-danger">{errors.school_listing_image}</div>
                             </div>
 
                             {/* Eligibility Marks */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Eligibility Marks</label>
+                                <label className="form-label">Eligibility Link</label>
                                 <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="e.g., 60% in 12th standard"
+                                    placeholder="Eligibility"
                                     value={data.eligibility_marks}
                                     onChange={(e) => setData("eligibility_marks", e.target.value)}
                                 />
                                 <div className="form-text text-danger">{errors.eligibility_marks}</div>
                             </div>
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Fee Structure Link</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Fee Structure"
+                                    value={data.fee_structure_pdf}
+                                    onChange={(e) => setData("fee_structure_pdf", e.target.value)}
+                                />
+                                <div className="form-text text-danger">{errors.fee_structure_pdf}</div>
+                            </div>
 
                             {/* Eligibility Description */}
                             <div className="mb-3 col-12">
-                                <label className="form-label">Eligibility Description</label>
+                                <label className="form-label">Description</label>
                                 <textarea
                                     className="form-control"
                                     rows="4"
-                                    placeholder="Detailed eligibility criteria and requirements..."
+                                    placeholder="Description"
                                     value={data.eligibility_desc}
                                     onChange={(e) => setData("eligibility_desc", e.target.value)}
                                 />
@@ -285,6 +357,7 @@ const Create = ({ departments, degree }) => {
                             <div className="mb-3 col-md-6">
                                 <label className="form-label">Program Structure (PDF)</label>
                                 <input
+                                    key={`program_structure-${fileInputRevision.program_structure ?? 0}`}
                                     type="file"
                                     className="form-control"
                                     accept=".pdf,application/pdf"
@@ -293,21 +366,53 @@ const Create = ({ departments, degree }) => {
                                 <div className="form-text">
                                     Upload program structure document in PDF format
                                 </div>
+                                {data.program_structure instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-danger mt-2"
+                                        onClick={() => clearSelectedFile("program_structure")}
+                                    >
+                                        <i className="bx bx-trash"></i> Remove selected file
+                                    </button>
+                                )}
                                 <div className="form-text text-danger">{errors.program_structure}</div>
+                            </div>
+
+                            {/* Brouchure Structure PDF */}
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Brouchure (PDF)</label>
+                                <input
+                                    key={`brouchure-${fileInputRevision.brouchure ?? 0}`}
+                                    type="file"
+                                    className="form-control"
+                                    accept=".pdf,application/pdf"
+                                    onChange={(e) => handleFileChange("brouchure", e.target.files[0])}
+                                />
+                                <div className="form-text">
+                                    Upload Brouchure document in PDF format
+                                </div>
+                                {data.brouchure instanceof File && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-danger mt-2"
+                                        onClick={() => clearSelectedFile("brouchure")}
+                                    >
+                                        <i className="bx bx-trash"></i> Remove selected file
+                                    </button>
+                                )}
+                                <div className="form-text text-danger">{errors.brouchure}</div>
                             </div>
 
                             {/* Scholarship PDF */}
                             <div className="mb-3 col-md-6">
-                                <label className="form-label">Scholarship Details (PDF)</label>
+                                <label className="form-label">Scholarship Url</label>
                                 <input
-                                    type="file"
+                                    type="text"
                                     className="form-control"
-                                    accept=".pdf,application/pdf"
-                                    onChange={(e) => handleFileChange("scholarship", e.target.files[0])}
+                                    placeholder="Scholarship"
+                                    value={data.scholarship}
+                                    onChange={(e) => setData("scholarship", e.target.value)}
                                 />
-                                <div className="form-text">
-                                    Upload scholarship information in PDF format
-                                </div>
                                 <div className="form-text text-danger">{errors.scholarship}</div>
                             </div>
 
@@ -345,7 +450,7 @@ const Create = ({ departments, degree }) => {
                                                     <div className="col-md-5">
                                                         <label className="form-label">Link URL</label>
                                                         <input
-                                                            type="url"
+                                                            type="text"
                                                             className="form-control"
                                                             placeholder="https://example.com/curriculum"
                                                             value={link.url}

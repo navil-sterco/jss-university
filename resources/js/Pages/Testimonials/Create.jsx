@@ -11,6 +11,8 @@ const Create = () => {
         slug: "",
         alt_text: "",
         image: "",
+        home_image: "",
+        placement_image: "",
         video_url: "",
         short_description: "",
         description: "",
@@ -108,6 +110,32 @@ const Create = () => {
                                     accept="image/png, image/jpeg, image/webp"
                                 />
                                 <div className="form-text text-danger">{errors.image}</div>
+                            </div>
+                            {/* Image Upload */}
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="home_image" className="form-label">Home Image</label>
+                                <input
+                                    type="file"
+                                    id="home_image"
+                                    ref={fileInputRef}
+                                    className="form-control"
+                                    onChange={(e) => setData("home_image", e.target.files[0])}
+                                    accept="image/png, image/jpeg, image/webp"
+                                />
+                                <div className="form-text text-danger">{errors.home_image}</div>
+                            </div>
+                            {/* Image Upload */}
+                            <div className="mb-3 col-md-6">
+                                <label htmlFor="placement_image" className="form-label">Placement Image</label>
+                                <input
+                                    type="file"
+                                    id="placement_image"
+                                    ref={fileInputRef}
+                                    className="form-control"
+                                    onChange={(e) => setData("placement_image", e.target.files[0])}
+                                    accept="image/png, image/jpeg, image/webp"
+                                />
+                                <div className="form-text text-danger">{errors.placement_image}</div>
                             </div>
 
                             {/* Video URL */}

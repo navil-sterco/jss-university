@@ -11,6 +11,7 @@ class SeoSetting extends Model
         'meta_title',
         'meta_description',
         'keywords',
+        'search_terms',
         'canonical_url',
         'slug',
         'og_title',
@@ -22,6 +23,7 @@ class SeoSetting extends Model
 
     protected $casts = [
         'keywords' => 'array',
+        'search_terms' => 'array',
     ];
 
     public function scopeFilter(Builder $query, $filters)

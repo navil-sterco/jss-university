@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useForm, usePage, router } from '@inertiajs/react';
 import Pagination from '@/Components/Pagination';
 import { ToastContainer, toast } from 'react-toastify';
-import _ from 'lodash';
+import { debounce } from "lodash";
 
 const Index = (props) => {
     const { searchTerm, schools } = props;
@@ -28,7 +28,7 @@ const Index = (props) => {
     }, [flash.success]);
 
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("schools", { search: query }, { preserveState: true, replace: true });
         }, 300);
         delaySearch();

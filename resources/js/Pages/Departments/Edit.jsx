@@ -1,5 +1,5 @@
 import { useForm, usePage } from "@inertiajs/react";
-import React from "react";
+import React, { useRef } from "react";
 
 const Edit = ({ department, schools }) => {
     const appUrl = usePage().props.appUrl;
@@ -14,8 +14,14 @@ const Edit = ({ department, schools }) => {
         academic_year: department.academic_year || "",
         apply_now_link: department.apply_now_link || "",
         brochure: null,
+        image: "",
         useful_links: department.useful_links || [],
     });
+
+        const imageRefs = {
+            image: useRef(null),
+            prospectus: useRef(null),
+        };
 
     const submit = (e) => {
         e.preventDefault();
@@ -153,6 +159,18 @@ const Edit = ({ department, schools }) => {
                                     onChange={(e) => setData("apply_now_link", e.target.value)}
                                 />
                                 <div className="form-text text-danger">{errors.apply_now_link}</div>
+                            </div>
+
+                            <div className="mb-3 col-md-6">
+                                <label className="form-label">Listing Image</label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    ref={imageRefs.image}
+                                    accept="image/png,image/jpeg,image/webp"
+                                    onChange={(e) => setData("image", e.target.files[0])}
+                                />
+                                <div className="form-text text-danger">{errors.image}</div>
                             </div>
 
                             <div className="mb-3 col-md-6">

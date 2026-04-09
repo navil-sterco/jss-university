@@ -75,6 +75,14 @@ class AdmissionController extends Controller
             ];
         }
 
+        if ($admission->academic_calendar) {
+            $menus[] = [
+                'title' => 'Academic Calender',
+                'target' => '_blank',
+                'url' => asset($admission->academic_calendar)
+            ];
+        }
+
         // Build the response structure
         $admissionData = [
             'left' => [
@@ -91,7 +99,7 @@ class AdmissionController extends Controller
                         'type' => "primary"
                     ],
                     [
-                        'text' => "DOWNLOAD SYLLABUS",
+                        'text' => "DOWNLOAD BROCHURE",
                         'url' => $admission->brochure ? asset($admission->brochure) : "/syllabus",
                         'type' => "secondary"
                     ],
@@ -107,6 +115,7 @@ class AdmissionController extends Controller
                         'url' => $admission->program_button_url ?: "/programs"
                     ],
                 ],
+                'academic_calendar' => $admission->academic_calendar ? asset($admission->academic_calendar) : "/images/header/admission-banner.png",
             ],
             'right' => [
                 'img' => $admission->image ? asset($admission->image) : "/images/header/admission-banner.png",

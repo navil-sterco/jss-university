@@ -12,6 +12,7 @@ class Program extends Model
         'menu_name',
         'name_short',
         'image',
+        'alternate_image',
         'slug',
         'display_order',
         'status',
@@ -26,5 +27,20 @@ class Program extends Model
                 $q->where('name', 'like', "%{$filters['search']}%");
             });
         }
+    }
+
+    public function schools()
+    {
+        return $this->belongsToMany(School::class, 'programs_school', 'program_id', 'school_id')->withTimestamps();
+    }
+
+    public function pages()
+    {
+        return $this->belongsToMany(Pages::class, 'programs_page', 'program_id', 'page_id')->withTimestamps();
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'programs_department', 'program_id', 'department_id')->withTimestamps();
     }
 }

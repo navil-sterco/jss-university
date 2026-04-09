@@ -30,10 +30,13 @@ class FacultyController extends Controller
                 $facultyQuery->where('type_id', $type);
             }
 
-            $perPage = 6;
+            $perPage = 21;
             $page = $request->get('page', 1);
 
-            $facultyPaginated = $facultyQuery->orderBy('display_order', 'asc')
+            $facultyPaginated = $facultyQuery
+                ->leftJoin('types', 'faculties.type_id', '=', 'types.id')
+                ->select('faculties.*')
+                ->orderBy('faculties.display_order', 'asc')
                 ->paginate($perPage, ['*'], 'page', $page);
 
             $facultyFormatted = $facultyPaginated->getCollection()->map(function ($faculty) {

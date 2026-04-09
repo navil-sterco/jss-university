@@ -118,6 +118,7 @@ class HamburgerController extends Controller
             'section_heading_first' => 'nullable|string|max:255',
             'section_subheading_first' => 'nullable|string|max:255',
             'section_image_first' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'target_blank' => 'boolean',
             
             'section_title_second' => 'nullable|string|max:255',
             'section_subtitle_second' => 'nullable|string|max:255',
@@ -151,6 +152,7 @@ class HamburgerController extends Controller
             'reference_id' => $validated['reference_id'] ?? null,
             'parent_id' => $validated['parent_id'] ?? null,
             'url' => $validated['url'] ?? null,
+            'target_blank' => $validated['target_blank'] ?? false,
             
             'section_title' => $validated['section_title'] ?? null,
             'section_subtitle' => $validated['section_subtitle'] ?? null,
@@ -218,6 +220,7 @@ class HamburgerController extends Controller
                 'section_title' => $hamburger->section_title,
                 'section_subtitle' => $hamburger->section_subtitle,
                 'link' => $hamburger->link,
+                'target_blank' => $hamburger->target_blank,
                 'section_title_second' => $hamburger->section_title_second,
                 'section_subtitle_second' => $hamburger->section_subtitle_second,
                 'section_image_first' => $hamburger->section_image_first,
@@ -239,7 +242,6 @@ class HamburgerController extends Controller
 
     public function update(Request $request, Hamburger $hamburger)
     {
-        // Note: Changed parameter type from Header to Hamburger to match your model
         
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -255,6 +257,7 @@ class HamburgerController extends Controller
             'section_heading_first' => 'nullable|string|max:255',
             'section_subheading_first' => 'nullable|string|max:255',
             'section_image_first' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'target_blank' => 'boolean',
             
             // Second Section
             'section_title_second' => 'nullable|string|max:255',
@@ -276,6 +279,7 @@ class HamburgerController extends Controller
             'reference_id' => $validated['reference_id'] ?? null,
             'parent_id' => $validated['parent_id'] ?? null,
             'url' => $validated['url'] ?? null,
+            'target_blank' => $validated['target_blank'] ?? false,
             
             // First Section
             'section_title' => $validated['section_title'] ?? null,

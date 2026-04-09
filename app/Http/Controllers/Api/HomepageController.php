@@ -29,16 +29,19 @@ class HomepageController extends Controller
         }
 
         $sections = [
-            'banners' => Banner::where('status', 1)->where('show_on_home', 1)->orderBy('display_order', 'asc')->take(5)->get()
+            'banners' => Banner::where('status', 1)->where('show_on_home', 1)->orderBy('display_order', 'asc')->take(6)->get()
                 ->map(function ($banner) {
                     return [
                         'id' => $banner->id,
                         'title' => $banner->heading,
                         'desc' => $banner->subheading,
-                        'url' => $banner->link ? asset($banner->link) : null,
+                        'url' => $banner->link,
                         'linked_text' => $banner->linked_text,
-                        'desktop_banner' => asset($banner->image),
-                        'mobile_banner' => asset($banner->mobile_image),
+                        'desktop_banner' => $banner->image ? asset($banner->image) : null,
+                        'mobile_banner' => $banner->mobile_image ? asset($banner->mobile_image) : null,
+                        'desktop_video' => $banner->video_desktop ? asset($banner->video_desktop) : null,
+                        'mobile_video' => $banner->video_mobile ? asset($banner->video_mobile) : null,
+                        'video_url' => $banner->video_url,
                         'display_order' => $banner->display_order,
                     ];
                 }),
@@ -52,11 +55,12 @@ class HomepageController extends Controller
                 'chancellor_name' => $homepage->about_chancellor_name,
                 'chancellor_img' => $homepage->about_chancellor_img ? asset($homepage->about_chancellor_img) : asset('assets/img/placeholder.png'),
                 'video_url' => $homepage->about_chancellor_video_url,
+                'about_video' => $homepage->about_video ? asset($homepage->about_video) : null,
                 'highlights' => array_map(function($highlight) {
                     return [
                         'rank' => $highlight['rank'] ?? null,
                         'text' => $highlight['text'] ?? null,
-                        'source' => $highlight['source'] ?? null,
+                        'source' => $highlight['source'] ? asset($highlight['source']) : null,
                     ];
                 }, $homepage->highlights ?? []),
                 'buttons' => array_map(function($button) {
@@ -149,7 +153,7 @@ class HomepageController extends Controller
                     'batch' => $item->batch,
                     'slug' => $item->slug,
                     'alt_text' => $item->alt_text,
-                    'image' => $item->image ? asset($item->image) : asset('assets/img/placeholder.png'),
+                    'image' => $item->placement_image ? asset($item->placement_image) : asset('assets/img/placeholder.png'),
                     'video_url' => $item->video_url,
                     'short_description' => $item->short_description,
                     'designation' => $item->designation,

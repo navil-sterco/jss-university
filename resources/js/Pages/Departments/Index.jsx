@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useForm, usePage, router } from '@inertiajs/react';
 import Pagination from '@/Components/Pagination';
 import { ToastContainer, toast } from 'react-toastify';
-import _ from 'lodash';
+import { debounce } from "lodash";
 
 const DepartmentIndex = (props) => {
     const { searchTerm, departments } = props;
@@ -23,7 +23,7 @@ const DepartmentIndex = (props) => {
     }, [flash.success]);
 
     useEffect(() => {
-        const delaySearch = _.debounce(() => {
+        const delaySearch = debounce(() => {
             router.get("department", { search: query }, { preserveState: true, replace: true });
         }, 300);
         delaySearch();

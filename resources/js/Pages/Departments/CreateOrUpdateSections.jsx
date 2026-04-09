@@ -1,10 +1,14 @@
 import { useForm, usePage } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
+import { Editor } from "@tinymce/tinymce-react";
+import { useRef } from "react";
 
 const Section = ({ department }) => {
     const [activeSections, setActiveSections] = useState([]);
+    const [labImagePreviews, setLabImagePreviews] = useState([]);
     const appUrl = usePage().props.appUrl;
+    const editorRef = useRef(null);
 
     const { data, setData, post, progress, errors, processing } = useForm({
         // About Department
@@ -23,6 +27,7 @@ const Section = ({ department }) => {
         hod_name: department.hod_name || "",
         hod_designation: department.hod_designation || "",
         hod_messages: department.hod_messages || [""],
+        hod_messages_list: department.hod_messages_list || [""],
         hod_image: null,
 
         // Courses
@@ -43,6 +48,29 @@ const Section = ({ department }) => {
         // Happening
         happening_title: department.happening_title || "",
         happening_subtitle: department.happening_subtitle || "",
+
+        // Laboratory Page Data
+        name_of_laboratory: department.name_of_laboratory || [""],
+        name_of_equipment: department.name_of_equipment || [""],
+        lab_images: null,
+
+        // Placement Section
+        placement_title: department.placement_title || "",
+        placement_subtitle: department.placement_subtitle || "",
+        hall_of_fame_image: null,
+        hall_of_fame_heading: department.hall_of_fame_heading || "",
+        hall_of_fame_url: department.hall_of_fame_url || "",
+
+        // Research (stored in Department pages)
+        research_title: department.research_title || "",
+        research_content: department.research_content || "",
+
+        // Program Count Section
+        department_title: department.department_title || "",
+        department_desc: department.department_desc || "",
+        department_programs_count: department.department_programs_count || "",
+        department_programs_text: department.department_programs_text || "",
+        department_buttons: department.department_buttons || "",
     });
 
     // Section configuration
@@ -74,35 +102,10 @@ const Section = ({ department }) => {
                     rows: 4
                 },
                 {
-                    name: "image",
-                    label: "Department Image",
-                    type: "file",
-                    accept: "image/*"
-                },
-                {
-                    name: "vision_title",
-                    label: "Vision Title",
-                    type: "text",
-                    placeholder: "Vision"
-                },
-                {
-                    name: "vision_description",
-                    label: "Vision Description",
-                    type: "textarea",
-                    placeholder: "Vision description",
-                    rows: 3
-                },
-                {
-                    name: "mission_title",
-                    label: "Mission Title",
-                    type: "text",
-                    placeholder: "Mission"
-                },
-                {
                     name: "mission_points",
-                    label: "Mission Points",
+                    label: "Paragraph",
                     type: "array",
-                    placeholder: "Add mission point"
+                    placeholder: "Add paragraph"
                 }
             ]
         },
@@ -133,6 +136,12 @@ const Section = ({ department }) => {
                 {
                     name: "hod_messages",
                     label: "HOD Messages",
+                    type: "array",
+                    placeholder: "Add HOD message"
+                },
+                {
+                    name: "hod_messages_list",
+                    label: "HOD Messages List",
                     type: "array",
                     placeholder: "Add HOD message"
                 },
@@ -191,6 +200,44 @@ const Section = ({ department }) => {
             ]
         },
         {
+            id: "placement",
+            label: "Placement",
+            icon: "💼",
+            description: "Placement information and hall of fame",
+            fields: [
+                {
+                    name: "placement_title",
+                    label: "Title",
+                    type: "text",
+                    placeholder: "Placement & Careers"
+                },
+                {
+                    name: "placement_subtitle",
+                    label: "Subtitle",
+                    type: "text",
+                    placeholder: "Our Placement Success"
+                },
+                {
+                    name: "hall_of_fame_image",
+                    label: "Hall of Fame Image",
+                    type: "file",
+                    accept: "image/*"
+                },
+                {
+                    name: "hall_of_fame_heading",
+                    label: "Hall of Fame Heading",
+                    type: "text",
+                    placeholder: "Hall of Fame"
+                },
+                {
+                    name: "hall_of_fame_url",
+                    label: "Hall of Fame URL",
+                    type: "url",
+                    placeholder: "https://example.com"
+                }
+            ]
+        },
+        {
             id: "lab",
             label: "Laboratories",
             icon: "🔬",
@@ -241,7 +288,94 @@ const Section = ({ department }) => {
                     placeholder: "Latest Events & News"
                 }
             ]
-        }
+        },
+        {
+            id: "lab-page",
+            label: "Laboratories Page Data",
+            icon: "🔬",
+            description: "Laboratory Listing Page and information",
+            fields: [
+                {
+                    name: "name_of_laboratory",
+                    label: "Name of Laboratory",
+                    type: "array",
+                    placeholder: "Enter laboratory name"
+                },
+                {
+                    name: "name_of_equipment",
+                    label: "Name of Equipment",
+                    type: "array",
+                    placeholder: "Enter equipment name"
+                },
+                {
+                    name: "lab_images",
+                    label: "Laboratory Images",
+                    type: "file-array",
+                    accept: "image/*",
+                    multiple: true,
+                    description: "Upload multiple images for the laboratory"
+                }
+            ]
+        },
+        {
+            id: "research",
+            label: "Research",
+            icon: "🧪",
+            description: "Department research content (rich text)",
+            fields: [
+                {
+                    name: "research_title",
+                    label: "Page Title",
+                    type: "text",
+                    placeholder: "Research",
+                },
+                {
+                    name: "research_content",
+                    label: "Content",
+                    type: "tinymce",
+                    placeholder: "Write research content here...",
+                },
+            ],
+        },
+        {
+            id: "programcount",
+            label: "Programs Count",
+            icon: "📊",
+            description: "Number of programs, academic year info, and CTA",
+            fields: [
+                {
+                    name: "department_title",
+                    label: "Title",
+                    type: "text",
+                    placeholder: "Our Programs"
+                },
+                {
+                    name: "department_desc",
+                    label: "Description",
+                    type: "textarea",
+                    placeholder: "Department programs description",
+                    rows: 2
+                },
+                {
+                    name: "department_programs_count",
+                    label: "Programs Count",
+                    type: "text",
+                    placeholder: "e.g., 50+"
+                },
+                {
+                    name: "department_programs_text",
+                    label: "Programs Text",
+                    type: "text",
+                    placeholder: "e.g., Programs Available"
+                },
+                {
+                    name: "department_buttons",
+                    label: "Academic Year Desc",
+                    type: "text",
+                    placeholder: "e.g., Academic Year 2024-25"
+                },
+            ],
+        },
     ];
 
     // Initialize active sections based on existing data
@@ -252,15 +386,23 @@ const Section = ({ department }) => {
                 const value = data[field.name];
                 if (Array.isArray(value)) return value.some(item => item && item !== "");
                 if (value === null || value === undefined) return false;
-                return value !== "";
+                if (typeof value === 'string') return value !== "";
+                return false;
             });
-            
+
             if (hasData) {
                 initiallyActive.push(section.id);
             }
         });
         setActiveSections(initiallyActive);
     }, []);
+
+    // Cleanup preview URLs
+    useEffect(() => {
+        return () => {
+            labImagePreviews.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, [labImagePreviews]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -271,7 +413,7 @@ const Section = ({ department }) => {
     };
 
     const { flash } = usePage().props;
-    
+
     useEffect(() => {
         if (flash.success) {
             toast.success(flash.success);
@@ -290,15 +432,18 @@ const Section = ({ department }) => {
 
     const removeSection = (sectionId) => {
         setActiveSections(prev => prev.filter(id => id !== sectionId));
-        
+
         // Reset section data when removed
         const section = sectionConfig.find(s => s.id === sectionId);
         if (section) {
             section.fields.forEach(field => {
                 if (field.type === 'array') {
                     setData(field.name, [""]);
-                } else if (field.type === 'file') {
+                } else if (field.type === 'file' || field.type === 'file-array') {
                     setData(field.name, null);
+                    if (field.name === 'lab_images') {
+                        setLabImagePreviews([]);
+                    }
                 } else {
                     setData(field.name, "");
                 }
@@ -329,6 +474,16 @@ const Section = ({ department }) => {
         }
     };
 
+    const handleFileArrayChange = (fieldName, files) => {
+        // Convert FileList to array
+        const fileArray = Array.from(files);
+        setData(fieldName, fileArray);
+
+        // Create preview URLs
+        const previews = fileArray.map(file => URL.createObjectURL(file));
+        setLabImagePreviews(previews);
+    };
+
     // Render field based on type
     const renderField = (field) => {
         const value = data[field.name];
@@ -344,6 +499,22 @@ const Section = ({ department }) => {
                         </label>
                         <input
                             type="text"
+                            className={`form-control ${fieldError ? 'is-invalid' : ''}`}
+                            placeholder={field.placeholder}
+                            value={value || ''}
+                            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                            disabled={processing}
+                        />
+                        {fieldError && <div className="invalid-feedback">{fieldError}</div>}
+                    </div>
+                );
+
+            case 'url':
+                return (
+                    <div className="mb-3" key={field.name}>
+                        <label className="form-label">{field.label}</label>
+                        <input
+                            type="url"
                             className={`form-control ${fieldError ? 'is-invalid' : ''}`}
                             placeholder={field.placeholder}
                             value={value || ''}
@@ -370,11 +541,77 @@ const Section = ({ department }) => {
                     </div>
                 );
 
+            case 'html':
+                return (
+                    <div className="mb-3" key={field.name}>
+                        <label className="form-label">{field.label}</label>
+                        <textarea
+                            className={`form-control ${fieldError ? 'is-invalid' : ''}`}
+                            rows={field.rows || 15}
+                            placeholder={field.placeholder}
+                            value={value || ''}
+                            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                            disabled={processing}
+                            style={{ fontFamily: 'monospace', whiteSpace: 'pre', backgroundColor: '#1e1e1e', color: '#d4d4d4', padding: '15px' }}
+                        />
+                        {fieldError && <div className="invalid-feedback">{fieldError}</div>}
+                        <small className="text-muted mt-1 d-block">This editor accepts raw HTML data.</small>
+                    </div>
+                );
+
+            case 'tinymce':
+                return (
+                    <div className="mb-3" key={field.name}>
+                        <label className="form-label">{field.label}</label>
+                        <div className={fieldError ? 'border border-danger rounded' : ''}>
+
+
+                            <Editor
+                                apiKey="037f6whjbulv6s1zd8oooaxi7te3pdw2va7xjfl1e4slpmoi"
+                                onInit={(evt, editor) => (editorRef.current = editor)}
+                                value={value}
+                                init={{
+                                    height: 400,
+                                    menubar: true,
+
+                                    plugins: [
+                                        "code", "advlist autolink lists link image charmap preview anchor",
+                                        "searchreplace visualblocks code fullscreen",
+                                        "insertdatetime media table help wordcount",
+                                        "codesample", // optional
+                                    ],
+
+                                    toolbar:
+                                        "undo redo | blocks | bold italic underline | " +
+                                        "alignleft aligncenter alignright | bullist numlist | " +
+                                        "link image | code preview fullscreen",
+
+                                    menubar: "file edit view insert format tools table help",
+
+                                    // 🔥 Important settings
+                                    valid_elements: "*[*]", // allow all HTML
+                                    extended_valid_elements: "*[*]",
+
+                                    // optional but useful
+                                    forced_root_block: false,
+
+                                    content_style:
+                                        "body { font-family:Arial,Helvetica,sans-serif; font-size:14px }",
+                                }}
+                                onEditorChange={(content) =>
+                                    handleFieldChange(field.name, content)
+                                }
+                            />
+                        </div>
+                        {fieldError && <div className="text-danger small mt-1">{fieldError}</div>}
+                    </div>
+                );
+
             case 'array':
                 return (
                     <div className="mb-3" key={field.name}>
                         <label className="form-label">{field.label}</label>
-                        {value.map((item, index) => (
+                        {value && value.map((item, index) => (
                             <div key={index} className="d-flex gap-2 mb-2">
                                 <input
                                     type="text"
@@ -420,22 +657,90 @@ const Section = ({ department }) => {
                             disabled={processing}
                         />
                         {fieldError && <div className="invalid-feedback">{fieldError}</div>}
-                        
+
                         {/* Show current file if exists in department data */}
                         {department[field.name] && typeof department[field.name] === 'string' && (
-                            <div className="mb-3 col-md-3">
-                                <label className="form-label" htmlFor="image">Current Image</label>
-                                <div className="mb-2">
+                            <div className="mt-2">
+                                <label className="form-label text-muted small">Current Image</label>
+                                <div>
                                     <img
                                         src={`${appUrl}/${department[field.name]}`}
-                                        alt="Current Banner"
+                                        alt="Current"
                                         style={{
                                             width: "100px",
                                             height: "60px",
                                             objectFit: "cover",
-                                            borderRadius: "4px"
+                                            borderRadius: "4px",
+                                            border: "1px solid #ddd"
                                         }}
                                     />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+
+            case 'file-array':
+                return (
+                    <div className="mb-3" key={field.name}>
+                        <label className="form-label">{field.label}</label>
+                        {field.description && (
+                            <small className="text-muted d-block mb-2">{field.description}</small>
+                        )}
+                        <input
+                            type="file"
+                            className={`form-control ${fieldError ? 'is-invalid' : ''}`}
+                            onChange={(e) => handleFileArrayChange(field.name, e.target.files)}
+                            accept={field.accept}
+                            multiple={field.multiple}
+                            disabled={processing}
+                        />
+                        {fieldError && <div className="invalid-feedback">{fieldError}</div>}
+
+                        {/* Show preview of selected files */}
+                        {labImagePreviews.length > 0 && (
+                            <div className="mt-3">
+                                <label className="form-label small">Selected Images Preview:</label>
+                                <div className="d-flex flex-wrap gap-3">
+                                    {labImagePreviews.map((preview, index) => (
+                                        <div key={index} className="position-relative">
+                                            <img
+                                                src={preview}
+                                                alt={`Preview ${index + 1}`}
+                                                style={{
+                                                    width: "100px",
+                                                    height: "80px",
+                                                    objectFit: "cover",
+                                                    borderRadius: "4px",
+                                                    border: "1px solid #ddd"
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Show existing images if available */}
+                        {department[field.name] && Array.isArray(department[field.name]) && department[field.name].length > 0 && (
+                            <div className="mt-3">
+                                <label className="form-label small">Existing Images:</label>
+                                <div className="d-flex flex-wrap gap-3">
+                                    {department[field.name].map((image, index) => (
+                                        <div key={index}>
+                                            <img
+                                                src={`${appUrl}/${image}`}
+                                                alt={`Existing ${index + 1}`}
+                                                style={{
+                                                    width: "100px",
+                                                    height: "80px",
+                                                    objectFit: "cover",
+                                                    borderRadius: "4px",
+                                                    border: "1px solid #ddd"
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -454,7 +759,7 @@ const Section = ({ department }) => {
 
     return (
         <>
-            <ToastContainer 
+            <ToastContainer
                 position="top-right"
                 autoClose={5000}
                 hideProgressBar={false}
@@ -465,7 +770,7 @@ const Section = ({ department }) => {
                 draggable
                 pauseOnHover
             />
-            
+
             <div className="d-flex align-items-center justify-content-between mb-4">
                 <h4 className="mb-0">
                     Manage Department Sections —{" "}
@@ -539,8 +844,8 @@ const Section = ({ department }) => {
                                 </div>
                                 <div className="card-body">
                                     <div className="row">
-                                        {section.fields.map(field => 
-                                            (field.type === 'array' || field.type === 'file' || field.type === 'textarea') ? (
+                                        {section.fields.map(field =>
+                                            (field.type === 'array' || field.type === 'file' || field.type === 'file-array' || field.type === 'textarea' || field.type === 'tinymce' || field.type === 'html') ? (
                                                 <div className="col-12" key={field.name}>
                                                     {renderField(field)}
                                                 </div>
@@ -577,9 +882,9 @@ const Section = ({ department }) => {
                 <div className="mt-4 p-4 bg-light rounded border">
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
-                            <button 
-                                type="submit" 
-                                className="btn btn-primary btn-lg" 
+                            <button
+                                type="submit"
+                                className="btn btn-primary btn-lg"
                                 disabled={processing}
                             >
                                 {processing ? (
@@ -600,7 +905,7 @@ const Section = ({ department }) => {
                             </span>
                         </div>
                     </div>
-                    
+
                     {/* Show message when no sections are active */}
                     {activeSections.length === 0 && (
                         <div className="mt-3 alert alert-warning">
@@ -618,7 +923,7 @@ const Section = ({ department }) => {
                         <p className="text-muted mb-4">
                             Add sections above to build your department content, or save to clear all sections.
                         </p>
-                        
+
                         {availableSections.length === 0 ? (
                             <div className="alert alert-info">
                                 <i className="bx bx-info-circle me-2"></i>
